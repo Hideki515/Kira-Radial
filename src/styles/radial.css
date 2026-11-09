@@ -301,3 +301,75 @@ html.is-tauri body { background: transparent; }
 @media (prefers-reduced-motion: reduce) {
   .holo-meridian, .holo-orbit, .holo-spin { animation: none; }
 }
+
+/* ======================================================================
+   Abrir a partir do ícone flutuante: o menu "nasce" do ícone e se
+   recolhe de volta para ele. --from-x/--from-y = deslocamento do ícone até
+   o centro do menu; --from-s = tamanho do ícone ÷ tamanho do menu.
+   Só transform/opacity (compositor).
+   ====================================================================== */
+.radial-root.is-from-orb {
+  animation: orb-unfold 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes orb-unfold {
+  from { opacity: 0.4; transform: translate(var(--from-x), var(--from-y)) scale(var(--from-s)); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* fatias surgem em sequência, no sentido horário */
+.is-from-orb .main-slice {
+  transform-box: view-box;
+  transform-origin: 450px 450px;
+  animation: orb-slice-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(110ms + var(--i, 0) * 32ms);
+}
+@keyframes orb-slice-in {
+  from { opacity: 0; transform: rotate(-24deg) scale(0.7); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* fundo escuro do anel cresce junto com as fatias (sem "disco vazio" no início) */
+.is-from-orb .ring-backing {
+  transform-box: view-box;
+  transform-origin: 450px 450px;
+  animation: orb-backing-in 300ms cubic-bezier(0.22, 1, 0.36, 1) 70ms both;
+}
+@keyframes orb-backing-in {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* anéis decorativos (os dois temas) expandem do centro, girando */
+.is-from-orb .holo-back,
+.is-from-orb .orbit-soft,
+.is-from-orb .orbit-hot {
+  transform-box: view-box;
+  transform-origin: 450px 450px;
+  animation: orb-rings-in 520ms cubic-bezier(0.16, 1, 0.3, 1) 60ms both;
+}
+.is-from-orb .holo-scan,
+.is-from-orb .holo-front {
+  transform-box: view-box;
+  transform-origin: 450px 450px;
+  animation: orb-rings-in 420ms cubic-bezier(0.16, 1, 0.3, 1) 160ms both;
+}
+@keyframes orb-rings-in {
+  from { opacity: 0; transform: rotate(90deg) scale(0.35); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* fechar: recolhe para o ícone */
+.radial-root.is-closing {
+  animation: orb-fold 170ms cubic-bezier(0.55, 0, 0.75, 0.3) forwards;
+  pointer-events: none;
+}
+@keyframes orb-fold {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: translate(var(--from-x), var(--from-y)) scale(var(--from-s)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .radial-root.is-from-orb, .is-from-orb .main-slice, .is-from-orb .ring-backing,
+  .is-from-orb .holo-back, .is-from-orb .holo-scan, .is-from-orb .holo-front,
+  .is-from-orb .orbit-soft, .is-from-orb .orbit-hot { animation: none; }
+}

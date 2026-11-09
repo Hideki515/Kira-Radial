@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { MenuItem } from "../shared/types";
 import { LAYOUT, donutSlicePath, polar, sliceAngle, sliceSpan } from "./geometry";
 import { SliceContent } from "./SliceContent";
@@ -20,7 +21,7 @@ export function MainSlice({ item, index, count, active, dimmed }: Props) {
     .filter(Boolean)
     .join(" ");
   return (
-    <g className={cls} data-testid="main-slice" aria-label={item.label} role="menuitem">
+    <g className={cls} data-testid="main-slice" aria-label={item.label} role="menuitem" style={{ "--i": index } as CSSProperties}>
       {/* Halo: traço largo e translúcido sob a borda (substitui filter: drop-shadow, caro). */}
       {active && <path d={d} className="slice-halo" />}
       <path d={d} className="slice-shape" />

@@ -14,6 +14,14 @@ const CONFIRM: Record<string, string> = {
   signout: "Encerrar a sessão agora?",
 };
 
+/** Duração da animação de recolher para o ícone (igual a .is-closing em radial.css). */
+export const CLOSE_TO_ORB_MS = 170;
+
+const prefersReducedMotion = () =>
+  typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+type Point = { x: number; y: number };
+
 /** Clique além deste raio (em px do canvas) fecha o menu em vez de escolher uma fatia. */
 const OUTSIDE_RADIUS = LAYOUT.subOuter + 60;
 
@@ -41,6 +49,19 @@ function RadialMenu({ config }: { config: Config }) {
 
   const [center, setCenter] = useState(() => ({ x: window.innerWidth / 2, y: window.innerHeight / 2 }));
   const [open, setOpen] = useState(!isTauri());
+  /** Aberto pelo ícone: ponto (px da janela) de onde o menu nasce e para onde se recolhe. */
+  const [origin, setOrigin] = useState<Point | null>(null);
+  /** Animação de recolher em andamento (o menu já não aceita entrada). */
+  const [closing, setClosing] = useState(false);
+  const closeTimer = useRef<number | null>(null);
+  // Desmontou no meio do recolhimento: não deixa o timer chamar hideMenu depois.
+  useEffect(
+    () => () => {
+      if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    },
+    [],
+  );
   const [openKey, setOpenKey] = useState(0);
   const [activeMain, setActiveMain] = useState<number | null>(() => initialSelection(items)[0]);
   const [activeSub, setActiveSub] = useState<number | null>(() => initialSelection(items)[1]);
@@ -53,8 +74,8 @@ function RadialMenu({ config }: { config: Config }) {
   const children: MenuItem[] = openMain !== null ? items[openMain]?.children ?? [] : [];
 
   // Refs para os handlers globais lerem o estado atual sem re-registrar listeners.
-  const state = useRef({ activeMain, activeSub, openMain, children, center, items, open });
-  state.current = { activeMain, activeSub, openMain, children, center, items, open };
+  const state = useRef({ activeMain, activeSub, openMain, children, center, items, open, origin });
+  state.current = { activeMain, activeSub, openMain, children, center, items, open, origin };
 
   const reset = useCallback(() => {
     setActiveMain(null);
@@ -77,17 +98,34 @@ function RadialMenu({ config }: { config: Config }) {
     if (parent !== null) setActiveMain(parent);
   }, []);
 
-  const showAt = useCallback((x: number, y: number) => {
+  const cancelClosing = useCallback(() => {
+    if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
+    closeTimer.current = null;
+    setClosing(false);
+  }, []);
+
+  const showAt = useCallback((x: number, y: number, from: Point | null = null) => {
+    cancelClosing();
     setCenter({ x, y });
+    setOrigin(from);
     reset();
     setOpen(true);
     setOpenKey((k) => k + 1);
-  }, [reset]);
+  }, [cancelClosing, reset]);
 
   const close = useCallback(() => {
+    const animate = state.current.origin !== null && !prefersReducedMotion();
     setOpen(false);
     reset();
-    void hideMenu();
+    if (!animate) return void hideMenu();
+    // Aberto pelo ícone: recolhe de volta para ele e só então esconde a janela.
+    setClosing(true);
+    if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => {
+      closeTimer.current = null;
+      setClosing(false);
+      void hideMenu();
+    }, CLOSE_TO_ORB_MS);
   }, [reset]);
 
   const flash = useCallback((text: string, error = false) => {
@@ -182,9 +220,11 @@ function RadialMenu({ config }: { config: Config }) {
         showReceivedAt.current = performance.now();
         if (p.sentAt) perfLog(`evento menu:show chegou ${Date.now() - p.sentAt} ms após ser emitido pelo Rust`);
         setProfileId(p.profileId);
-        showAt(p.cx, p.cy);
+        const from = p.originX != null && p.originY != null ? { x: p.originX, y: p.originY } : null;
+        showAt(p.cx, p.cy, from);
       }),
       onEvent<null>("menu:hide", () => {
+        cancelClosing();
         setOpen(false);
         reset();
       }),
@@ -192,7 +232,7 @@ function RadialMenu({ config }: { config: Config }) {
       onEvent<null>("menu:release", () => executeSelection(true)),
     ];
     return () => offs.forEach((p) => p.then((off) => off()));
-  }, [executeSelection, reset, showAt]);
+  }, [cancelClosing, executeSelection, reset, showAt]);
 
   // --- Mouse / teclado / roda ---
   useEffect(() => {
@@ -301,12 +341,19 @@ function RadialMenu({ config }: { config: Config }) {
     width: px,
     height: px,
     "--active": config.appearance.accent,
+    // Aberto pelo ícone: deslocamento/escala iniciais = o próprio ícone (ver .is-from-orb).
+    ...(origin && {
+      "--from-x": `${origin.x - center.x}px`,
+      "--from-y": `${origin.y - center.y}px`,
+      "--from-s": Math.min(1, config.launcher.orb.size / px),
+    }),
   } as CSSProperties;
+  const rootClass = `radial-root${origin ? " is-from-orb" : ""}${closing ? " is-closing" : ""}`;
 
   return (
     <>
-      {open && (
-        <div key={openKey} className="radial-root" style={style}>
+      {(open || closing) && (
+        <div key={openKey} className={rootClass} style={style} data-testid="radial-root">
           <RadialCanvas
             items={items}
             activeMain={activeMain}

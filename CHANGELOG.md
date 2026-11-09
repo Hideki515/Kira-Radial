@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.1
+
+- **Animação de abertura pelo ícone**: o menu nasce do ícone.
+  - O núcleo cresce do tamanho do ícone, o fundo e os anéis se expandem girando e as fatias surgem em sequência no sentido horário.
+  - Ao fechar (Esc, clique fora ou no centro), o menu se recolhe de volta para o ícone.
+  - Pelo atalho, o menu continua abrindo e fechando como antes.
+  - A animação é desligada quando o Windows está com "reduzir animações".
+
 ## 0.3.0
 
 - **Ícone flutuante** (orbe holográfico animado) que abre o menu com um clique.
