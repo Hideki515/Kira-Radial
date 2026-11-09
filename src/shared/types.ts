@@ -94,6 +94,8 @@ export interface Config {
     showNumbers?: boolean;
     /** Mostra a música em reprodução no centro (padrão: ligado). */
     showMedia?: boolean;
+    /** Sons ao abrir/fechar/executar/passar por uma fatia. Ausente = desligado. */
+    sounds?: SoundsConfig;
   };
   launcher: Launcher;
   profiles: Profile[];
@@ -136,9 +138,29 @@ export const SCALE_LIMITS = { min: 0.5, max: 1.6 } as const;
 
 export const ORB_LIMITS = { minSize: 56, maxSize: 160, minOpacity: 0.4, maxOpacity: 1 } as const;
 
-export type Theme = "glass" | "holo";
-export const THEMES: readonly Theme[] = ["glass", "holo"];
+export type SoundEvent = "open" | "close" | "execute" | "hover";
+export interface SoundSource {
+  /** "builtin" = som sintetizado da Kira; "file" = arquivo próprio; "off" = sem som. */
+  mode: "builtin" | "file" | "off";
+  file?: string;
+}
+export interface SoundsConfig {
+  enabled: boolean;
+  /** 0–1 */
+  volume: number;
+  events: Record<SoundEvent, SoundSource>;
+}
+
+export type Theme = "glass" | "holo" | "reactor" | "terminal";
+export const THEMES: readonly Theme[] = ["glass", "holo", "reactor", "terminal"];
 /** Cor de destaque sugerida ao escolher o tema holográfico. */
 export const HOLO_ACCENT = "#ffb03a";
+/** Cor sugerida para cada tema (aplicada ao trocar, se a cor atual for a sugerida do tema anterior). */
+export const THEME_ACCENT: Record<Theme, string> = {
+  glass: "#4ade9b",
+  holo: HOLO_ACCENT,
+  reactor: "#5ad1ff",
+  terminal: "#39ff6a",
+};
 
 export const LIMITS = { minSlices: 3, maxSlices: 10, maxChildren: 8 } as const;

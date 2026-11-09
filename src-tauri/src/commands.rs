@@ -54,6 +54,14 @@ pub async fn read_orb_image(path: String) -> Result<String, String> {
         .map_err(|e| e.to_string())?
 }
 
+/// Som próprio (WAV/MP3/OGG) como data URL.
+#[tauri::command]
+pub async fn read_sound(path: String) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || crate::orb::read_sound(&path))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
 /// Menu do botão direito no ícone.
 #[tauri::command]
 pub fn orb_context_menu(app: AppHandle) -> Result<(), String> {

@@ -297,6 +297,20 @@ export async function readOrbImage(path: string): Promise<string> {
   return invoke<string>("read_orb_image", { path });
 }
 
+/** Som próprio (WAV/MP3/OGG) como data URL. No navegador, usa o caminho direto. */
+export async function readSound(path: string): Promise<string> {
+  if (!isTauri()) return path;
+  return invoke<string>("read_sound", { path });
+}
+
+/** Escolhe um arquivo de som. */
+export async function pickSound(): Promise<string | null> {
+  if (!isTauri()) return window.prompt("Caminho do som (WAV/MP3/OGG)");
+  const { open } = await import("@tauri-apps/plugin-dialog");
+  const r = await open({ multiple: false, filters: [{ name: "Som", extensions: ["wav", "mp3", "ogg"] }] });
+  return typeof r === "string" ? r : null;
+}
+
 /** Menu do botão direito no ícone (Configurações / Esconder ícone). */
 export async function orbContextMenu(): Promise<void> {
   if (isTauri()) await invoke("orb_context_menu");

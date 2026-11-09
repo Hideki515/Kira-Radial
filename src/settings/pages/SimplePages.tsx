@@ -1,9 +1,11 @@
 import { Check, Clipboard, RotateCcw, Upload } from "lucide-react";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { cloneConfig, defaultConfig, withDefaults } from "../../shared/defaults";
-import { HOLO_ACCENT, SCALE_LIMITS, wantsHotkey, wantsOrb, type Config, type LauncherMode, type Theme } from "../../shared/types";
+import { HOLO_ACCENT, SCALE_LIMITS, THEMES, THEME_ACCENT, wantsHotkey, wantsOrb, type Config, type LauncherMode, type Theme } from "../../shared/types";
 import { Field, Section, Segmented, Toggle } from "../controls";
 import { HotkeyRecorder } from "../HotkeyRecorder";
+import { RadialCanvas } from "../../radial/RadialCanvas";
+import { SoundsSection } from "./SoundsSection";
 import { clipboardClear } from "../../shared/ipc";
 
 interface PageProps {
@@ -103,35 +105,68 @@ export function HotkeyPage({ config, update }: PageProps) {
   );
 }
 
-const ACCENTS = ["#4ade9b", "#43c7d9", "#a78bfa", "#e879d8", "#f2c46d", HOLO_ACCENT, "#ff5c7a"];
-const GLASS_ACCENT = "#4ade9b";
+const ACCENTS = ["#4ade9b", "#43c7d9", "#5ad1ff", "#39ff6a", "#a78bfa", "#e879d8", "#f2c46d", HOLO_ACCENT, "#ff5c7a"];
 
 /** Troca o tema e sugere a cor que combina com ele (sem sobrescrever uma cor personalizada). */
 export function applyTheme(c: Config, theme: Theme) {
   const prev = c.appearance.theme ?? "glass";
   if (prev === theme) return;
   c.appearance.theme = theme;
-  if (theme === "holo" && c.appearance.accent === GLASS_ACCENT) c.appearance.accent = HOLO_ACCENT;
-  if (theme === "glass" && c.appearance.accent === HOLO_ACCENT) c.appearance.accent = GLASS_ACCENT;
+  // Troca a cor só se ela for a sugerida do tema anterior (cor personalizada fica).
+  // Tema anterior desconhecido (config editada/de outra versão): não há cor sugerida para comparar.
+  const prevAccent = THEME_ACCENT[prev as Theme] as string | undefined;
+  if (prevAccent && c.appearance.accent.toLowerCase() === prevAccent.toLowerCase()) c.appearance.accent = THEME_ACCENT[theme];
+}
+
+const THEME_INFO: Record<Theme, { label: string; hint: string }> = {
+  glass: { label: "Vidro", hint: "Fatias escuras translúcidas, discreto." },
+  holo: { label: "Holográfico", hint: "HUD em wireframe com esfera e anéis animados." },
+  reactor: { label: "Arc Reactor", hint: "Anéis segmentados girando e núcleo azul brilhante." },
+  terminal: { label: "Terminal", hint: "Verde fósforo, fonte monoespaçada e linhas de varredura." },
+};
+
+/** Cartões com miniatura (estática) de cada tema. */
+function ThemePicker({ config, update }: PageProps) {
+  const current = config.appearance.theme ?? "glass";
+  const items = config.profiles[0].items;
+  return (
+    <div className="theme-grid" role="radiogroup" aria-label="Tema">
+      {THEMES.map((t) => (
+        <button
+          key={t}
+          type="button"
+          role="radio"
+          aria-checked={current === t}
+          aria-label={THEME_INFO[t].label}
+          className={`theme-card${current === t ? " is-on" : ""}`}
+          onClick={() => update((c) => applyTheme(c, t))}
+        >
+          <span className="theme-thumb is-thumb" style={{ "--active": current === t ? config.appearance.accent : THEME_ACCENT[t] } as CSSProperties}>
+            <RadialCanvas
+              items={items}
+              activeMain={0}
+              activeSub={null}
+              hubHovered={false}
+              stats={{ cpu: 42, ram: 50 }}
+              appearance={{ ...config.appearance, theme: t, showMedia: false }}
+            />
+          </span>
+          <span className="theme-name">{THEME_INFO[t].label}</span>
+          <span className="theme-hint">{THEME_INFO[t].hint}</span>
+        </button>
+      ))}
+    </div>
+  );
 }
 
 export function AppearancePage({ config, update }: PageProps) {
   const a = config.appearance;
   return (
+    <>
     <Section title="Aparência">
-      <Field label="Tema" group>
-        <Segmented<Theme>
-          value={a.theme ?? "glass"}
-          options={[
-            { value: "glass", label: "Vidro" },
-            { value: "holo", label: "Holográfico" },
-          ]}
-          onChange={(t) => update((c) => applyTheme(c, t))}
-        />
+      <Field label="Tema" group hint="Cada tema sugere uma cor; a cor de destaque abaixo continua valendo (uma cor personalizada não é trocada).">
+        <ThemePicker config={config} update={update} />
       </Field>
-      {a.theme === "holo" && (
-        <p className="muted">HUD em wireframe com esfera e anéis animados. Usa a cor de destaque abaixo (âmbar por padrão; azul-ciano também fica bom).</p>
-      )}
       <Field label={`Tamanho: ${Math.round(a.scale * 100)}%`}>
         <input type="range" min={SCALE_LIMITS.min} max={SCALE_LIMITS.max} step={0.05} value={a.scale} onChange={(e) => update((c) => void (c.appearance.scale = Number(e.target.value)))} />
       </Field>
@@ -158,6 +193,8 @@ export function AppearancePage({ config, update }: PageProps) {
       />
       <Toggle label="Mostrar medidor de CPU" checked={a.showCpu} onChange={(v) => update((c) => void (c.appearance.showCpu = v))} />
     </Section>
+    <SoundsSection config={config} update={update} />
+    </>
   );
 }
 

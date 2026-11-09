@@ -23,6 +23,8 @@ export function validateConfig(c: Config): string[] {
     errors.push(`Tamanho do menu deve estar entre ${SCALE_LIMITS.min * 100}% e ${SCALE_LIMITS.max * 100}%.`);
   if (c.appearance.theme !== undefined && !THEMES.includes(c.appearance.theme))
     errors.push(`Tema desconhecido: "${c.appearance.theme}".`);
+  const snd = c.appearance.sounds;
+  if (snd && !(snd.volume >= 0 && snd.volume <= 1)) errors.push("Volume dos sons deve estar entre 0% e 100%.");
   if (!c.profiles.length) errors.push("É necessário ao menos um perfil.");
 
   const ids = new Set<string>();

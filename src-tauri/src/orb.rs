@@ -228,12 +228,40 @@ pub fn base64(data: &[u8]) -> String {
 /// Lê a imagem do ícone e devolve `data:<mime>;base64,...`.
 pub fn read_image(path: &str) -> Result<String, String> {
     let mime = image_mime(path).ok_or("formato não suportado (use GIF, WebP ou PNG)")?;
-    let meta = std::fs::metadata(path).map_err(|e| format!("não foi possível abrir a imagem: {e}"))?;
+    read_data_url(path, mime, MAX_IMAGE_BYTES, "imagem")
+}
+
+/// Limite de tamanho dos sons próprios.
+pub const MAX_SOUND_BYTES: u64 = 2 * 1024 * 1024;
+
+/// Tipo MIME de áudio pela extensão; `None` = formato não aceito.
+pub fn sound_mime(path: &str) -> Option<&'static str> {
+    let ext = path.rsplit('.').next()?.to_ascii_lowercase();
+    match ext.as_str() {
+        "wav" => Some("audio/wav"),
+        "mp3" => Some("audio/mpeg"),
+        "ogg" => Some("audio/ogg"),
+        _ => None,
+    }
+}
+
+/// Lê um som próprio (WAV/MP3/OGG, até 2 MB) como data URL.
+pub fn read_sound(path: &str) -> Result<String, String> {
+    let mime = sound_mime(path).ok_or("formato não suportado (use WAV, MP3 ou OGG)")?;
+    read_data_url(path, mime, MAX_SOUND_BYTES, "som")
+}
+
+fn read_data_url(path: &str, mime: &str, max: u64, what: &str) -> Result<String, String> {
+    let meta = std::fs::metadata(path).map_err(|e| format!("não foi possível abrir o arquivo de {what}: {e}"))?;
     if !meta.is_file() {
         return Err("o caminho não é um arquivo".into());
     }
-    if meta.len() > MAX_IMAGE_BYTES {
-        return Err(format!("imagem muito grande ({:.1} MB; máximo 8 MB)", meta.len() as f64 / 1_048_576.0));
+    if meta.len() > max {
+        return Err(format!(
+            "{what} muito grande ({:.1} MB; máximo {} MB)",
+            meta.len() as f64 / 1_048_576.0,
+            max / 1_048_576
+        ));
     }
     let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
     Ok(format!("data:{mime};base64,{}", base64(&bytes)))
@@ -354,6 +382,23 @@ mod image_tests {
         assert_eq!(image_mime("x.exe"), None);
         assert_eq!(image_mime("semextensao"), None);
         assert!(read_image("nada.exe").is_err());
+    }
+
+    #[test]
+    fn sons_aceitos_e_limite() {
+        assert_eq!(sound_mime("a.WAV"), Some("audio/wav"));
+        assert_eq!(sound_mime("a.mp3"), Some("audio/mpeg"));
+        assert_eq!(sound_mime("a.ogg"), Some("audio/ogg"));
+        assert_eq!(sound_mime("a.exe"), None);
+        let dir = std::env::temp_dir().join("kira-sound-test");
+        std::fs::create_dir_all(&dir).unwrap();
+        let big = dir.join("b.wav");
+        std::fs::File::create(&big).unwrap().set_len(MAX_SOUND_BYTES + 1).unwrap();
+        assert!(read_sound(big.to_str().unwrap()).unwrap_err().contains("muito grande"));
+        let ok = dir.join("a.wav");
+        std::fs::write(&ok, b"RIFF").unwrap();
+        assert_eq!(read_sound(ok.to_str().unwrap()).unwrap(), "data:audio/wav;base64,UklGRg==");
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

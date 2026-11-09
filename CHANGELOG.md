@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.0
+
+- **Novos temas:**
+  - **Arc Reactor**: anéis segmentados girando, bobinas em volta do núcleo, azul-ciano.
+  - **Terminal**: verde fósforo, fonte monoespaçada, grade de pontos e linhas de varredura.
+- **Seletor de tema com miniaturas** em Configurações → Aparência. Cada tema sugere a própria cor, mas uma cor personalizada é mantida.
+- **Sons estilo HUD**, sintetizados pela própria Kira (sem arquivos de terceiros), para abrir, fechar, executar e passar por uma fatia.
+  - Volume ajustável e botão ▶ para ouvir cada som.
+  - Em cada evento dá para usar um arquivo próprio (WAV/MP3/OGG, até 2 MB) ou deixar sem som.
+  - Vem desligado.
+
 ## 0.6.0
 
 - **Reordenar fatias e subitens arrastando** pela alça ⋮⋮ na página Itens. Também funciona com Alt+↑/↓ na linha selecionada.

@@ -116,6 +116,7 @@ pub fn run() {
             commands::clipboard_clear,
             commands::get_volume,
             commands::read_orb_image,
+            commands::read_sound,
             commands::orb_context_menu,
             perf::perf_log,
             keycapture::start_key_capture,

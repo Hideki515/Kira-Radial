@@ -2,6 +2,8 @@ import type { NowPlaying, StatsPayload } from "../shared/ipc";
 import type { Config, MenuItem } from "../shared/types";
 import { CenterHub } from "./CenterHub";
 import { HoloBack, HoloFront, HoloScan } from "./HoloLayer";
+import { ReactorBack, ReactorFront, TerminalBack, TerminalFront } from "./ThemeLayers";
+import { THEMES } from "../shared/types";
 import { LAYOUT, polar, sliceAngle } from "./geometry";
 import { MainSlice } from "./MainSlice";
 import { SubmenuRing } from "./SubmenuRing";
@@ -44,9 +46,10 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
   const subOpen = subParent !== null && children.length > 0;
   // Pré-visualização: escurece só com um subitem escolhido (como antes). Menu real: sempre que o sub-anel está aberto.
   const dimOthers = openMain === undefined ? activeSub !== null : subOpen;
-  const holo = appearance.theme === "holo";
+  const theme = THEMES.includes(appearance.theme ?? "glass") ? appearance.theme ?? "glass" : "glass";
+  const holo = theme === "holo";
   return (
-    <svg className={`radial-canvas theme-${holo ? "holo" : "glass"}`} viewBox={`0 0 ${LAYOUT.size} ${LAYOUT.size}`} role="menu" aria-label="Menu radial">
+    <svg className={`radial-canvas theme-${theme}`} viewBox={`0 0 ${LAYOUT.size} ${LAYOUT.size}`} role="menu" aria-label="Menu radial">
       <defs>
         <radialGradient id="slice-glass" cx={C} cy={C} r={LAYOUT.subOuter} gradientUnits="userSpaceOnUse">
           <stop offset="0.35" stopColor="#0a0f17" />
@@ -74,6 +77,10 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
 
       {holo ? (
         <HoloBack />
+      ) : theme === "reactor" ? (
+        <ReactorBack />
+      ) : theme === "terminal" ? (
+        <TerminalBack />
       ) : (
         <>
           {/* brilhos ambientes */}
@@ -126,6 +133,8 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
         volume={volume}
       />
       {holo && <HoloFront />}
+      {theme === "reactor" && <ReactorFront />}
+      {theme === "terminal" && <TerminalFront />}
     </svg>
   );
 }

@@ -392,3 +392,84 @@ html.is-tauri body { background: transparent; }
 .theme-holo .hub-np-artist, .theme-holo .hub-np-time { font-family: var(--font-holo); fill: var(--holo-dim); }
 .theme-holo .hub-cover-ring { stroke: var(--holo); }
 .theme-holo .hub-vol { stroke: var(--holo-hi); }
+
+/* ======================================================================
+   Tema "Arc Reactor" — azul-ciano, anéis segmentados grossos, núcleo
+   branco-azulado. Cor = cor de destaque (--active).
+   ====================================================================== */
+.theme-reactor {
+  --rx: var(--active);
+  --rx-hi: color-mix(in srgb, var(--active) 40%, #f2fbff);
+  --rx-dim: color-mix(in srgb, var(--active) 40%, transparent);
+  --rx-faint: color-mix(in srgb, var(--active) 14%, transparent);
+  --rx-bg: color-mix(in srgb, var(--active) 6%, #03070c);
+}
+.reactor { pointer-events: none; }
+.reactor-glow-in { stop-color: var(--rx); stop-opacity: 0.16; }
+.reactor-glow-mid { stop-color: var(--rx); stop-opacity: 0.05; }
+.reactor-glow-out { stop-color: var(--rx); stop-opacity: 0; }
+.reactor-thin { fill: none; stroke: var(--rx-dim); stroke-width: 1; }
+.reactor-thin--faint { stroke: var(--rx-faint); }
+.reactor-seg { fill: none; stroke: var(--rx); stroke-width: 9; stroke-linecap: butt; opacity: 0.55; }
+.reactor-tooth { fill: none; stroke: var(--rx-dim); stroke-width: 5; }
+.reactor-coil { fill: none; stroke: var(--rx-hi); stroke-width: 11; opacity: 0.75; }
+.reactor-rim { fill: none; stroke: var(--rx-hi); stroke-width: 2; }
+.reactor-spin { transform-box: view-box; transform-origin: 450px 450px; animation: holo-spin 90s linear infinite; }
+.reactor-spin--rev { animation-duration: 140s; animation-direction: reverse; }
+.reactor-spin--coils { animation-duration: 30s; }
+
+.theme-reactor .ring-backing { fill: var(--rx-bg); fill-opacity: 0.92; }
+.theme-reactor .main-slice .slice-shape { fill: color-mix(in srgb, var(--active) 5%, #050b12); stroke: var(--rx-dim); stroke-width: 1.4; }
+.theme-reactor .main-slice .slice-icon { color: var(--rx-hi); }
+.theme-reactor .slice-label { fill: #dff6ff; letter-spacing: 0.08em; }
+.theme-reactor .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 22%, #050b12); stroke: var(--rx-hi); stroke-width: 2; }
+.theme-reactor .main-slice.is-active .slice-icon,
+.theme-reactor .main-slice.is-active .slice-label { color: #fff; fill: #fff; }
+.theme-reactor .sub-slice .slice-shape { fill: color-mix(in srgb, var(--item-color) 8%, #050b12); }
+.theme-reactor .hub-disc { fill: color-mix(in srgb, var(--active) 18%, #06121c); stroke: var(--rx-hi); }
+.theme-reactor .hub-well { fill: #02060a; stroke: var(--rx-faint); }
+.theme-reactor .hub-gauge { stroke: var(--rx-hi); }
+.theme-reactor .hub-time, .theme-reactor .hub-np-title { fill: #f2fbff; }
+.theme-reactor .hub-cpu { fill: var(--rx-hi); }
+
+/* ======================================================================
+   Tema "Terminal" — verde fósforo sobre preto, fonte monoespaçada,
+   grade de pontos e linhas de varredura (CRT).
+   ====================================================================== */
+.theme-terminal {
+  --tm: var(--active);
+  --tm-dim: color-mix(in srgb, var(--active) 45%, transparent);
+  --tm-faint: color-mix(in srgb, var(--active) 12%, transparent);
+  --font-term: "Cascadia Mono", "Cascadia Code", Consolas, "Courier New", monospace;
+}
+.terminal { pointer-events: none; }
+.term-dot { fill: var(--tm-faint); }
+.term-bracket { fill: none; stroke: var(--tm); stroke-width: 2; }
+.term-caption { font-family: var(--font-term); font-size: 12px; fill: var(--tm-dim); letter-spacing: 0.1em; }
+.term-scanline { fill: #000; opacity: 0.22; }
+.term-sweep { fill: var(--tm); opacity: 0.05; animation: term-sweep 4s linear infinite; }
+@keyframes term-sweep { from { transform: translateY(0); } to { transform: translateY(740px); } }
+
+.theme-terminal .ring-backing { fill: #020602; fill-opacity: 0.95; }
+.theme-terminal .main-slice .slice-shape { fill: #031003; stroke: var(--tm-dim); stroke-width: 1; stroke-dasharray: 6 3; }
+.theme-terminal .main-slice .slice-icon, .theme-terminal .sub-slice .slice-icon { color: var(--tm); }
+.theme-terminal .slice-label { font-family: var(--font-term); font-weight: 600; fill: var(--tm); letter-spacing: 0.04em; }
+.theme-terminal .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 16%, #031003); stroke: var(--tm); stroke-dasharray: none; }
+.theme-terminal .main-slice.is-active .slice-label { fill: #eaffea; }
+.theme-terminal .slice-marker { animation: term-blink 1s steps(1) infinite; }
+@keyframes term-blink { 50% { opacity: 0; } }
+.theme-terminal .sub-slice .slice-shape { fill: #031003; stroke: color-mix(in srgb, var(--item-color) 55%, transparent); }
+.theme-terminal .sub-slice .slice-label { fill: color-mix(in srgb, var(--item-color) 70%, var(--tm)); }
+.theme-terminal .hub-disc, .theme-terminal .hub-well { fill: #010401; stroke: var(--tm-dim); }
+.theme-terminal .hub-time, .theme-terminal .hub-cpu, .theme-terminal .hub-np-title { font-family: var(--font-term); fill: var(--tm); }
+.theme-terminal .hub-date, .theme-terminal .hub-pill-text, .theme-terminal .hub-np-artist, .theme-terminal .hub-np-time { font-family: var(--font-term); fill: var(--tm-dim); }
+.theme-terminal .hub-gauge { stroke: var(--tm); stroke-linecap: butt; }
+.theme-terminal .hub-track { stroke: var(--tm-faint); stroke-dasharray: 3 3; }
+.theme-terminal .slice-num { font-family: var(--font-term); fill: var(--tm-dim); }
+
+/* miniaturas do seletor de tema: sem animação */
+.radial-canvas.is-thumb *, .is-thumb .radial-canvas * { animation: none !important; transition: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reactor-spin, .term-sweep, .theme-terminal .slice-marker { animation: none; }
+}

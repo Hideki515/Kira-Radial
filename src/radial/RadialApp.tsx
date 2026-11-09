@@ -4,6 +4,7 @@ import { useSystemStats } from "../hooks/useSystemStats";
 import { describeAction, getVolume, hideMenu, isTauri, nowPlaying as fetchNowPlaying, type NowPlaying, onEvent, runAction, type MenuShowPayload } from "../shared/ipc";
 import { observeLongTasks, perfLog, startFrameMonitor } from "../shared/perf";
 import type { Config, MenuItem } from "../shared/types";
+import { clearSoundCache, playSound } from "../shared/sound";
 import { resolveItems } from "./dynamic";
 import { useDynamicSources } from "./useDynamicSources";
 import { LAYOUT, hitTest, sliceAngle, type Hit } from "./geometry";
@@ -55,6 +56,12 @@ function RadialMenu({ config }: { config: Config }) {
   const [volume, setVolume] = useState<number | null>(null);
   const volumeTimer = useRef<number | null>(null);
   const showMedia = config.appearance.showMedia !== false;
+  /** Config de sons sempre atual para os callbacks estáveis. */
+  const soundsRef = useRef(config.appearance.sounds);
+  soundsRef.current = config.appearance.sounds;
+  // Configuração de sons mudou (salva nas Configurações): relê os arquivos próprios.
+  const soundsKey = JSON.stringify(config.appearance.sounds ?? null);
+  useEffect(() => clearSoundCache(), [soundsKey]);
   const scale = config.appearance.scale;
 
   const [center, setCenter] = useState(() => ({ x: window.innerWidth / 2, y: window.innerHeight / 2 }));
@@ -124,12 +131,14 @@ function RadialMenu({ config }: { config: Config }) {
     setCenter({ x, y });
     setOrigin(from);
     clickedId.current = null;
+    void playSound("open", soundsRef.current);
     reset();
     setOpen(true);
     setOpenKey((k) => k + 1);
   }, [cancelClosing, reset]);
 
   const close = useCallback(() => {
+    void playSound("close", soundsRef.current);
     const animate = state.current.origin !== null && !prefersReducedMotion();
     setOpen(false);
     reset();
@@ -161,6 +170,7 @@ function RadialMenu({ config }: { config: Config }) {
       const action = item?.action;
       if (!item || !action) return;
       if (action.type === "system" && CONFIRM[action.cmd] && !window.confirm(CONFIRM[action.cmd])) return;
+      void playSound("execute", soundsRef.current);
       try {
         // No Tauri o backend esconde o menu antes de agir (e devolve o foco ao app anterior).
         await runAction(action);
@@ -197,6 +207,11 @@ function RadialMenu({ config }: { config: Config }) {
     [config.behavior.deadZonePx, scale],
   );
 
+
+  // Som ao passar por uma fatia/subitem (desligado por padrão).
+  useEffect(() => {
+    if (open && (activeMain !== null || activeSub !== null)) void playSound("hover", soundsRef.current);
+  }, [open, activeMain, activeSub]);
 
   // "Tocando agora": lê ao abrir e a cada 2 s enquanto o menu está aberto.
   useEffect(() => {

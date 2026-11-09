@@ -62,4 +62,23 @@ describe("RadialCanvas", () => {
     const nums = screen.getAllByTestId("slice-num").map((e) => e.textContent);
     expect(nums).toEqual(defaultProfile.items.slice(0, 9).map((_, i) => String(i + 1)));
   });
+
+  it("Arc Reactor e Terminal desenham as próprias camadas", () => {
+    const { container, rerender } = render(<RadialCanvas {...base} appearance={{ ...base.appearance, theme: "reactor" }} activeMain={0} activeSub={null} />);
+    expect(container.querySelector("svg")!.classList.contains("theme-reactor")).toBe(true);
+    expect(screen.getByTestId("reactor-back")).toBeTruthy();
+    expect(container.querySelectorAll(".reactor-coil").length).toBe(10);
+    expect(container.querySelector(".holo-back")).toBeNull();
+    rerender(<RadialCanvas {...base} appearance={{ ...base.appearance, theme: "terminal" }} activeMain={0} activeSub={null} />);
+    expect(container.querySelector("svg")!.classList.contains("theme-terminal")).toBe(true);
+    expect(screen.getByTestId("terminal-back")).toBeTruthy();
+    expect(container.querySelector(".term-sweep")).toBeTruthy();
+    expect(screen.getAllByTestId("main-slice")).toHaveLength(defaultProfile.items.length);
+    container.querySelectorAll(".reactor, .terminal").forEach((g) => expect(g.getAttribute("aria-hidden")).toBe("true"));
+  });
+
+  it("tema desconhecido cai no vidro", () => {
+    const { container } = render(<RadialCanvas {...base} appearance={{ ...base.appearance, theme: "matrix" as never }} activeMain={null} activeSub={null} />);
+    expect(container.querySelector("svg")!.classList.contains("theme-glass")).toBe(true);
+  });
 });
