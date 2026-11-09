@@ -29,6 +29,42 @@ pub fn current() -> Foreground {
     }
 }
 
+fn describe(hwnd: HWND) -> Foreground {
+    let mut pid = 0u32;
+    unsafe { GetWindowThreadProcessId(hwnd, Some(&mut pid)) };
+    Foreground { hwnd: hwnd.0 as isize, exe: exe_name(pid) }
+}
+
+/// Janela de app em foco, ignorando `exclude` (janelas do Kira). Se o foco estiver numa
+/// delas, devolve a primeira janela de app visível abaixo na ordem Z.
+pub fn current_app(exclude: &[isize]) -> Foreground {
+    let fg = current();
+    if fg.hwnd == 0 || !exclude.contains(&fg.hwnd) {
+        return fg;
+    }
+    use windows::Win32::UI::WindowsAndMessaging::{
+        GetTopWindow, GetWindow, GetWindowLongPtrW, GetWindowTextLengthW, IsIconic, IsWindowVisible, GWL_EXSTYLE,
+        GW_HWNDNEXT, GW_OWNER, WS_EX_TOOLWINDOW,
+    };
+    unsafe {
+        let mut h = GetTopWindow(None).ok();
+        while let Some(w) = h {
+            let ex = GetWindowLongPtrW(w, GWL_EXSTYLE) as u32;
+            let is_app = IsWindowVisible(w).as_bool()
+                && !IsIconic(w).as_bool()
+                && GetWindowTextLengthW(w) > 0
+                && ex & WS_EX_TOOLWINDOW.0 == 0
+                && GetWindow(w, GW_OWNER).is_err()
+                && !exclude.contains(&(w.0 as isize));
+            if is_app {
+                return describe(w);
+            }
+            h = GetWindow(w, GW_HWNDNEXT).ok();
+        }
+    }
+    Foreground::default()
+}
+
 pub fn exe_name(pid: u32) -> Option<String> {
     if pid == 0 {
         return None;

@@ -7,6 +7,7 @@ mod config;
 mod foreground;
 mod keycapture;
 mod menu;
+mod orb;
 mod perf;
 mod positioning;
 mod stats;
@@ -35,7 +36,7 @@ pub fn run() {
         .setup(move |app| {
             let handle = app.handle().clone();
 
-            if let Err(e) = menu::register_hotkey(&handle, &cfg.hotkey.accelerator) {
+            if let Err(e) = menu::apply_hotkey(&handle, &cfg) {
                 eprintln!("[kira-radial] {e}");
                 *handle.state::<AppState>().hotkey_error.lock().unwrap() = Some(e);
                 // Sem atalho o app ainda é usável pela bandeja; abre as configurações para corrigir.
@@ -54,11 +55,17 @@ pub fn run() {
                 }
             }
 
+            orb::init(&handle);
+            orb::apply(&handle, &cfg);
+
             build_tray(app)?;
             stats::spawn(handle);
             Ok(())
         })
         .on_window_event(|window, event| {
+            if let (orb::ORB, WindowEvent::Moved(p)) = (window.label(), event) {
+                orb::on_moved(window.app_handle(), p.x, p.y);
+            }
             if let WindowEvent::CloseRequested { api, .. } = event {
                 // Fechar apenas esconde; o app continua na bandeja.
                 api.prevent_close();
@@ -80,6 +87,8 @@ pub fn run() {
             commands::list_processes,
             commands::list_audio_outputs,
             commands::hotkey_error,
+            commands::orb_clicked,
+            commands::orb_reset_position,
             perf::perf_log,
             keycapture::start_key_capture,
             keycapture::stop_key_capture,

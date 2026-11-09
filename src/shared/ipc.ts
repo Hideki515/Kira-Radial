@@ -1,6 +1,6 @@
 // Ponte com o backend Tauri. No navegador (npm run dev) tudo cai em fallbacks,
 // o que permite desenvolver o visual e a tela de configuração sem Rust.
-import { cloneConfig, defaultConfig } from "./defaults";
+import { cloneConfig, defaultConfig, withDefaults } from "./defaults";
 import type { Action, Config } from "./types";
 
 export const isTauri = (): boolean =>
@@ -13,6 +13,9 @@ export interface MenuShowPayload {
   profileId: string;
   /** Instante (ms desde 1970) em que o Rust emitiu o evento — para medir atraso de entrega. */
   sentAt?: number;
+  /** Aberto pelo ícone: ponto de onde o menu "nasce" (px lógicos relativos à janela). */
+  originX?: number | null;
+  originY?: number | null;
 }
 
 export interface StatsPayload {
@@ -65,10 +68,10 @@ export async function hideMenu(): Promise<void> {
 const LS_KEY = "kira-radial:config";
 
 export async function getConfig(): Promise<Config> {
-  if (isTauri()) return invoke<Config>("get_config");
+  if (isTauri()) return withDefaults(await invoke<Config>("get_config"));
   try {
     const s = localStorage.getItem(LS_KEY);
-    if (s) return JSON.parse(s) as Config;
+    if (s) return withDefaults(JSON.parse(s) as Config);
   } catch {
     /* sem storage: usa padrão */
   }
@@ -138,6 +141,23 @@ export async function pickPath(directory: boolean): Promise<string | null> {
   const { open } = await import("@tauri-apps/plugin-dialog");
   const r = await open({ directory, multiple: false });
   return typeof r === "string" ? r : null;
+}
+
+/** Clique no ícone flutuante: o backend abre (ou fecha) o menu centrado nele. */
+export async function orbClicked(): Promise<void> {
+  if (isTauri()) await invoke("orb_clicked");
+}
+
+/** Volta o ícone flutuante para o canto inferior direito. */
+export async function orbResetPosition(): Promise<void> {
+  if (isTauri()) await invoke("orb_reset_position");
+}
+
+/** Arrasta a janela atual (ícone) com o mouse, até soltar o botão. */
+export async function startWindowDrag(): Promise<void> {
+  if (!isTauri()) return;
+  const { getCurrentWindow } = await import("@tauri-apps/api/window");
+  await getCurrentWindow().startDragging();
 }
 
 export async function onEvent<T>(name: string, cb: (payload: T) => void): Promise<() => void> {

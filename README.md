@@ -9,6 +9,7 @@ Feito com **Tauri 2 (Rust) + React 18 + TypeScript + Vite**.
 
 ## Recursos
 - **Abre no cursor**, centralizado no mouse. Perto da borda, o menu é ajustado para caber no monitor (vários monitores e DPI).
+- **Ícone flutuante opcional:** um orbe holográfico animado que abre o menu com um clique. Ele pode ser arrastado para qualquer lugar da tela. Escolha entre abrir pelo atalho, pelo ícone ou pelos dois.
 - **Atalho global configurável** (padrão `Ctrl+Alt+Q`). Aceita a tecla Win, teclados ABNT2 e dois modos:
   - *pressionar e clicar*;
   - *segurar e soltar*.

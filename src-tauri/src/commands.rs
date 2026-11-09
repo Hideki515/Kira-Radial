@@ -15,19 +15,36 @@ pub fn get_config(state: State<'_, AppState>) -> Config {
 }
 
 #[tauri::command]
-pub fn save_config(app: AppHandle, state: State<'_, AppState>, config: Config) -> Result<(), String> {
+pub fn save_config(app: AppHandle, state: State<'_, AppState>, mut config: Config) -> Result<(), String> {
     config.validate()?;
     let old = state.config();
-    if old.hotkey.accelerator != config.hotkey.accelerator {
-        menu::register_hotkey(&app, &config.hotkey.accelerator)?;
+    // A posição do ícone é do backend (muda ao arrastar); o rascunho das configurações
+    // pode estar desatualizado.
+    config.launcher.orb.x = old.launcher.orb.x;
+    config.launcher.orb.y = old.launcher.orb.y;
+    if old.hotkey.accelerator != config.hotkey.accelerator || old.launcher.mode != config.launcher.mode {
+        menu::apply_hotkey(&app, &config)?;
     }
     if old.behavior.autostart != config.behavior.autostart {
         apply_autostart(&app, config.behavior.autostart)?;
     }
     config::save(&config)?;
     *state.config.lock().unwrap() = config.clone();
+    crate::orb::apply(&app, &config);
     let _ = app.emit("config:changed", config);
     Ok(())
+}
+
+/// Clique no ícone flutuante.
+#[tauri::command]
+pub fn orb_clicked(app: AppHandle) -> Result<(), String> {
+    crate::orb::clicked(&app)
+}
+
+/// Volta o ícone flutuante para o canto padrão.
+#[tauri::command]
+pub fn orb_reset_position(app: AppHandle) {
+    crate::orb::reset_position(&app);
 }
 
 pub fn apply_autostart(app: &AppHandle, enabled: bool) -> Result<(), String> {

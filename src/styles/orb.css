@@ -1,0 +1,122 @@
+/* Ícone flutuante (orbe holográfico). Só transform/opacity animados: roda no compositor (GPU). */
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+body { background: #0b0f16; user-select: none; }
+html.is-tauri body { background: transparent; }
+
+.orb-stage {
+  --orb-hi: color-mix(in srgb, var(--orb-accent) 45%, #fff8e6);
+  --orb-dim: color-mix(in srgb, var(--orb-accent) 45%, transparent);
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.orb {
+  position: relative;
+  width: var(--orb-size);
+  height: var(--orb-size);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--orb-accent);
+  cursor: pointer;
+  opacity: var(--orb-idle);
+  transition: opacity 200ms ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.orb:hover { opacity: 1; }
+.orb:active { transform: scale(0.92); }
+.orb:focus-visible { box-shadow: 0 0 0 2px var(--orb-hi); }
+
+/* brilho de fundo (estático; só a opacidade pulsa) */
+.orb-glow {
+  position: absolute;
+  inset: -22%;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--orb-accent) 38%, transparent) 0%,
+    color-mix(in srgb, var(--orb-accent) 12%, transparent) 42%, transparent 70%);
+  animation: orb-breathe 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+.orb:hover .orb-glow { animation-duration: 1.4s; }
+
+.orb-scene {
+  position: absolute;
+  inset: 0;
+  perspective: calc(var(--orb-size) * 3);
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+/* Cada anel: inclinação fixa (orb-tilt) + giro contínuo (orb-spin) */
+.orb-tilt, .orb-spin { position: absolute; inset: 0; transform-style: preserve-3d; }
+.orb-tilt--1 { transform: rotateX(68deg); }
+.orb-tilt--2 { transform: rotateY(64deg) rotateX(12deg); inset: 4%; }
+.orb-tilt--3 { transform: rotateX(-52deg) rotateY(34deg); inset: 9%; }
+.orb-tilt--4 { inset: -6%; }
+
+.orb-spin { animation: orb-spin 7s linear infinite; }
+.orb-spin--2 { animation-duration: 5.2s; animation-direction: reverse; }
+.orb-spin--3 { animation-duration: 3.8s; }
+.orb-spin--4 { animation-duration: 26s; animation-direction: reverse; opacity: 0.55; }
+.orb:hover .orb-spin--1 { animation-duration: 2.6s; }
+.orb:hover .orb-spin--2 { animation-duration: 2s; }
+.orb:hover .orb-spin--3 { animation-duration: 1.5s; }
+
+.orb-ring-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+}
+.orb-node { fill: var(--orb-hi); stroke: none; }
+
+/* núcleo */
+.orb-core {
+  position: absolute;
+  inset: 34%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 45% 40%, #fffdf6 0%, var(--orb-hi) 22%, var(--orb-accent) 48%,
+    color-mix(in srgb, var(--orb-accent) 30%, transparent) 72%, transparent 100%);
+  box-shadow: 0 0 calc(var(--orb-size) * 0.18) color-mix(in srgb, var(--orb-accent) 70%, transparent);
+  animation: orb-pulse 2.4s ease-in-out infinite;
+}
+
+/* imagem própria (GIF/WebP/PNG) */
+.orb-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* clique: onda que se expande a partir do núcleo */
+.orb-burst {
+  position: absolute;
+  inset: 20%;
+  border-radius: 50%;
+  border: 2px solid var(--orb-hi);
+  pointer-events: none;
+  animation: orb-burst 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes orb-spin { to { transform: rotateZ(360deg); } }
+@keyframes orb-breathe { 0%, 100% { opacity: 0.65; } 50% { opacity: 1; } }
+@keyframes orb-pulse { 0%, 100% { transform: scale(0.92); } 50% { transform: scale(1.06); } }
+@keyframes orb-burst {
+  from { transform: scale(0.6); opacity: 1; }
+  to   { transform: scale(2.1); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb-spin, .orb-glow, .orb-core { animation: none; }
+}

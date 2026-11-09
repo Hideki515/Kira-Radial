@@ -1,7 +1,7 @@
 import { Check, Clipboard, RotateCcw, Upload } from "lucide-react";
 import { useState } from "react";
-import { cloneConfig, defaultConfig } from "../../shared/defaults";
-import { HOLO_ACCENT, type Config, type Theme } from "../../shared/types";
+import { cloneConfig, defaultConfig, withDefaults } from "../../shared/defaults";
+import { HOLO_ACCENT, wantsHotkey, wantsOrb, type Config, type LauncherMode, type Theme } from "../../shared/types";
 import { Field, Section, Segmented, Toggle } from "../controls";
 import { HotkeyRecorder } from "../HotkeyRecorder";
 
@@ -31,14 +31,49 @@ export function GeneralPage({ config, update }: PageProps) {
   );
 }
 
-export function HotkeyPage({ config, update }: PageProps) {
+const LAUNCHER_HINT: Record<LauncherMode, string> = {
+  hotkey: "O menu abre pelo atalho global, na posição do mouse.",
+  orb: "Um ícone animado fica na tela; clique nele para abrir o menu. Arraste-o para qualquer lugar. O atalho fica desligado.",
+  both: "O ícone fica na tela e o atalho global também funciona.",
+};
+
+export function LauncherSection({ config, update }: PageProps) {
+  const mode = config.launcher.mode;
   return (
+    <Section title="Abrir o menu por">
+      <Field label="Modo de abertura" group hint={LAUNCHER_HINT[mode]}>
+        <Segmented<LauncherMode>
+          value={mode}
+          options={[
+            { value: "hotkey", label: "Atalho" },
+            { value: "orb", label: "Ícone" },
+            { value: "both", label: "Ícone + atalho" },
+          ]}
+          onChange={(v) => update((c) => void (c.launcher.mode = v))}
+        />
+      </Field>
+      {wantsOrb(mode) && <p className="muted">Ajuste tamanho e aparência do ícone na página <strong>Ícone</strong>.</p>}
+    </Section>
+  );
+}
+
+export function HotkeyPage({ config, update }: PageProps) {
+  const hotkeyOn = wantsHotkey(config.launcher.mode);
+  return (
+    <>
+    <LauncherSection config={config} update={update} />
+    {!hotkeyOn ? (
+      <Section title="Atalho de exibição" description="Desligado no modo “Ícone”. Escolha “Atalho” ou “Ícone + atalho” acima para usar uma combinação de teclas.">
+        <p className="muted" data-testid="hotkey-off">Atalho atual (desligado): <kbd>{config.hotkey.accelerator}</kbd></p>
+      </Section>
+    ) : (
     <Section title="Atalho de exibição" description="Combinação global que abre o menu em qualquer lugar do Windows. Enquanto você grava, o atalho atual fica pausado.">
       <Field label="Atalho">
         <HotkeyRecorder value={config.hotkey.accelerator} requireModifier pauseGlobal onChange={(v) => update((c) => void (c.hotkey.accelerator = v))} />
       </Field>
       <Field
         label="Modo"
+        group
         hint={config.hotkey.mode === "toggle"
           ? "Pressione para abrir; clique numa fatia (ou pressione de novo / Esc para fechar)."
           : "Segure o atalho, aponte o mouse para a fatia e solte para executar."}
@@ -51,6 +86,8 @@ export function HotkeyPage({ config, update }: PageProps) {
       </Field>
       <p className="muted">Sugestões: Ctrl+Alt+Q, Alt+Q, Ctrl+Shift+Q, Win+Shift+Z. (Alt+Space costuma ser capturado pelo PowerToys.)</p>
     </Section>
+    )}
+    </>
   );
 }
 
@@ -125,7 +162,7 @@ export function BackupPage({ config, replace }: { config: Config; replace: (c: C
               try {
                 const c = JSON.parse(text) as Config;
                 if (c.version !== 1 || !Array.isArray(c.profiles)) throw new Error("formato não reconhecido");
-                replace(c);
+                replace(withDefaults(c));
                 setMsg({ ok: true, text: "Importado para o rascunho." });
               } catch (e) {
                 setMsg({ ok: false, text: `JSON inválido: ${(e as Error).message}` });

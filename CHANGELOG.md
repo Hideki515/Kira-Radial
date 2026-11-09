@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+- **Ícone flutuante** (orbe holográfico animado) que abre o menu com um clique.
+  - Pode ser arrastado para qualquer lugar da tela, inclusive para outro monitor; a posição fica salva.
+  - O menu abre centrado no ícone.
+- **Escolha como abrir o menu**: Atalho · Ícone · Ícone + atalho (em Configurações → Atalho). No modo "Ícone", o atalho global fica desligado.
+- A versão exibida nas configurações agora vem do `package.json`.
+
 ## 0.2.0
 
 - **Tema "Holográfico"**: HUD em wireframe.

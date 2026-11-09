@@ -70,12 +70,39 @@ export interface Config {
     showCpu: boolean;
     showClock: boolean;
   };
+  launcher: Launcher;
   profiles: Profile[];
 }
+
+/** Como o menu é aberto: atalho global, ícone flutuante ou os dois. */
+export type LauncherMode = "hotkey" | "orb" | "both";
+export const LAUNCHER_MODES: readonly LauncherMode[] = ["hotkey", "orb", "both"];
+export const wantsHotkey = (m: LauncherMode) => m !== "orb";
+export const wantsOrb = (m: LauncherMode) => m !== "hotkey";
+
+export interface OrbConfig {
+  /** Posição salva (px físicos, canto superior esquerdo). null = canto inferior direito. Gerida pelo backend. */
+  x: number | null;
+  y: number | null;
+  /** Diâmetro do orbe em px. */
+  size: number;
+  /** GIF/WebP/PNG próprio; null = orbe holográfico embutido. */
+  image: string | null;
+  /** Opacidade em repouso (passar o mouse deixa 100%). */
+  opacityIdle: number;
+  hideOnFullscreen: boolean;
+}
+
+export interface Launcher {
+  mode: LauncherMode;
+  orb: OrbConfig;
+}
+
+export const ORB_LIMITS = { minSize: 56, maxSize: 160, minOpacity: 0.4, maxOpacity: 1 } as const;
 
 export type Theme = "glass" | "holo";
 export const THEMES: readonly Theme[] = ["glass", "holo"];
 /** Cor de destaque sugerida ao escolher o tema holográfico. */
 export const HOLO_ACCENT = "#ffb03a";
 
-export const LIMITS ={ minSlices: 3, maxSlices: 10, maxChildren: 8 } as const;
+export const LIMITS = { minSlices: 3, maxSlices: 10, maxChildren: 8 } as const;

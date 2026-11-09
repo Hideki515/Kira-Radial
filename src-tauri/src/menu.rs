@@ -17,6 +17,8 @@ pub struct AppState {
     pub prev_hwnd: AtomicIsize,
     pub visible: AtomicBool,
     pub paused: AtomicBool,
+    /// Ícone flutuante escondido temporariamente (bandeja / app em tela cheia).
+    pub orb_hidden: AtomicBool,
     pub shortcut: Mutex<Option<Shortcut>>,
     /// Erro do último registro do atalho (exibido na tela de configurações).
     pub hotkey_error: Mutex<Option<String>>,
@@ -29,6 +31,7 @@ impl AppState {
             prev_hwnd: AtomicIsize::new(0),
             visible: AtomicBool::new(false),
             paused: AtomicBool::new(false),
+            orb_hidden: AtomicBool::new(false),
             shortcut: Mutex::new(None),
             hotkey_error: Mutex::new(None),
         }
@@ -46,6 +49,19 @@ struct MenuShow {
     cy: f64,
     profile_id: String,
     sent_at: u64,
+    /// Ponto de onde o menu "nasce" (centro do ícone), em px lógicos relativos à janela.
+    /// `None` quando aberto pelo atalho/bandeja.
+    origin_x: Option<f64>,
+    origin_y: Option<f64>,
+}
+
+/// De onde o menu foi aberto.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Origin {
+    /// Atalho global ou bandeja: abre no cursor (ou no centro, conforme a config).
+    Cursor,
+    /// Ícone flutuante: abre centrado neste ponto (px físicos da tela).
+    Point(i32, i32),
 }
 
 fn radial(app: &AppHandle) -> Result<WebviewWindow, String> {
@@ -53,6 +69,10 @@ fn radial(app: &AppHandle) -> Result<WebviewWindow, String> {
 }
 
 pub fn show(app: &AppHandle) -> Result<(), String> {
+    show_from(app, Origin::Cursor)
+}
+
+pub fn show_from(app: &AppHandle, origin: Origin) -> Result<(), String> {
     let t = std::time::Instant::now();
     let mut marks: Vec<String> = Vec::new();
     let mut mark = |name: &str| marks.push(format!("{name} {:.1}ms", t.elapsed().as_secs_f64() * 1000.0));
@@ -61,16 +81,29 @@ pub fn show(app: &AppHandle) -> Result<(), String> {
     let win = radial(app)?;
     let cfg = state.config();
 
-    // Captura o app em foco ANTES de mostrar o menu.
-    let fg = foreground::current();
+    // Captura o app em foco ANTES de mostrar o menu (ignorando as janelas do próprio Kira:
+    // se o clique no ícone tiver ativado alguma, usa a janela de app logo abaixo).
     let own = win.hwnd().map(|h| h.0 as isize).unwrap_or(0);
-    if fg.hwnd != own {
+    let orb = crate::orb::hwnd(app);
+    let fg = foreground::current_app(&[own, orb]);
+    if fg.hwnd != 0 {
         state.prev_hwnd.store(fg.hwnd, Ordering::SeqCst);
     }
     let profile_id = cfg.profile_for(fg.exe.as_deref()).id.clone();
     mark("foco");
 
-    let p = positioning::placement(cfg.ui_scale(), cfg.behavior.open_at == OpenAt::Center)?;
+    let (at, centered) = match origin {
+        Origin::Cursor => (None, cfg.behavior.open_at == OpenAt::Center),
+        Origin::Point(x, y) => (Some((x, y)), false),
+    };
+    let p = positioning::placement(cfg.ui_scale(), centered, at)?;
+    let (origin_x, origin_y) = match at {
+        Some(pt) => {
+            let (x, y) = p.to_local(pt);
+            (Some(x), Some(y))
+        }
+        None => (None, None),
+    };
     let pos = PhysicalPosition::new(p.x, p.y);
     let size = PhysicalSize::new(p.side, p.side);
     let place = |w: &WebviewWindow| {
@@ -81,7 +114,7 @@ pub fn show(app: &AppHandle) -> Result<(), String> {
 
     place(&win);
     mark("mover");
-    app.emit_to(RADIAL, "menu:show", MenuShow { cx: p.center, cy: p.center, profile_id, sent_at: crate::perf::now_ms() })
+    app.emit_to(RADIAL, "menu:show", MenuShow { cx: p.center, cy: p.center, profile_id, sent_at: crate::perf::now_ms(), origin_x, origin_y })
         .map_err(|e| e.to_string())?;
     mark("emit");
     win.show().map_err(|e| e.to_string())?;
@@ -178,6 +211,19 @@ pub fn to_shortcut(accelerator: &str) -> Result<Shortcut, String> {
         .join("+")
         .parse::<Shortcut>()
         .map_err(|e| format!("atalho inválido \"{accelerator}\": {e}"))
+}
+
+/// Liga ou desliga o atalho global conforme o modo de abertura (atalho / ícone / ambos).
+pub fn apply_hotkey(app: &AppHandle, cfg: &Config) -> Result<(), String> {
+    if cfg.launcher.mode.wants_hotkey() {
+        return register_hotkey(app, &cfg.hotkey.accelerator);
+    }
+    let state = app.state::<AppState>();
+    if let Some(old) = state.shortcut.lock().unwrap().take() {
+        let _ = app.global_shortcut().unregister(old);
+    }
+    *state.hotkey_error.lock().unwrap() = None;
+    Ok(())
 }
 
 /// Registra o atalho global. Em caso de falha (ex.: já usado por outro app),

@@ -18,7 +18,63 @@ pub struct Config {
     pub hotkey: Hotkey,
     pub behavior: Behavior,
     pub appearance: Value,
+    /// Como o menu é aberto (atalho, ícone flutuante ou ambos). Ausente em configs antigas.
+    #[serde(default)]
+    pub launcher: Launcher,
     pub profiles: Vec<Profile>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum LauncherMode {
+    #[default]
+    Hotkey,
+    Orb,
+    Both,
+}
+
+impl LauncherMode {
+    pub fn wants_hotkey(self) -> bool {
+        matches!(self, LauncherMode::Hotkey | LauncherMode::Both)
+    }
+    pub fn wants_orb(self) -> bool {
+        matches!(self, LauncherMode::Orb | LauncherMode::Both)
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase", default)]
+pub struct Launcher {
+    pub mode: LauncherMode,
+    pub orb: OrbConfig,
+}
+
+/// Ícone flutuante. Posição em pixels físicos (canto superior esquerdo); `None` = canto padrão.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase", default)]
+pub struct OrbConfig {
+    pub x: Option<i32>,
+    pub y: Option<i32>,
+    /// Diâmetro em px lógicos (56–160).
+    pub size: f64,
+    /// GIF/WebP/PNG próprio; `None` = orbe holográfico embutido.
+    pub image: Option<String>,
+    pub opacity_idle: f64,
+    pub hide_on_fullscreen: bool,
+}
+
+impl Default for OrbConfig {
+    fn default() -> Self {
+        Self { x: None, y: None, size: 96.0, image: None, opacity_idle: 0.85, hide_on_fullscreen: true }
+    }
+}
+
+impl OrbConfig {
+    pub const MIN_SIZE: f64 = 56.0;
+    pub const MAX_SIZE: f64 = 160.0;
+    pub fn size(&self) -> f64 {
+        self.size.clamp(Self::MIN_SIZE, Self::MAX_SIZE)
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -188,6 +244,28 @@ mod tests {
         assert_eq!(c.profile_for(Some("Code.EXE")).id, "vs");
         assert_eq!(c.profile_for(Some("notepad.exe")).id, "default");
         assert_eq!(c.profile_for(None).id, "default");
+    }
+
+    #[test]
+    fn config_antiga_sem_launcher_usa_atalho() {
+        let mut v: Value = serde_json::to_value(Config::default_config()).unwrap();
+        v.as_object_mut().unwrap().remove("launcher");
+        let c: Config = serde_json::from_value(v).unwrap();
+        assert_eq!(c.launcher.mode, LauncherMode::Hotkey);
+        assert_eq!(c.launcher.orb, OrbConfig::default());
+        assert!(c.launcher.mode.wants_hotkey() && !c.launcher.mode.wants_orb());
+    }
+
+    #[test]
+    fn launcher_parcial_completa_com_padroes() {
+        let mut v: Value = serde_json::to_value(Config::default_config()).unwrap();
+        v["launcher"] = serde_json::json!({ "mode": "both", "orb": { "x": 10, "y": 20, "size": 999 } });
+        let c: Config = serde_json::from_value(v).unwrap();
+        assert!(c.launcher.mode.wants_hotkey() && c.launcher.mode.wants_orb());
+        assert_eq!((c.launcher.orb.x, c.launcher.orb.y), (Some(10), Some(20)));
+        assert_eq!(c.launcher.orb.size(), OrbConfig::MAX_SIZE);
+        assert!(c.launcher.orb.hide_on_fullscreen);
+        assert!(LauncherMode::Orb.wants_orb() && !LauncherMode::Orb.wants_hotkey());
     }
 
     #[test]

@@ -114,7 +114,7 @@ export function SettingsApp() {
             <Icon size={16} /> {label}
           </button>
         ))}
-        <div className="sidebar-foot">v0.1.0</div>
+        <div className="sidebar-foot">v{__APP_VERSION__}</div>
       </nav>
 
       <main className="content">
@@ -159,7 +159,14 @@ export function SettingsApp() {
           />
         </div>
         <div className="preview-hotkey">
-          Abrir com <kbd>{draft.hotkey.accelerator}</kbd> · {draft.hotkey.mode === "hold" ? "segurar e soltar" : "pressionar e clicar"}
+          {draft.launcher.mode === "orb" ? (
+            <>Abrir clicando no <strong>ícone</strong></>
+          ) : (
+            <>
+              Abrir com <kbd>{draft.hotkey.accelerator}</kbd> · {draft.hotkey.mode === "hold" ? "segurar e soltar" : "pressionar e clicar"}
+              {draft.launcher.mode === "both" && <> · ou pelo ícone</>}
+            </>
+          )}
         </div>
       </aside>
 

@@ -1,12 +1,24 @@
 import { parseCombo } from "./keys";
-import { LIMITS, THEMES, type Action, type Config, type MenuItem } from "./types";
+import { LAUNCHER_MODES, LIMITS, ORB_LIMITS, THEMES, wantsHotkey, type Action, type Config, type MenuItem } from "./types";
 
 /** Valida a configuração inteira. Retorna mensagens legíveis; lista vazia = válida. */
 export function validateConfig(c: Config): string[] {
   const errors: string[] = [];
-  if (!parseCombo(c.hotkey.accelerator)) errors.push(`Atalho inválido: "${c.hotkey.accelerator}"`);
-  else if (!parseCombo(c.hotkey.accelerator)!.mods.length)
-    errors.push("O atalho global precisa de pelo menos um modificador (Ctrl, Alt, Shift ou Win).");
+  const mode = c.launcher?.mode ?? "hotkey";
+  if (!LAUNCHER_MODES.includes(mode)) errors.push(`Modo de abertura desconhecido: "${mode}".`);
+  // No modo "só ícone" o atalho fica desligado: não bloqueia salvar.
+  if (wantsHotkey(mode)) {
+    if (!parseCombo(c.hotkey.accelerator)) errors.push(`Atalho inválido: "${c.hotkey.accelerator}"`);
+    else if (!parseCombo(c.hotkey.accelerator)!.mods.length)
+      errors.push("O atalho global precisa de pelo menos um modificador (Ctrl, Alt, Shift ou Win).");
+  }
+  const orb = c.launcher?.orb;
+  if (orb) {
+    if (!(orb.size >= ORB_LIMITS.minSize && orb.size <= ORB_LIMITS.maxSize))
+      errors.push(`Tamanho do ícone deve estar entre ${ORB_LIMITS.minSize} e ${ORB_LIMITS.maxSize} px.`);
+    if (!(orb.opacityIdle >= ORB_LIMITS.minOpacity && orb.opacityIdle <= ORB_LIMITS.maxOpacity))
+      errors.push("Opacidade do ícone deve estar entre 40% e 100%.");
+  }
   if (c.appearance.scale < 0.5 || c.appearance.scale > 1.6) errors.push("Escala deve estar entre 0,5 e 1,6.");
   if (c.appearance.theme !== undefined && !THEMES.includes(c.appearance.theme))
     errors.push(`Tema desconhecido: "${c.appearance.theme}".`);
