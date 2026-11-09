@@ -58,8 +58,10 @@ fn show_no_activate(win: &WebviewWindow) {
 /// Aplica a configuração: mostra/esconde o ícone, ajusta tamanho e posição.
 pub fn apply(app: &AppHandle, cfg: &Config) {
     let Some(win) = window(app) else { return };
-    let paused = app.state::<AppState>().orb_hidden.load(Ordering::SeqCst);
-    if !cfg.launcher.mode.wants_orb() || paused {
+    let state = app.state::<AppState>();
+    let hidden = state.orb_hidden.load(Ordering::SeqCst)
+        || (cfg.launcher.orb.hide_on_fullscreen && state.orb_fullscreen.load(Ordering::SeqCst));
+    if !cfg.launcher.mode.wants_orb() || hidden {
         let _ = win.hide();
         return;
     }
@@ -225,6 +227,14 @@ pub fn context_menu(app: &AppHandle) -> Result<(), String> {
     let hide = MenuItem::with_id(app, MENU_HIDE, "Esconder ícone (volta pela bandeja)", true, None::<&str>)
         .map_err(|e| e.to_string())?;
     let menu = Menu::with_items(app, &[&settings, &sep, &hide]).map_err(|e| e.to_string())?;
+    // Win32: o dono de um menu de contexto precisa estar em primeiro plano, senão o menu
+    // não fecha ao clicar fora (a janela do ícone é WS_EX_NOACTIVATE). Foi um clique
+    // intencional no ícone, então trazê-lo à frente aqui é esperado.
+    if let Ok(h) = win.hwnd() {
+        unsafe {
+            let _ = windows::Win32::UI::WindowsAndMessaging::SetForegroundWindow(windows::Win32::Foundation::HWND(h.0 as *mut _));
+        }
+    }
     win.popup_menu(&menu).map_err(|e| e.to_string())
 }
 
@@ -241,6 +251,64 @@ pub fn set_hidden(app: &AppHandle, hidden: bool) {
 pub fn toggle_hidden(app: &AppHandle) {
     let hidden = app.state::<AppState>().orb_hidden.load(Ordering::SeqCst);
     set_hidden(app, !hidden);
+}
+
+// ---------------------------------------------------------------------------
+// Esconder em tela cheia: consulta o Windows a cada 1,5 s (custo desprezível) e
+// esconde o ícone enquanto um jogo, vídeo ou apresentação ocupa a tela inteira.
+
+/// Estado do Windows (QUERY_USER_NOTIFICATION_STATE) que indica tela cheia:
+/// app em tela cheia (BUSY), jogo Direct3D exclusivo ou modo apresentação.
+pub fn is_fullscreen_state(quns: i32) -> bool {
+    use windows::Win32::UI::Shell::{QUNS_BUSY, QUNS_PRESENTATION_MODE, QUNS_RUNNING_D3D_FULL_SCREEN};
+    [QUNS_BUSY, QUNS_RUNNING_D3D_FULL_SCREEN, QUNS_PRESENTATION_MODE].iter().any(|s| s.0 == quns)
+}
+
+fn fullscreen_now() -> bool {
+    use windows::Win32::UI::Shell::SHQueryUserNotificationState;
+    unsafe { SHQueryUserNotificationState() }.map(|s| is_fullscreen_state(s.0)).unwrap_or(false)
+}
+
+pub fn spawn_fullscreen_watch(app: AppHandle) {
+    std::thread::spawn(move || loop {
+        std::thread::sleep(Duration::from_millis(1500));
+        let state = app.state::<AppState>();
+        let cfg = state.config();
+        // Recurso desligado (ou modo sem ícone): esquece o estado de tela cheia.
+        if !cfg.launcher.mode.wants_orb() || !cfg.launcher.orb.hide_on_fullscreen {
+            if state.orb_fullscreen.swap(false, Ordering::SeqCst) {
+                apply(&app, &cfg);
+            }
+            continue;
+        }
+        // Menu aberto: não mexe em nada (o ícone não deve reaparecer sobre um jogo só
+        // porque o menu foi aberto pelo atalho).
+        if state.visible.load(Ordering::SeqCst) {
+            continue;
+        }
+        let full = fullscreen_now();
+        if state.orb_fullscreen.swap(full, Ordering::SeqCst) != full {
+            crate::perf::log("rust", if full { "ícone escondido: app em tela cheia" } else { "ícone de volta: saiu da tela cheia" });
+            apply(&app, &cfg);
+        }
+    });
+}
+
+#[cfg(test)]
+mod fullscreen_tests {
+    use super::*;
+
+    #[test]
+    fn so_estados_de_tela_cheia_escondem() {
+        use windows::Win32::UI::Shell::*;
+        for s in [QUNS_BUSY, QUNS_RUNNING_D3D_FULL_SCREEN, QUNS_PRESENTATION_MODE] {
+            assert!(is_fullscreen_state(s.0));
+        }
+        // Protetor/bloqueio, uso normal, "horas tranquilas" e app da Loja aberto: ícone fica.
+        for s in [QUNS_NOT_PRESENT, QUNS_ACCEPTS_NOTIFICATIONS, QUNS_QUIET_TIME, QUNS_APP] {
+            assert!(!is_fullscreen_state(s.0));
+        }
+    }
 }
 
 #[cfg(test)]

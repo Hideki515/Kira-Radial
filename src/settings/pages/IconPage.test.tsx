@@ -87,6 +87,14 @@ describe("Configurações › Ícone", () => {
     expect(go).toHaveBeenCalled();
   });
 
+  it("esconder em tela cheia vem ligado e pode ser desligado", () => {
+    render(<Harness />);
+    const box = screen.getByLabelText(/Esconder em tela cheia/) as HTMLInputElement;
+    expect(box.checked).toBe(true);
+    fireEvent.click(box);
+    expect(last.launcher.orb.hideOnFullscreen).toBe(false);
+  });
+
   it("voltar para o canto chama o backend", async () => {
     render(<Harness />);
     fireEvent.click(screen.getByRole("button", { name: /Voltar o ícone para o canto/ }));

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.3
+
+- **Esconder o ícone em tela cheia**: o ícone some durante jogos, vídeos e apresentações em tela cheia e volta sozinho ao sair. A opção vem ligada e pode ser desligada em Configurações → Ícone.
+- O menu do botão direito no ícone agora fecha ao clicar fora.
+
 ## 0.3.2
 
 - **Página "Ícone" nas configurações**:

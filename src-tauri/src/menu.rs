@@ -19,6 +19,8 @@ pub struct AppState {
     pub paused: AtomicBool,
     /// Ícone flutuante escondido temporariamente (bandeja / app em tela cheia).
     pub orb_hidden: AtomicBool,
+    /// Ícone escondido automaticamente porque há um app em tela cheia (jogo, vídeo, apresentação).
+    pub orb_fullscreen: AtomicBool,
     pub shortcut: Mutex<Option<Shortcut>>,
     /// Erro do último registro do atalho (exibido na tela de configurações).
     pub hotkey_error: Mutex<Option<String>>,
@@ -32,6 +34,7 @@ impl AppState {
             visible: AtomicBool::new(false),
             paused: AtomicBool::new(false),
             orb_hidden: AtomicBool::new(false),
+            orb_fullscreen: AtomicBool::new(false),
             shortcut: Mutex::new(None),
             hotkey_error: Mutex::new(None),
         }

@@ -57,6 +57,7 @@ pub fn run() {
 
             orb::init(&handle);
             orb::apply(&handle, &cfg);
+            orb::spawn_fullscreen_watch(handle.clone());
 
             build_tray(app)?;
             stats::spawn(handle);

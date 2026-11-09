@@ -4,7 +4,7 @@ import { Orb } from "../../orb/Orb";
 import { useOrbImage } from "../../orb/useOrbImage";
 import { orbResetPosition, pickImage } from "../../shared/ipc";
 import { ORB_LIMITS, wantsOrb, type Config } from "../../shared/types";
-import { Field, Section, Segmented } from "../controls";
+import { Field, Section, Segmented, Toggle } from "../controls";
 
 interface Props {
   config: Config;
@@ -97,6 +97,13 @@ export function IconPage({ config, update, goToLauncher }: Props) {
             onChange={(e) => update((c) => void (c.launcher.orb.opacityIdle = Number(e.target.value)))}
           />
         </Field>
+
+        <Toggle
+          label="Esconder em tela cheia"
+          hint="Some durante jogos, vídeos e apresentações em tela cheia e volta sozinho ao sair."
+          checked={orb.hideOnFullscreen}
+          onChange={(v) => update((c) => void (c.launcher.orb.hideOnFullscreen = v))}
+        />
 
         <div className="row-actions">
           <button
