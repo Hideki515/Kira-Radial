@@ -2,6 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { defaultConfig, defaultProfile } from "../shared/defaults";
 import { RadialCanvas } from "./RadialCanvas";
+import { gearPath } from "./ThemeLayers2";
 
 const base = {
   items: defaultProfile.items,
@@ -80,5 +81,25 @@ describe("RadialCanvas", () => {
   it("tema desconhecido cai no vidro", () => {
     const { container } = render(<RadialCanvas {...base} appearance={{ ...base.appearance, theme: "matrix" as never }} activeMain={null} activeSub={null} />);
     expect(container.querySelector("svg")!.classList.contains("theme-glass")).toBe(true);
+  });
+
+  it("Neon, Cyberpunk e Steampunk têm camadas próprias; Fluent e Minimalista são só CSS", () => {
+    const layer: Record<string, string | null> = { neon: "neon-back", cyber: "cyber-back", steam: "steam-back", fluent: null, minimal: null };
+    for (const [theme, id] of Object.entries(layer)) {
+      const { container, unmount } = render(<RadialCanvas {...base} appearance={{ ...base.appearance, theme: theme as never }} activeMain={0} activeSub={null} />);
+      expect(container.querySelector("svg")!.classList.contains(`theme-${theme}`)).toBe(true);
+      if (id) expect(screen.getByTestId(id).getAttribute("aria-hidden")).toBe("true");
+      expect(container.querySelector(".holo-back, .reactor-back, .terminal-back")).toBeNull();
+      expect(container.querySelector(".orbit-hot")).toBeNull(); // sem as órbitas do Vidro
+      expect(screen.getAllByTestId("main-slice")).toHaveLength(defaultProfile.items.length);
+      unmount();
+    }
+  });
+
+  it("engrenagem do Steampunk tem 4 pontos por dente e fecha o caminho", () => {
+    const d = gearPath(0, 0, 10, 14, 6);
+    expect(d.startsWith("M")).toBe(true);
+    expect(d.endsWith("Z")).toBe(true);
+    expect(d.split("L").length).toBe(6 * 4);
   });
 });

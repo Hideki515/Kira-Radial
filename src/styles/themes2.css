@@ -1,0 +1,152 @@
+/* Temas: Neon Synthwave, Cyberpunk, Steampunk, Fluent Claro e Minimalista.
+   A cor de destaque (--active) continua valendo em todos. */
+
+/* ======================================================================
+   Neon Synthwave — sol listrado, grade em perspectiva, neon rosa/ciano.
+   ====================================================================== */
+.neon { pointer-events: none; }
+.neon-sun { opacity: 0.55; }
+.neon-cut { fill: #0b0618; }
+.neon-grid line { stroke: #ff4fd8; stroke-width: 1; opacity: 0.35; }
+.neon-ring { fill: none; stroke-width: 2; }
+.neon-ring--pink { stroke: #ff4fd8; opacity: 0.8; animation: neon-flicker 5s steps(1) infinite; }
+.neon-ring--cyan { stroke: #3ef0ff; opacity: 0.6; }
+@keyframes neon-flicker { 0%, 100% { opacity: 0.8; } 47% { opacity: 0.8; } 48% { opacity: 0.25; } 50% { opacity: 0.8; } 52% { opacity: 0.4; } 53% { opacity: 0.8; } }
+
+.theme-neon .ring-backing { fill: #0b0618; fill-opacity: 0.94; }
+.theme-neon .main-slice .slice-shape { fill: #160b2e; stroke: color-mix(in srgb, #3ef0ff 45%, transparent); stroke-width: 1.4; }
+.theme-neon .main-slice .slice-icon { color: #3ef0ff; }
+.theme-neon .slice-label { font-family: "Bahnschrift", "Segoe UI", sans-serif; fill: #ffd7f5; letter-spacing: 0.16em; font-style: italic; }
+.theme-neon .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 30%, #160b2e); stroke: var(--active); stroke-width: 2.2; }
+.theme-neon .main-slice.is-active .slice-icon { color: #fff; }
+.theme-neon .main-slice.is-active .slice-label { fill: #fff; }
+.theme-neon .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 35%, transparent); stroke-width: 12; }
+.theme-neon .sub-slice .slice-shape { fill: #160b2e; }
+.theme-neon .hub-disc { fill: #12082a; stroke: #ff4fd8; }
+.theme-neon .hub-well { fill: #0b0618; stroke: #3ef0ff; stroke-opacity: 0.4; }
+.theme-neon .hub-time { font-family: "Bahnschrift", sans-serif; fill: #ffd7f5; font-style: italic; }
+.theme-neon .hub-cpu { fill: #3ef0ff; font-style: italic; }
+.theme-neon .hub-gauge { stroke: #ff4fd8; }
+.theme-neon .hub-track { stroke: rgba(62, 240, 255, 0.15); }
+
+/* ======================================================================
+   Cyberpunk — amarelo e preto, faixa de perigo, glitch no texto ativo.
+   ====================================================================== */
+.cyber { pointer-events: none; }
+.cyber-frame { fill: none; stroke: #fcee0a; stroke-width: 2; opacity: 0.85; }
+.cyber-hazard { fill: none; stroke: #fcee0a; stroke-width: 14; stroke-dasharray: 14 14; opacity: 0.9; }
+.cyber-thin { fill: none; stroke: #00f0ff; stroke-width: 1; opacity: 0.6; }
+.cyber-caption { font-family: "Bahnschrift", "Consolas", monospace; font-size: 13px; font-weight: 700; fill: #fcee0a; letter-spacing: 0.18em; }
+.cyber-bar { fill: #00f0ff; opacity: 0.7; animation: cyber-bar 1.6s steps(4) infinite; }
+.cyber-bar--b { fill: #ff003c; animation-delay: -0.8s; }
+.cyber-spin { transform-box: view-box; transform-origin: 450px 450px; animation: holo-spin 60s linear infinite; }
+@keyframes cyber-bar { 0% { opacity: 0.2; } 50% { opacity: 0.9; } 100% { opacity: 0.4; } }
+
+.theme-cyber .ring-backing { fill: #0a0a0a; fill-opacity: 0.96; }
+.theme-cyber .main-slice .slice-shape { fill: #111; stroke: #fcee0a; stroke-width: 1.2; }
+.theme-cyber .main-slice .slice-icon { color: #fcee0a; }
+.theme-cyber .slice-label { font-family: "Bahnschrift", "Segoe UI", sans-serif; font-weight: 700; fill: #f5f5f5; letter-spacing: 0.2em; }
+.theme-cyber .main-slice.is-active .slice-shape { fill: #fcee0a; stroke: #fcee0a; }
+.theme-cyber .main-slice.is-active .slice-icon { color: #0a0a0a; }
+.theme-cyber .main-slice.is-active .slice-label { fill: #0a0a0a; animation: cyber-glitch 2.4s steps(1) infinite; }
+.theme-cyber .slice-marker { fill: #ff003c; }
+.theme-cyber .main-slice .slice-halo { stroke: rgba(0, 240, 255, 0.35); }
+@keyframes cyber-glitch {
+  0%, 90%, 100% { transform: none; }
+  91% { transform: translateX(-2px); fill: #ff003c; }
+  93% { transform: translateX(2px); fill: #00a8b3; }
+  95% { transform: none; }
+}
+.theme-cyber .sub-slice .slice-shape { fill: #111; }
+.theme-cyber .sub-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--item-color) 30%, #111); }
+.theme-cyber .hub-disc { fill: #0d0d0d; stroke: #fcee0a; stroke-width: 2; }
+.theme-cyber .hub-well { fill: #050505; stroke: #00f0ff; stroke-opacity: 0.35; }
+.theme-cyber .hub-time, .theme-cyber .hub-cpu { font-family: "Bahnschrift", sans-serif; fill: #fcee0a; }
+.theme-cyber .hub-date, .theme-cyber .hub-pill-text { fill: #00f0ff; }
+.theme-cyber .hub-gauge { stroke: #00f0ff; stroke-linecap: butt; }
+.theme-cyber .hub-track { stroke: rgba(252, 238, 10, 0.15); stroke-dasharray: 4 4; }
+
+/* ======================================================================
+   Steampunk — latão/cobre, engrenagens, rebites, serifa.
+   ====================================================================== */
+.steam { pointer-events: none; }
+.steam-gear { fill: #3a2614; stroke: #d4a24c; stroke-width: 2; }
+.steam-gear--copper { fill: #4a2a18; stroke: #c8743a; }
+.steam-hub { fill: #2a1a0e; stroke: #d4a24c; stroke-width: 2; }
+.steam-rivet { fill: #e7c27a; stroke: #6b4a1e; stroke-width: 1; }
+.steam-bezel { fill: none; stroke: #d4a24c; stroke-width: 5; }
+.steam-spin { transform-box: view-box; transform-origin: 450px 450px; animation: holo-spin 80s linear infinite; }
+.steam-spin--a { animation-duration: 20s; animation-direction: reverse; }
+.steam-spin--b { animation-duration: 16s; }
+
+.theme-steam .ring-backing { fill: #1d120a; fill-opacity: 0.97; }
+.theme-steam .main-slice .slice-shape { fill: #2a1a0e; stroke: #8a5f2a; stroke-width: 1.5; }
+.theme-steam .main-slice .slice-icon { color: #e7c27a; }
+.theme-steam .slice-label { font-family: Georgia, "Times New Roman", serif; font-weight: 700; fill: #f1dcae; letter-spacing: 0.06em; }
+.theme-steam .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 30%, #2a1a0e); stroke: var(--active); stroke-width: 2.2; }
+.theme-steam .main-slice.is-active .slice-label { fill: #fff3d6; }
+.theme-steam .main-slice .slice-halo { stroke: rgba(212, 162, 76, 0.25); }
+.theme-steam .sub-slice .slice-shape { fill: #2a1a0e; }
+.theme-steam .hub-disc { fill: #2a1a0e; stroke: #8a5f2a; }
+.theme-steam .hub-well { fill: #140c06; stroke: #6b4a1e; }
+.theme-steam .hub-time, .theme-steam .hub-np-title { font-family: Georgia, serif; fill: #f1dcae; }
+.theme-steam .hub-date, .theme-steam .hub-pill-text, .theme-steam .hub-np-artist { font-family: Georgia, serif; fill: #b48a4c; }
+.theme-steam .hub-cpu { font-family: Georgia, serif; fill: #e7c27a; }
+.theme-steam .hub-gauge { stroke: #d4a24c; }
+.theme-steam .hub-track { stroke: rgba(212, 162, 76, 0.18); }
+
+/* ======================================================================
+   Fluent Claro — estilo Windows 11: claro, translúcido, cantos suaves.
+   ====================================================================== */
+.fluent-shadow { fill: none; stroke: rgba(0, 0, 0, 0.12); stroke-width: 26; }
+.theme-fluent .ring-backing { fill: #f3f3f3; fill-opacity: 0.86; }
+.theme-fluent .main-slice .slice-shape { fill: #fbfbfb; fill-opacity: 0.92; stroke: rgba(0, 0, 0, 0.08); stroke-width: 1; stroke-linejoin: round; }
+.theme-fluent .main-slice .slice-icon, .theme-fluent .sub-slice .slice-icon { color: #1b1b1b; }
+.theme-fluent .slice-label { font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif; font-weight: 600; fill: #1b1b1b; letter-spacing: 0; }
+.theme-fluent .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 12%, #ffffff); stroke: var(--active); stroke-width: 2; }
+.theme-fluent .main-slice.is-active .slice-icon { color: var(--active); }
+.theme-fluent .main-slice.is-active .slice-label { fill: var(--active); }
+.theme-fluent .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 18%, transparent); }
+.theme-fluent .sub-slice .slice-shape { fill: #ffffff; fill-opacity: 0.95; stroke: color-mix(in srgb, var(--item-color) 50%, transparent); }
+.theme-fluent .sub-slice .slice-label { fill: #1b1b1b; }
+.theme-fluent .sub-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--item-color) 14%, #ffffff); }
+.theme-fluent .hub-well { fill: #e9e9e9; stroke: rgba(0, 0, 0, 0.06); }
+.theme-fluent .hub-disc { fill: #ffffff; stroke: rgba(0, 0, 0, 0.1); }
+.theme-fluent .hub-time, .theme-fluent .hub-np-title { fill: #1b1b1b; }
+.theme-fluent .hub-date, .theme-fluent .hub-np-artist, .theme-fluent .hub-np-time { fill: #616161; }
+.theme-fluent .hub-cpu { fill: var(--active); }
+.theme-fluent .hub-pill { fill: #f3f3f3; stroke: rgba(0, 0, 0, 0.1); }
+.theme-fluent .hub-pill-text { fill: #616161; }
+.theme-fluent .hub-track { stroke: rgba(0, 0, 0, 0.06); }
+.theme-fluent .hub-gauge { stroke: var(--active); }
+.theme-fluent .hub-gauge-halo { stroke: color-mix(in srgb, var(--active) 14%, transparent); }
+.theme-fluent .slice-num { fill: #8a8a8a; }
+
+/* ======================================================================
+   Minimalista — preto e branco, traços finos, nada de enfeite.
+   ====================================================================== */
+.theme-minimal .ring-backing { fill: #000; fill-opacity: 0.92; }
+.theme-minimal .main-slice .slice-shape { fill: #000; stroke: rgba(255, 255, 255, 0.18); stroke-width: 0.8; }
+.theme-minimal .main-slice .slice-icon, .theme-minimal .sub-slice .slice-icon { color: #e6e6e6; }
+.theme-minimal .slice-label { font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif; font-weight: 400; fill: #bdbdbd; letter-spacing: 0.22em; }
+.theme-minimal .main-slice.is-active .slice-shape { fill: #111; stroke: var(--active); stroke-width: 1; }
+.theme-minimal .main-slice.is-active .slice-icon { color: #fff; }
+.theme-minimal .main-slice.is-active .slice-label { fill: #fff; }
+.theme-minimal .main-slice .slice-halo, .theme-minimal .sub-slice .slice-halo { stroke: none; }
+.theme-minimal .slice-marker { fill: var(--active); }
+.theme-minimal .sub-slice .slice-shape { fill: #000; stroke: rgba(255, 255, 255, 0.2); stroke-width: 0.8; }
+.theme-minimal .sub-slice.is-active .slice-shape { fill: #111; stroke: var(--item-color); }
+.theme-minimal .sub-slice.is-active .slice-icon, .theme-minimal .sub-slice.is-active .slice-label { color: #fff; fill: #fff; }
+.theme-minimal .hub-well { fill: #000; stroke: none; }
+.theme-minimal .hub-disc { fill: #000; stroke: rgba(255, 255, 255, 0.2); }
+.theme-minimal .hub-time { font-weight: 300; fill: #fff; }
+.theme-minimal .hub-cpu { font-weight: 300; fill: #e6e6e6; }
+.theme-minimal .hub-date, .theme-minimal .hub-pill-text { fill: #8a8a8a; }
+.theme-minimal .hub-pill { fill: none; stroke: rgba(255, 255, 255, 0.15); }
+.theme-minimal .hub-track { stroke: rgba(255, 255, 255, 0.06); stroke-width: 2; }
+.theme-minimal .hub-gauge { stroke: var(--active); stroke-width: 2; }
+.theme-minimal .hub-gauge-halo { stroke: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .neon-ring--pink, .cyber-bar, .cyber-spin, .steam-spin, .theme-cyber .main-slice.is-active .slice-label { animation: none; }
+}

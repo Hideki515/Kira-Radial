@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { cloneConfig, defaultConfig } from "../../shared/defaults";
-import { HOLO_ACCENT, SCALE_LIMITS, THEME_ACCENT, type Config } from "../../shared/types";
+import { HOLO_ACCENT, SCALE_LIMITS, THEMES, THEME_ACCENT, type Config } from "../../shared/types";
 import { validateConfig } from "../../shared/validate";
 import { AppearancePage, applyTheme } from "./SimplePages";
 
@@ -66,7 +66,7 @@ describe("Aparência › tema", () => {
   it("4 temas em cartões; Arc Reactor e Terminal trocam a cor sugerida em cadeia", () => {
     let last: Config | null = null;
     render(<Harness onChange={(c) => (last = c)} />);
-    expect(screen.getAllByRole("radio").filter((r) => r.classList.contains("theme-card"))).toHaveLength(4);
+    expect(screen.getAllByRole("radio").filter((r) => r.classList.contains("theme-card"))).toHaveLength(THEMES.length);
     fireEvent.click(screen.getByRole("radio", { name: "Arc Reactor" }));
     expect(last!.appearance.theme).toBe("reactor");
     expect(last!.appearance.accent).toBe(THEME_ACCENT.reactor);

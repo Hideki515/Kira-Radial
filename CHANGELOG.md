@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.0
+
+- **Cinco temas novos**, cada um com uma linguagem visual diferente:
+  - **Neon Synthwave**: retrô anos 80, sol listrado em degradê, grade em perspectiva e aros neon rosa/ciano piscando.
+  - **Cyberpunk**: amarelo e preto, moldura chanfrada, faixa de perigo girando, barras de status e texto com glitch na fatia ativa.
+  - **Steampunk**: latão e cobre, placa de engrenagem e engrenagens girando, rebites e letras serifadas.
+  - **Fluent Claro**: tema claro e translúcido no estilo do Windows 11, com sombra suave.
+  - **Minimalista**: preto e branco, traços finos e sem enfeites.
+- Agora são 9 temas. Paleta de cores com as sugestões dos temas novos.
+
 ## 0.7.0
 
 - **Novos temas:**

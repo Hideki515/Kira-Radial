@@ -151,8 +151,8 @@ export interface SoundsConfig {
   events: Record<SoundEvent, SoundSource>;
 }
 
-export type Theme = "glass" | "holo" | "reactor" | "terminal";
-export const THEMES: readonly Theme[] = ["glass", "holo", "reactor", "terminal"];
+export type Theme = "glass" | "holo" | "reactor" | "terminal" | "neon" | "cyber" | "steam" | "fluent" | "minimal";
+export const THEMES: readonly Theme[] = ["glass", "holo", "reactor", "terminal", "neon", "cyber", "steam", "fluent", "minimal"];
 /** Cor de destaque sugerida ao escolher o tema holográfico. */
 export const HOLO_ACCENT = "#ffb03a";
 /** Cor sugerida para cada tema (aplicada ao trocar, se a cor atual for a sugerida do tema anterior). */
@@ -161,6 +161,11 @@ export const THEME_ACCENT: Record<Theme, string> = {
   holo: HOLO_ACCENT,
   reactor: "#5ad1ff",
   terminal: "#39ff6a",
+  neon: "#ff4fd8",
+  cyber: "#fcee0a",
+  steam: "#d4a24c",
+  fluent: "#0067c0",
+  minimal: "#f2f2f2",
 };
 
 export const LIMITS = { minSlices: 3, maxSlices: 10, maxChildren: 8 } as const;

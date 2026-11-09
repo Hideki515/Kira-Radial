@@ -3,6 +3,7 @@ import type { Config, MenuItem } from "../shared/types";
 import { CenterHub } from "./CenterHub";
 import { HoloBack, HoloFront, HoloScan } from "./HoloLayer";
 import { ReactorBack, ReactorFront, TerminalBack, TerminalFront } from "./ThemeLayers";
+import { CyberBack, NeonBack, SteamBack, SteamFront } from "./ThemeLayers2";
 import { THEMES } from "../shared/types";
 import { LAYOUT, polar, sliceAngle } from "./geometry";
 import { MainSlice } from "./MainSlice";
@@ -81,6 +82,15 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
         <ReactorBack />
       ) : theme === "terminal" ? (
         <TerminalBack />
+      ) : theme === "neon" ? (
+        <NeonBack />
+      ) : theme === "cyber" ? (
+        <CyberBack />
+      ) : theme === "steam" ? (
+        <SteamBack />
+      ) : theme === "fluent" || theme === "minimal" ? (
+        // Fluent Claro e Minimalista: sem decoração atrás do anel (só a sombra suave do Fluent).
+        theme === "fluent" ? <circle cx={C} cy={C} r={LAYOUT.mainOuter + 14} className="fluent-shadow" /> : null
       ) : (
         <>
           {/* brilhos ambientes */}
@@ -135,6 +145,7 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
       {holo && <HoloFront />}
       {theme === "reactor" && <ReactorFront />}
       {theme === "terminal" && <TerminalFront />}
+      {theme === "steam" && <SteamFront />}
     </svg>
   );
 }

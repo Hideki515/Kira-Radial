@@ -4,6 +4,7 @@ import { RadialApp } from "./radial/RadialApp";
 import { isTauri } from "./shared/ipc";
 import "./styles/tokens.css";
 import "./styles/radial.css";
+import "./styles/themes2.css";
 
 if (isTauri()) document.documentElement.classList.add("is-tauri");
 

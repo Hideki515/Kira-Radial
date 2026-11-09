@@ -105,7 +105,7 @@ export function HotkeyPage({ config, update }: PageProps) {
   );
 }
 
-const ACCENTS = ["#4ade9b", "#43c7d9", "#5ad1ff", "#39ff6a", "#a78bfa", "#e879d8", "#f2c46d", HOLO_ACCENT, "#ff5c7a"];
+const ACCENTS = ["#4ade9b", "#43c7d9", "#5ad1ff", "#0067c0", "#39ff6a", "#a78bfa", "#e879d8", "#ff4fd8", "#fcee0a", "#f2c46d", "#d4a24c", HOLO_ACCENT, "#ff5c7a", "#f2f2f2"];
 
 /** Troca o tema e sugere a cor que combina com ele (sem sobrescrever uma cor personalizada). */
 export function applyTheme(c: Config, theme: Theme) {
@@ -123,6 +123,11 @@ const THEME_INFO: Record<Theme, { label: string; hint: string }> = {
   holo: { label: "Holográfico", hint: "HUD em wireframe com esfera e anéis animados." },
   reactor: { label: "Arc Reactor", hint: "Anéis segmentados girando e núcleo azul brilhante." },
   terminal: { label: "Terminal", hint: "Verde fósforo, fonte monoespaçada e linhas de varredura." },
+  neon: { label: "Neon Synthwave", hint: "Retrô anos 80: sol listrado, grade em perspectiva e neon rosa/ciano." },
+  cyber: { label: "Cyberpunk", hint: "Amarelo e preto, faixa de perigo, cantos chanfrados e glitch." },
+  steam: { label: "Steampunk", hint: "Latão e cobre, engrenagens girando, rebites e letras serifadas." },
+  fluent: { label: "Fluent Claro", hint: "Claro e translúcido, no estilo do Windows 11." },
+  minimal: { label: "Minimalista", hint: "Preto e branco, traços finos, nada de enfeite." },
 };
 
 /** Cartões com miniatura (estática) de cada tema. */
