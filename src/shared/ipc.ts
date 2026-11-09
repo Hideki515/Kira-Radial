@@ -153,6 +153,25 @@ export async function orbResetPosition(): Promise<void> {
   if (isTauri()) await invoke("orb_reset_position");
 }
 
+/** Imagem própria do ícone (GIF/WebP/PNG) como data URL. No navegador, usa o caminho direto. */
+export async function readOrbImage(path: string): Promise<string> {
+  if (!isTauri()) return path;
+  return invoke<string>("read_orb_image", { path });
+}
+
+/** Menu do botão direito no ícone (Configurações / Esconder ícone). */
+export async function orbContextMenu(): Promise<void> {
+  if (isTauri()) await invoke("orb_context_menu");
+}
+
+/** Escolhe uma imagem para o ícone. */
+export async function pickImage(): Promise<string | null> {
+  if (!isTauri()) return window.prompt("Caminho da imagem (GIF/WebP/PNG)");
+  const { open } = await import("@tauri-apps/plugin-dialog");
+  const r = await open({ multiple: false, filters: [{ name: "Imagem animada", extensions: ["gif", "webp", "png", "apng"] }] });
+  return typeof r === "string" ? r : null;
+}
+
 /** Arrasta a janela atual (ícone) com o mouse, até soltar o botão. */
 export async function startWindowDrag(): Promise<void> {
   if (!isTauri()) return;

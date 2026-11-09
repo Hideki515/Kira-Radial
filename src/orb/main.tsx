@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { isTauri } from "../shared/ipc";
 import { OrbApp } from "./OrbApp";
 import "../styles/tokens.css";
+import "../styles/orb-window.css";
 import "../styles/orb.css";
 
 if (isTauri()) document.documentElement.classList.add("is-tauri");

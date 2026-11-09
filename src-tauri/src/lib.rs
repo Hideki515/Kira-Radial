@@ -62,6 +62,12 @@ pub fn run() {
             stats::spawn(handle);
             Ok(())
         })
+        // Itens do menu de contexto do ícone (o da bandeja tem handler próprio).
+        .on_menu_event(|app, event| match event.id().as_ref() {
+            orb::MENU_SETTINGS => menu::open_settings(app),
+            orb::MENU_HIDE => orb::set_hidden(app, true),
+            _ => {}
+        })
         .on_window_event(|window, event| {
             if let (orb::ORB, WindowEvent::Moved(p)) = (window.label(), event) {
                 orb::on_moved(window.app_handle(), p.x, p.y);
@@ -89,6 +95,8 @@ pub fn run() {
             commands::hotkey_error,
             commands::orb_clicked,
             commands::orb_reset_position,
+            commands::read_orb_image,
+            commands::orb_context_menu,
             perf::perf_log,
             keycapture::start_key_capture,
             keycapture::stop_key_capture,
@@ -101,9 +109,10 @@ fn build_tray(app: &tauri::App) -> tauri::Result<()> {
     let open = MenuItem::with_id(app, "open", "Abrir menu", true, None::<&str>)?;
     let settings = MenuItem::with_id(app, "settings", "Configurações", true, None::<&str>)?;
     let pause = CheckMenuItem::with_id(app, "pause", "Pausar atalho", true, false, None::<&str>)?;
+    let orb_toggle = MenuItem::with_id(app, "orb", "Mostrar/esconder ícone", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Sair", true, None::<&str>)?;
     let sep = PredefinedMenuItem::separator(app)?;
-    let tray_menu = Menu::with_items(app, &[&open, &settings, &pause, &sep, &quit])?;
+    let tray_menu = Menu::with_items(app, &[&open, &settings, &pause, &orb_toggle, &sep, &quit])?;
 
     let pause_item = pause.clone();
     TrayIconBuilder::with_id("main")
@@ -121,6 +130,7 @@ fn build_tray(app: &tauri::App) -> tauri::Result<()> {
                 menu::set_paused(app, paused);
                 let _ = pause_item.set_checked(paused);
             }
+            "orb" => orb::toggle_hidden(app),
             "quit" => app.exit(0),
             _ => {}
         })

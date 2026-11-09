@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.2
+
+- **Página "Ícone" nas configurações**:
+  - Pré-visualização animada.
+  - Tamanho (56–160 px) e opacidade em repouso.
+  - Botão "Voltar o ícone para o canto".
+- **Imagem própria para o ícone** (GIF, WebP ou PNG animado, até 8 MB). Se a imagem não carregar, o orbe embutido é usado.
+- **Botão direito no ícone**: Configurações e "Esconder ícone".
+- **Bandeja**: item "Mostrar/esconder ícone".
+
 ## 0.3.1
 
 - **Animação de abertura pelo ícone**: o menu nasce do ícone.

@@ -1,8 +1,9 @@
-import { CircleDot, Keyboard, LayoutGrid, Palette, Save, Settings2, Undo2, Users, Archive, AlertTriangle } from "lucide-react";
+import { CircleDot, Orbit, Keyboard, LayoutGrid, Palette, Save, Settings2, Undo2, Users, Archive, AlertTriangle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useSystemStats } from "../hooks/useSystemStats";
 import { getConfig, getHotkeyError, listAudioOutputs, saveConfig, type AudioDevice } from "../shared/ipc";
-import type { Config, Profile } from "../shared/types";
+import { wantsOrb, type Config, type Profile } from "../shared/types";
+import { IconPage } from "./pages/IconPage";
 import { validateConfig } from "../shared/validate";
 import { RadialCanvas } from "../radial/RadialCanvas";
 import { hasDynamic, resolveItems } from "../radial/dynamic";
@@ -10,11 +11,12 @@ import { ItemsPage, type Selection } from "./pages/ItemsPage";
 import { ProfilesPage } from "./pages/ProfilesPage";
 import { AppearancePage, BackupPage, GeneralPage, HotkeyPage } from "./pages/SimplePages";
 
-type Page = "items" | "hotkey" | "profiles" | "general" | "appearance" | "backup";
+type Page = "items" | "hotkey" | "icon" | "profiles" | "general" | "appearance" | "backup";
 
 const NAV: { id: Page; label: string; icon: typeof CircleDot }[] = [
   { id: "items", label: "Itens do menu", icon: LayoutGrid },
   { id: "hotkey", label: "Atalho", icon: Keyboard },
+  { id: "icon", label: "Ícone", icon: Orbit },
   { id: "profiles", label: "Perfis por app", icon: Users },
   { id: "general", label: "Geral", icon: Settings2 },
   { id: "appearance", label: "Aparência", icon: Palette },
@@ -109,7 +111,7 @@ export function SettingsApp() {
           <CircleDot size={20} />
           <span>Kira Radial</span>
         </div>
-        {NAV.map(({ id, label, icon: Icon }) => (
+        {NAV.filter((n) => n.id !== "icon" || wantsOrb(draft.launcher.mode) || page === "icon").map(({ id, label, icon: Icon }) => (
           <button key={id} type="button" className={`nav-item${page === id ? " is-on" : ""}`} onClick={() => setPage(id)}>
             <Icon size={16} /> {label}
           </button>
@@ -138,6 +140,7 @@ export function SettingsApp() {
 
         {page === "items" && <ItemsPage profile={profile} selection={sel} onSelect={setSelection} edit={editProfile} />}
         {page === "hotkey" && <HotkeyPage config={draft} update={update} />}
+        {page === "icon" && <IconPage config={draft} update={update} goToLauncher={() => setPage("hotkey")} />}
         {page === "profiles" && (
           <ProfilesPage config={draft} selected={pIdx} onSelect={(i) => { setProfileIdx(i); setSelection({ main: 0, child: null }); }} update={update} />
         )}

@@ -41,6 +41,20 @@ pub fn orb_clicked(app: AppHandle) -> Result<(), String> {
     crate::orb::clicked(&app)
 }
 
+/// Imagem própria do ícone como data URL.
+#[tauri::command]
+pub async fn read_orb_image(path: String) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || crate::orb::read_image(&path))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+/// Menu do botão direito no ícone.
+#[tauri::command]
+pub fn orb_context_menu(app: AppHandle) -> Result<(), String> {
+    crate::orb::context_menu(&app)
+}
+
 /// Volta o ícone flutuante para o canto padrão.
 #[tauri::command]
 pub fn orb_reset_position(app: AppHandle) {

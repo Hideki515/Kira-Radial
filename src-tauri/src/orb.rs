@@ -164,3 +164,119 @@ mod tests {
         assert_eq!(window_side(56.0), 84.0);
     }
 }
+
+// ---------------------------------------------------------------------------
+// Imagem própria (GIF/WebP/PNG/APNG): lida pelo backend e entregue como data URL,
+// sem abrir o "asset protocol" do Tauri para o disco inteiro.
+
+/// Limite de tamanho da imagem do ícone.
+pub const MAX_IMAGE_BYTES: u64 = 8 * 1024 * 1024;
+
+/// Tipo MIME pela extensão; `None` = formato não aceito.
+pub fn image_mime(path: &str) -> Option<&'static str> {
+    let ext = path.rsplit('.').next()?.to_ascii_lowercase();
+    match ext.as_str() {
+        "gif" => Some("image/gif"),
+        "webp" => Some("image/webp"),
+        "png" | "apng" => Some("image/png"),
+        _ => None,
+    }
+}
+
+fn base64(data: &[u8]) -> String {
+    const T: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = String::with_capacity(data.len().div_ceil(3) * 4);
+    for chunk in data.chunks(3) {
+        let b = [chunk[0], *chunk.get(1).unwrap_or(&0), *chunk.get(2).unwrap_or(&0)];
+        let n = (b[0] as u32) << 16 | (b[1] as u32) << 8 | b[2] as u32;
+        out.push(T[(n >> 18) as usize & 63] as char);
+        out.push(T[(n >> 12) as usize & 63] as char);
+        out.push(if chunk.len() > 1 { T[(n >> 6) as usize & 63] as char } else { '=' });
+        out.push(if chunk.len() > 2 { T[n as usize & 63] as char } else { '=' });
+    }
+    out
+}
+
+/// Lê a imagem do ícone e devolve `data:<mime>;base64,...`.
+pub fn read_image(path: &str) -> Result<String, String> {
+    let mime = image_mime(path).ok_or("formato não suportado (use GIF, WebP ou PNG)")?;
+    let meta = std::fs::metadata(path).map_err(|e| format!("não foi possível abrir a imagem: {e}"))?;
+    if !meta.is_file() {
+        return Err("o caminho não é um arquivo".into());
+    }
+    if meta.len() > MAX_IMAGE_BYTES {
+        return Err(format!("imagem muito grande ({:.1} MB; máximo 8 MB)", meta.len() as f64 / 1_048_576.0));
+    }
+    let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
+    Ok(format!("data:{mime};base64,{}", base64(&bytes)))
+}
+
+// ---------------------------------------------------------------------------
+// Menu do botão direito no ícone e item da bandeja.
+
+pub const MENU_SETTINGS: &str = "orb-settings";
+pub const MENU_HIDE: &str = "orb-hide";
+
+pub fn context_menu(app: &AppHandle) -> Result<(), String> {
+    use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
+    let win = window(app).ok_or("ícone não encontrado")?;
+    let settings = MenuItem::with_id(app, MENU_SETTINGS, "Configurações", true, None::<&str>).map_err(|e| e.to_string())?;
+    let sep = PredefinedMenuItem::separator(app).map_err(|e| e.to_string())?;
+    let hide = MenuItem::with_id(app, MENU_HIDE, "Esconder ícone (volta pela bandeja)", true, None::<&str>)
+        .map_err(|e| e.to_string())?;
+    let menu = Menu::with_items(app, &[&settings, &sep, &hide]).map_err(|e| e.to_string())?;
+    win.popup_menu(&menu).map_err(|e| e.to_string())
+}
+
+/// Esconde/mostra o ícone temporariamente (até reiniciar o app ou alternar de novo).
+pub fn set_hidden(app: &AppHandle, hidden: bool) {
+    let cfg = {
+        let state = app.state::<AppState>();
+        state.orb_hidden.store(hidden, Ordering::SeqCst);
+        state.config()
+    };
+    apply(app, &cfg);
+}
+
+pub fn toggle_hidden(app: &AppHandle) {
+    let hidden = app.state::<AppState>().orb_hidden.load(Ordering::SeqCst);
+    set_hidden(app, !hidden);
+}
+
+#[cfg(test)]
+mod image_tests {
+    use super::*;
+
+    #[test]
+    fn aceita_so_formatos_de_imagem_animada() {
+        assert_eq!(image_mime(r"C:\a\jarvis.GIF"), Some("image/gif"));
+        assert_eq!(image_mime("x.webp"), Some("image/webp"));
+        assert_eq!(image_mime("x.apng"), Some("image/png"));
+        assert_eq!(image_mime("x.exe"), None);
+        assert_eq!(image_mime("semextensao"), None);
+        assert!(read_image("nada.exe").is_err());
+    }
+
+    #[test]
+    fn base64_confere_com_rfc4648() {
+        assert_eq!(base64(b""), "");
+        assert_eq!(base64(b"f"), "Zg==");
+        assert_eq!(base64(b"fo"), "Zm8=");
+        assert_eq!(base64(b"foo"), "Zm9v");
+        assert_eq!(base64(b"foobar"), "Zm9vYmFy");
+    }
+
+    #[test]
+    fn le_arquivo_e_recusa_grande_demais() {
+        let dir = std::env::temp_dir().join("kira-orb-test");
+        std::fs::create_dir_all(&dir).unwrap();
+        let ok = dir.join("a.gif");
+        std::fs::write(&ok, b"GIF89a").unwrap();
+        assert_eq!(read_image(ok.to_str().unwrap()).unwrap(), "data:image/gif;base64,R0lGODlh");
+        let big = dir.join("b.png");
+        let f = std::fs::File::create(&big).unwrap();
+        f.set_len(MAX_IMAGE_BYTES + 1).unwrap();
+        assert!(read_image(big.to_str().unwrap()).unwrap_err().contains("muito grande"));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+}

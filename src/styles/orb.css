@@ -1,8 +1,5 @@
-/* Ícone flutuante (orbe holográfico). Só transform/opacity animados: roda no compositor (GPU). */
-* { box-sizing: border-box; }
-html, body, #root { margin: 0; width: 100%; height: 100%; overflow: hidden; }
-body { background: #0b0f16; user-select: none; }
-html.is-tauri body { background: transparent; }
+/* Ícone flutuante (orbe holográfico). Só transform/opacity animados: roda no compositor (GPU).
+   Reaproveitado na pré-visualização das configurações; regras da janela ficam em orb-window.css. */
 
 .orb-stage {
   --orb-hi: color-mix(in srgb, var(--orb-accent) 45%, #fff8e6);
