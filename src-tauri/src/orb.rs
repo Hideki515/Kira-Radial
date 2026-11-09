@@ -45,12 +45,15 @@ pub fn init(app: &AppHandle) {
     }
 }
 
-/// Mostra sem ativar (não tira o foco do app em uso).
-fn show_no_activate(win: &WebviewWindow) {
-    use windows::Win32::UI::WindowsAndMessaging::{ShowWindow, SW_SHOWNOACTIVATE};
+/// Mostra/esconde direto pelo Win32. Mostrar precisa ser SW_SHOWNOACTIVATE (não tira o
+/// foco do app em uso), e por isso esconder também precisa ser direto: o Tauri (tao)
+/// guarda o próprio "visível" e só aplica mudanças em relação a ele — como ele nunca
+/// soube que a janela apareceu, `win.hide()` não fazia nada e o ícone não sumia.
+fn set_visible(win: &WebviewWindow, visible: bool) {
+    use windows::Win32::UI::WindowsAndMessaging::{ShowWindow, SW_HIDE, SW_SHOWNOACTIVATE};
     if let Ok(h) = win.hwnd() {
         unsafe {
-            let _ = ShowWindow(windows::Win32::Foundation::HWND(h.0 as *mut _), SW_SHOWNOACTIVATE);
+            let _ = ShowWindow(windows::Win32::Foundation::HWND(h.0 as *mut _), if visible { SW_SHOWNOACTIVATE } else { SW_HIDE });
         }
     }
 }
@@ -62,7 +65,7 @@ pub fn apply(app: &AppHandle, cfg: &Config) {
     let hidden = state.orb_hidden.load(Ordering::SeqCst)
         || (cfg.launcher.orb.hide_on_fullscreen && state.orb_fullscreen.load(Ordering::SeqCst));
     if !cfg.launcher.mode.wants_orb() || hidden {
-        let _ = win.hide();
+        set_visible(&win, false);
         return;
     }
     let orb = &cfg.launcher.orb;
@@ -76,7 +79,7 @@ pub fn apply(app: &AppHandle, cfg: &Config) {
     // (senão o canto padrão seria gravado como posição fixa).
     *PLACED.lock().unwrap() = Some((x, y));
     let _ = win.set_position(PhysicalPosition::new(x, y));
-    show_no_activate(&win);
+    set_visible(&win, true);
     let _ = app.emit_to(ORB, "orb:config", cfg.launcher.orb.clone());
 }
 
@@ -346,5 +349,23 @@ mod image_tests {
         f.set_len(MAX_IMAGE_BYTES + 1).unwrap();
         assert!(read_image(big.to_str().unwrap()).unwrap_err().contains("muito grande"));
         let _ = std::fs::remove_dir_all(&dir);
+    }
+}
+
+#[cfg(test)]
+mod visibility_qa_tests {
+    /// Regressão v0.3.4 (QA): mostrar e esconder o ícone precisam passar pelo mesmo
+    /// caminho (Win32 em `set_visible`). Se `win.show()`/`win.hide()` do Tauri voltar a
+    /// ser usado aqui, o estado VISIBLE do tao fica dessincronizado e o ícone não some.
+    #[test]
+    fn icone_nao_usa_show_hide_do_tauri() {
+        let src = include_str!("orb.rs");
+        let code: Vec<&str> = src.lines().filter(|l| !l.trim_start().starts_with("//")).collect();
+        for m in ["hide", "show"] {
+            let needle = format!(".{m}()");
+            let hits: Vec<&&str> = code.iter().filter(|l| l.contains(&needle) && !l.contains("needle")).collect();
+            assert!(hits.is_empty(), "orb.rs usa {needle} do Tauri: {hits:?}");
+        }
+        assert!(src.contains("SW_HIDE") && src.contains("SW_SHOWNOACTIVATE"));
     }
 }

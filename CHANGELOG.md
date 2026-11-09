@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.4
+
+- **Correção:** o ícone não sumia ao escolher "Esconder ícone" (no botão direito ou na bandeja), ao trocar o modo de abertura para "Atalho" nem em tela cheia.
+
 ## 0.3.3
 
 - **Esconder o ícone em tela cheia**: o ícone some durante jogos, vídeos e apresentações em tela cheia e volta sozinho ao sair. A opção vem ligada e pode ser desligada em Configurações → Ícone.
