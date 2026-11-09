@@ -1,0 +1,40 @@
+/* Tokens de design — componentes não usam cores/tempos literais fora daqui. */
+:root {
+  color-scheme: dark;
+
+  --bg-page: #111111;
+  --bg-base: #080e14;
+  --bg-panel: #0c1219;
+  --bg-surface: #111722;
+
+  --accent: #43c7d9;   /* cyan: medidor de CPU, órbitas */
+  --active: #4ade9b;   /* fatia ativa (sobrescrito por appearance.accent) */
+  --violet: #a78bfa;
+  --danger: #ff5c7a;
+  --warning: #f2c46d;
+  --success: #4ade9b;
+
+  --text-primary: #e8ecf4;
+  --text-label: #dde3ec;
+  --text-secondary: #9aa5b8;
+  --text-muted: #6f7a8c;
+
+  --line-soft: rgba(255, 255, 255, 0.06);
+  --line: rgba(255, 255, 255, 0.1);
+
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI Semibold", "Segoe UI", system-ui, sans-serif;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 120ms;
+  --dur-mid: 180ms;
+  --dur-slow: 240ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 1ms;
+    --dur-mid: 1ms;
+    --dur-slow: 1ms;
+  }
+}

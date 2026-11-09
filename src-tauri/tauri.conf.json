@@ -1,0 +1,67 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Kira Radial",
+  "version": "0.1.0",
+  "identifier": "com.kira.radial",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "radial",
+        "url": "index.html",
+        "title": "Kira Radial",
+        "width": 675,
+        "height": 675,
+        "transparent": true,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "shadow": false,
+        "resizable": false,
+        "visible": false,
+        "focus": false
+      },
+      {
+        "label": "settings",
+        "url": "settings.html",
+        "title": "Kira Radial — Configurações",
+        "width": 1200,
+        "height": 780,
+        "minWidth": 980,
+        "minHeight": 620,
+        "center": true,
+        "visible": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    },
+    "publisher": "Kira Radial",
+    "copyright": "© 2026 Hideki515. Licença MIT.",
+    "category": "Utility",
+    "shortDescription": "Menu radial para atalhos do Windows",
+    "longDescription": "Kira Radial: menu radial aberto por um atalho global que executa ações configuradas pelo usuário (abrir programas, pastas e sites, enviar atalhos de teclado, controlar mídia e áudio)."
+  }
+}

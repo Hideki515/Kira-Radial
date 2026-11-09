@@ -1,0 +1,194 @@
+* { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--bg-page);
+  font-family: var(--font-ui);
+  color: var(--text-primary);
+  user-select: none;
+  cursor: default;
+}
+
+/* Na janela Tauri o fundo é transparente: só o menu aparece sobre a área de trabalho. */
+html.is-tauri body { background: transparent; }
+
+.radial-root {
+  position: absolute;
+  /* Anima na camada de composição (GPU), sem redesenhar o SVG a cada quadro. */
+  will-change: transform, opacity;
+  contain: strict;
+  animation: radial-in var(--dur-slow) var(--ease-out) both;
+}
+
+@keyframes radial-in {
+  from { opacity: 0; transform: scale(0.86); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.radial-canvas {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  display: block;
+}
+
+/* --- órbitas --- */
+.orbit-soft { fill: none; stroke: var(--line-soft); stroke-width: 1; }
+.orbit-hot  { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-linecap: round; opacity: 0.45; }
+.ambient    { pointer-events: none; }
+.ring-backing { fill: #06090d; fill-opacity: 0.94; }
+
+/* --- gradiente ativo --- */
+.stop-hot-deep { stop-color: color-mix(in srgb, var(--active) 6%, #0b1118); }
+.stop-hot-soft { stop-color: color-mix(in srgb, var(--active) 16%, #0e1620); }
+
+/* --- fatias principais --- */
+.slice-shape {
+  transition: fill var(--dur-mid) var(--ease-out), stroke var(--dur-mid) var(--ease-out);
+}
+
+.main-slice .slice-shape {
+  fill: url(#slice-glass);
+  stroke: var(--line-soft);
+  stroke-width: 1;
+}
+
+.main-slice .slice-icon { color: var(--text-primary); transition: color var(--dur-mid) var(--ease-out); }
+
+.slice-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  fill: var(--text-label);
+  letter-spacing: 0.02em;
+  transition: fill var(--dur-mid) var(--ease-out);
+}
+.slice-label--main { font-size: 13.5px; }
+.slice-label--sub  { font-size: 11.5px; }
+
+.main-slice.is-active .slice-shape {
+  fill: url(#slice-hot);
+  stroke: var(--active);
+  stroke-width: 1.6;
+}
+.main-slice.is-active .slice-icon  { color: var(--active); }
+.main-slice.is-active .slice-label { fill: var(--active); }
+.slice-marker { fill: var(--active); }
+
+/* Sem opacidade na forma: a janela é transparente e o fundo apareceria através da fatia. */
+.main-slice.is-dimmed .slice-content { opacity: 0.6; }
+
+/* --- sub-anel --- */
+.sub-slice {
+  transform-box: view-box;
+  transform-origin: 450px 450px;
+  animation: sub-in var(--dur-slow) var(--ease-out) both;
+  animation-delay: var(--stagger, 0ms);
+}
+
+@keyframes sub-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.sub-slice .slice-shape {
+  fill: #0f1726;
+  stroke: color-mix(in srgb, var(--item-color) 65%, transparent);
+  stroke-width: 1.4;
+}
+.sub-slice .slice-icon { color: var(--text-primary); }
+
+.sub-slice.is-active .slice-shape {
+  fill: color-mix(in srgb, var(--item-color) 14%, #0f1726);
+  stroke: var(--item-color);
+  stroke-width: 1.8;
+}
+.sub-slice.is-active .slice-icon  { color: var(--item-color); }
+.sub-slice.is-active .slice-label { fill: var(--item-color); }
+
+.submenu-ring.is-dense .slice-label--sub { font-size: 10px; }
+
+/* --- hub central --- */
+.hub-well { fill: #0a0d12; stroke: rgba(255, 255, 255, 0.03); }
+.hub-disc {
+  fill: url(#hub-glass);
+  stroke: var(--line);
+  stroke-width: 1;
+  transition: stroke var(--dur-mid) var(--ease-out);
+}
+.center-hub.is-hovered .hub-disc { stroke: rgba(255, 255, 255, 0.22); }
+
+.hub-track { fill: none; stroke: rgba(255, 255, 255, 0.08); stroke-width: 7; }
+.hub-gauge {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 7;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 600ms var(--ease-out);
+}
+
+.hub-time { font-family: var(--font-display); font-size: 28px; font-weight: 700; fill: #f2f5fa; }
+.hub-date { font-size: 8.5px; font-weight: 700; fill: var(--text-muted); letter-spacing: 0.04em; }
+.hub-cpu  { font-family: var(--font-display); font-size: 31px; font-weight: 700; fill: var(--accent); }
+.hub-pill { fill: rgba(255, 255, 255, 0.03); stroke: rgba(255, 255, 255, 0.12); }
+.hub-pill-text { font-size: 9px; font-weight: 700; fill: var(--text-secondary); letter-spacing: 0.12em; }
+
+/* --- toast e dica --- */
+.toast {
+  position: absolute;
+  transform: translateX(-50%);
+  max-width: 420px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgba(12, 18, 25, 0.92);
+  border: 1px solid var(--line);
+  color: var(--text-primary);
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: radial-in var(--dur-mid) var(--ease-out) both;
+  pointer-events: none;
+}
+.toast.is-error { border-color: var(--danger); color: var(--danger); }
+
+.dev-hint {
+  position: fixed;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.dev-hint a { color: var(--accent); pointer-events: auto; }
+.dev-hint kbd {
+  font-family: var(--font-ui);
+  padding: 1px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--line);
+  color: var(--text-secondary);
+}
+
+/* --- halos (substituem filter: drop-shadow, que redesenha com desfoque a cada quadro) --- */
+.slice-halo {
+  fill: none;
+  stroke-width: 9;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 16%, transparent); }
+.sub-slice .slice-halo  { stroke: color-mix(in srgb, var(--item-color) 18%, transparent); }
+.hub-gauge-halo {
+  fill: none;
+  stroke: color-mix(in srgb, var(--accent) 18%, transparent);
+  stroke-width: 15;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 600ms var(--ease-out);
+}

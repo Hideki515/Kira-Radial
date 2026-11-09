@@ -1,0 +1,146 @@
+import { act, cleanup, render } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cloneConfig, defaultConfig } from "../shared/defaults";
+import type { Config } from "../shared/types";
+import { LAYOUT, polar, sliceAngle, submenuAngles } from "./geometry";
+
+// Teste adicionado pelo QA: ações de mídia não fecham o menu (no Tauri) — cliques repetidos executam
+// de novo, a seleção permanece e aparece um toast com o rótulo da mídia. Demais ações não mostram toast.
+
+const ipc = vi.hoisted(() => ({
+  config: null as unknown as Config,
+  runAction: vi.fn(async () => {}),
+  hideMenu: vi.fn(async () => {}),
+  handlers: {} as Record<string, (p: unknown) => void>,
+}));
+
+vi.mock("../shared/ipc", async (orig) => {
+  const real = await orig<typeof import("../shared/ipc")>();
+  return {
+    ...real,
+    isTauri: () => true,
+    getConfig: async () => ipc.config,
+    listAudioOutputs: async () => [],
+    runAction: ipc.runAction,
+    hideMenu: ipc.hideMenu,
+    onEvent: async (name: string, cb: (p: unknown) => void) => {
+      ipc.handlers[name] = cb;
+      return () => {
+        if (ipc.handlers[name] === cb) delete ipc.handlers[name];
+      };
+    },
+  };
+});
+
+vi.mock("../shared/perf", () => ({
+  perfLog: () => {},
+  observeLongTasks: () => {},
+  startFrameMonitor: () => () => ({ durationMs: 0, frames: 0, maxGapMs: 0, janky: 0 }),
+}));
+
+import { RadialApp } from "./RadialApp";
+
+const cfg = () => cloneConfig(defaultConfig);
+const items = () => cfg().profiles[0].items;
+const idx = (id: string) => items().findIndex((i) => i.id === id);
+const n = () => items().length;
+const scale = () => defaultConfig.appearance.scale;
+const center = () => ({ x: Math.round(window.innerWidth / 2), y: Math.round(window.innerHeight / 2) });
+
+function mainPoint(i: number) {
+  const p = polar(0, 0, ((LAYOUT.mainInner + LAYOUT.mainOuter) / 2) * scale(), sliceAngle(i, n()));
+  return { x: center().x + p.x, y: center().y + p.y };
+}
+function subPoint(parent: number, k: number) {
+  const count = items()[parent].children!.length;
+  const a = submenuAngles(sliceAngle(parent, n()), count)[k];
+  const p = polar(0, 0, ((LAYOUT.subInner + LAYOUT.subOuter) / 2) * scale(), a);
+  return { x: center().x + p.x, y: center().y + p.y };
+}
+function ptr(type: "pointermove" | "pointerup", pt: { x: number; y: number }) {
+  act(() => {
+    window.dispatchEvent(new MouseEvent(type, { clientX: pt.x, clientY: pt.y, button: 0, bubbles: true }));
+  });
+}
+const click = async (pt: { x: number; y: number }) => {
+  ptr("pointermove", pt);
+  ptr("pointerup", pt);
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+};
+
+const root = () => document.querySelector(".radial-root");
+const submenu = () => document.querySelector('[data-testid="submenu"]');
+const toast = () => document.querySelector(".toast")?.textContent ?? null;
+const activeSubLabel = () => document.querySelector(".sub-slice.is-active")?.getAttribute("aria-label") ?? null;
+
+async function mountAndShow() {
+  ipc.config = cfg();
+  render(<RadialApp />);
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+  expect(root()).toBeNull(); // no Tauri começa escondido
+  act(() => ipc.handlers["menu:show"]?.({ profileId: ipc.config.profiles[0].id, cx: center().x, cy: center().y }));
+  expect(root()).not.toBeNull();
+}
+
+beforeEach(() => {
+  ipc.runAction.mockClear();
+  ipc.hideMenu.mockClear();
+});
+afterEach(cleanup);
+
+describe("RadialApp › mídia mantém o menu aberto (Tauri)", () => {
+  it("clique em volume + executa, mantém menu/sub-anel/seleção e mostra toast; segundo clique executa de novo", async () => {
+    await mountAndShow();
+    const midia = idx("midia");
+    const k = items()[midia].children!.findIndex((c) => c.id === "volup");
+    const volup = items()[midia].children![k];
+    await click(mainPoint(midia));
+    expect(submenu()).not.toBeNull();
+
+    await click(subPoint(midia, k));
+    expect(ipc.runAction).toHaveBeenCalledTimes(1);
+    expect(ipc.runAction).toHaveBeenLastCalledWith({ type: "media", cmd: "volup" });
+    expect(root()).not.toBeNull();
+    expect(submenu()).not.toBeNull();
+    expect(activeSubLabel()).toBe(volup.label);
+    expect(toast()).toBe(`${volup.label}: volume +`);
+    expect(ipc.hideMenu).not.toHaveBeenCalled();
+
+    await click(subPoint(midia, k));
+    expect(ipc.runAction).toHaveBeenCalledTimes(2);
+    expect(root()).not.toBeNull();
+    expect(ipc.hideMenu).not.toHaveBeenCalled();
+  });
+
+  it("Enter repetido num item de mídia também executa várias vezes sem fechar", async () => {
+    await mountAndShow();
+    const midia = idx("midia");
+    await click(mainPoint(midia));
+    const k = items()[midia].children!.findIndex((c) => c.id === "next");
+    await click(subPoint(midia, k));
+    for (let i = 0; i < 2; i++) {
+      act(() => {
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+      });
+      await act(async () => {
+        await Promise.resolve();
+      });
+    }
+    expect(ipc.runAction).toHaveBeenCalledTimes(3);
+    expect(root()).not.toBeNull();
+    expect(toast()).toContain("próxima faixa");
+  });
+
+  it("ação que não é mídia não mostra toast no Tauri (o backend esconde o menu)", async () => {
+    await mountAndShow();
+    await click(mainPoint(idx("browser")));
+    expect(ipc.runAction).toHaveBeenCalledWith(items()[idx("browser")].action);
+    expect(toast()).toBeNull();
+  });
+});

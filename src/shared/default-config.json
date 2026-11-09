@@ -1,0 +1,279 @@
+{
+  "version": 1,
+  "hotkey": {
+    "accelerator": "Ctrl+Alt+Q",
+    "mode": "toggle"
+  },
+  "behavior": {
+    "openAt": "cursor",
+    "closeOnBlur": true,
+    "closeOnAction": true,
+    "deadZonePx": 120,
+    "autostart": false
+  },
+  "appearance": {
+    "scale": 0.75,
+    "accent": "#4ade9b",
+    "showCpu": true,
+    "showClock": true
+  },
+  "profiles": [
+    {
+      "id": "default",
+      "name": "Padrão",
+      "items": [
+        {
+          "id": "terminal",
+          "label": "Terminal",
+          "icon": "terminal",
+          "action": {
+            "type": "launch",
+            "path": "wt.exe"
+          }
+        },
+        {
+          "id": "pastas",
+          "label": "Pastas",
+          "icon": "folder-open",
+          "children": [
+            {
+              "id": "desktop",
+              "label": "Desktop",
+              "icon": "folder-open",
+              "color": "#4ade9b",
+              "action": {
+                "type": "folder",
+                "path": "%USERPROFILE%\\Desktop"
+              }
+            },
+            {
+              "id": "downloads",
+              "label": "Downloads",
+              "icon": "folder-open",
+              "color": "#43c7d9",
+              "action": {
+                "type": "folder",
+                "path": "%USERPROFILE%\\Downloads"
+              }
+            },
+            {
+              "id": "docs",
+              "label": "Docs",
+              "icon": "file-text",
+              "color": "#f2c46d",
+              "action": {
+                "type": "folder",
+                "path": "%USERPROFILE%\\Documents"
+              }
+            }
+          ]
+        },
+        {
+          "id": "dev",
+          "label": "Dev",
+          "icon": "server",
+          "children": [
+            {
+              "id": "vscode",
+              "label": "VS Code",
+              "icon": "code",
+              "color": "#43c7d9",
+              "action": {
+                "type": "launch",
+                "path": "code"
+              }
+            },
+            {
+              "id": "github",
+              "label": "GitHub",
+              "icon": "github",
+              "color": "#a78bfa",
+              "action": {
+                "type": "url",
+                "url": "https://github.com"
+              }
+            },
+            {
+              "id": "taskmgr",
+              "label": "Tarefas",
+              "icon": "activity",
+              "color": "#ff5c7a",
+              "action": {
+                "type": "keys",
+                "combo": "Ctrl+Shift+Esc"
+              }
+            }
+          ]
+        },
+        {
+          "id": "browser",
+          "label": "Browser",
+          "icon": "globe",
+          "action": {
+            "type": "url",
+            "url": "https://www.google.com"
+          }
+        },
+        {
+          "id": "arquivo",
+          "label": "Arquivo",
+          "icon": "file-text",
+          "action": {
+            "type": "launch",
+            "path": "explorer.exe"
+          }
+        },
+        {
+          "id": "apps",
+          "label": "Apps",
+          "icon": "app-window",
+          "children": [
+            {
+              "id": "calc",
+              "label": "Calculadora",
+              "icon": "calculator",
+              "color": "#43c7d9",
+              "action": {
+                "type": "launch",
+                "path": "calc.exe"
+              }
+            },
+            {
+              "id": "notepad",
+              "label": "Notas",
+              "icon": "notebook-pen",
+              "color": "#f2c46d",
+              "action": {
+                "type": "launch",
+                "path": "notepad.exe"
+              }
+            },
+            {
+              "id": "desk",
+              "label": "Área de trab.",
+              "icon": "monitor",
+              "color": "#4ade9b",
+              "action": {
+                "type": "keys",
+                "combo": "Win+D"
+              }
+            },
+            {
+              "id": "shot",
+              "label": "Captura",
+              "icon": "camera",
+              "color": "#a78bfa",
+              "action": {
+                "type": "system",
+                "cmd": "screenshot"
+              }
+            }
+          ]
+        },
+        {
+          "id": "midia",
+          "label": "Mídia",
+          "icon": "music",
+          "children": [
+            {
+              "id": "prev",
+              "label": "Anterior",
+              "icon": "skip-back",
+              "color": "#a78bfa",
+              "action": {
+                "type": "media",
+                "cmd": "prev"
+              }
+            },
+            {
+              "id": "play",
+              "label": "Play/Pause",
+              "icon": "play",
+              "color": "#4ade9b",
+              "action": {
+                "type": "media",
+                "cmd": "playpause"
+              }
+            },
+            {
+              "id": "next",
+              "label": "Próxima",
+              "icon": "skip-forward",
+              "color": "#a78bfa",
+              "action": {
+                "type": "media",
+                "cmd": "next"
+              }
+            },
+            {
+              "id": "volup",
+              "label": "Vol +",
+              "icon": "volume-2",
+              "color": "#43c7d9",
+              "action": {
+                "type": "media",
+                "cmd": "volup"
+              }
+            },
+            {
+              "id": "voldown",
+              "label": "Vol −",
+              "icon": "volume-1",
+              "color": "#43c7d9",
+              "action": {
+                "type": "media",
+                "cmd": "voldown"
+              }
+            },
+            {
+              "id": "mute",
+              "label": "Mudo",
+              "icon": "volume-x",
+              "color": "#ff5c7a",
+              "action": {
+                "type": "media",
+                "cmd": "mute"
+              }
+            }
+          ]
+        },
+        {
+          "id": "config",
+          "label": "Config",
+          "icon": "settings",
+          "children": [
+            {
+              "id": "settings",
+              "label": "Menu",
+              "icon": "sliders-horizontal",
+              "color": "#43c7d9",
+              "action": {
+                "type": "openSettings"
+              }
+            },
+            {
+              "id": "lock",
+              "label": "Bloquear",
+              "icon": "lock",
+              "color": "#f2c46d",
+              "action": {
+                "type": "system",
+                "cmd": "lock"
+              }
+            },
+            {
+              "id": "sleep",
+              "label": "Suspender",
+              "icon": "moon",
+              "color": "#a78bfa",
+              "action": {
+                "type": "system",
+                "cmd": "sleep"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
