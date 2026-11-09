@@ -1,7 +1,7 @@
 import { Check, Clipboard, RotateCcw, Upload } from "lucide-react";
 import { useState } from "react";
 import { cloneConfig, defaultConfig, withDefaults } from "../../shared/defaults";
-import { HOLO_ACCENT, wantsHotkey, wantsOrb, type Config, type LauncherMode, type Theme } from "../../shared/types";
+import { HOLO_ACCENT, SCALE_LIMITS, wantsHotkey, wantsOrb, type Config, type LauncherMode, type Theme } from "../../shared/types";
 import { Field, Section, Segmented, Toggle } from "../controls";
 import { HotkeyRecorder } from "../HotkeyRecorder";
 
@@ -121,7 +121,7 @@ export function AppearancePage({ config, update }: PageProps) {
         <p className="muted">HUD em wireframe com esfera e anéis animados. Usa a cor de destaque abaixo (âmbar por padrão; azul-ciano também fica bom).</p>
       )}
       <Field label={`Tamanho: ${Math.round(a.scale * 100)}%`}>
-        <input type="range" min={0.5} max={1.4} step={0.05} value={a.scale} onChange={(e) => update((c) => void (c.appearance.scale = Number(e.target.value)))} />
+        <input type="range" min={SCALE_LIMITS.min} max={SCALE_LIMITS.max} step={0.05} value={a.scale} onChange={(e) => update((c) => void (c.appearance.scale = Number(e.target.value)))} />
       </Field>
       <Field label="Cor de destaque (fatia ativa)">
         <div className="color-row">

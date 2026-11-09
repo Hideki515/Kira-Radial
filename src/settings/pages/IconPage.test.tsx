@@ -8,6 +8,7 @@ const ipc = vi.hoisted(() => ({
   pickImage: vi.fn(async (): Promise<string | null> => "C:\\gifs\\jarvis.webp"),
   readOrbImage: vi.fn(async (p: string) => `data:image/webp;base64,${p.length}`),
   orbResetPosition: vi.fn(async () => {}),
+  orbSetHidden: vi.fn(async () => {}),
 }));
 vi.mock("../../shared/ipc", async (orig) => ({ ...(await orig<typeof import("../../shared/ipc")>()), ...ipc }));
 
@@ -19,11 +20,12 @@ afterEach(() => {
 });
 
 let last: Config;
-function Harness({ mode = "orb" as Config["launcher"]["mode"], image = null as string | null, goToLauncher = () => {} }) {
+function Harness({ mode = "orb" as Config["launcher"]["mode"], image = null as string | null, hidden = false, goToLauncher = () => {} }) {
   const [c, setC] = useState(() => {
     const x = cloneConfig(defaultConfig);
     x.launcher.mode = mode;
     x.launcher.orb.image = image;
+    x.launcher.orb.hidden = hidden;
     return x;
   });
   last = c;
@@ -93,6 +95,14 @@ describe("Configurações › Ícone", () => {
     expect(box.checked).toBe(true);
     fireEvent.click(box);
     expect(last.launcher.orb.hideOnFullscreen).toBe(false);
+  });
+
+  it("ícone escondido mostra aviso com botão para mostrar de novo", async () => {
+    render(<Harness hidden />);
+    fireEvent.click(screen.getByRole("button", { name: "Mostrar o ícone" }));
+    await flush();
+    expect(ipc.orbSetHidden).toHaveBeenCalledWith(false);
+    expect(screen.queryByTestId("orb-hidden")).toBeNull();
   });
 
   it("voltar para o canto chama o backend", async () => {

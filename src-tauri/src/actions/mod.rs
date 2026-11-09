@@ -201,9 +201,25 @@ fn enable_shutdown_privilege() -> Result<(), String> {
             Privileges: [LUID_AND_ATTRIBUTES { Luid: Default::default(), Attributes: SE_PRIVILEGE_ENABLED }],
         };
         let r = LookupPrivilegeValueW(PCWSTR::null(), SE_SHUTDOWN_NAME, &mut tp.Privileges[0].Luid)
-            .and_then(|_| AdjustTokenPrivileges(token, false, Some(&tp), 0, None, None));
+            .and_then(|_| AdjustTokenPrivileges(token, false, Some(&tp), 0, None, None))
+            // AdjustTokenPrivileges "dá certo" mesmo sem conceder: o resultado real fica no GetLastError.
+            .map(|_| windows::Win32::Foundation::GetLastError().0);
         let _ = CloseHandle(token);
-        r.map_err(|e| format!("sem permissão para desligar: {e}"))
+        match r {
+            Ok(last_error) => privilege_result(last_error),
+            Err(e) => Err(format!("sem permissão para desligar: {e}")),
+        }
+    }
+}
+
+/// Interpreta o GetLastError() logo após um AdjustTokenPrivileges bem-sucedido.
+pub fn privilege_result(last_error: u32) -> Result<(), String> {
+    const ERROR_NOT_ALL_ASSIGNED: u32 = 1300;
+    match last_error {
+        ERROR_NOT_ALL_ASSIGNED => Err(
+            "sem permissão para desligar/reiniciar: a conta não tem o privilégio de desligamento (política do Windows)".into(),
+        ),
+        _ => Ok(()),
     }
 }
 
@@ -278,6 +294,13 @@ pub fn expand_env(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn privilegio_nao_concedido_vira_erro_legivel() {
+        assert!(privilege_result(0).is_ok());
+        let e = privilege_result(1300).unwrap_err();
+        assert!(e.contains("sem permissão"));
+    }
 
     #[test]
     fn midia_mantem_menu_aberto() {

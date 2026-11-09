@@ -2,7 +2,7 @@ import { ImageIcon, LocateFixed, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Orb } from "../../orb/Orb";
 import { useOrbImage } from "../../orb/useOrbImage";
-import { orbResetPosition, pickImage } from "../../shared/ipc";
+import { orbResetPosition, orbSetHidden, pickImage } from "../../shared/ipc";
 import { ORB_LIMITS, wantsOrb, type Config } from "../../shared/types";
 import { Field, Section, Segmented, Toggle } from "../controls";
 
@@ -21,6 +21,7 @@ export function IconPage({ config, update, goToLauncher }: Props) {
   const orb = config.launcher.orb;
   const image = useOrbImage(orb.image);
   const [msg, setMsg] = useState<string | null>(null);
+  const [hidden, setHidden] = useState(orb.hidden);
   const look: Look = orb.image ? "image" : "builtin";
 
   const choose = async () => {
@@ -34,6 +35,15 @@ export function IconPage({ config, update, goToLauncher }: Props) {
         <div className="banner-info" role="note" data-testid="orb-off">
           O ícone está desligado: o menu abre só pelo atalho.{" "}
           <button type="button" className="link" onClick={goToLauncher}>Ativar em Atalho → Abrir o menu por</button>
+        </div>
+      )}
+
+      {wantsOrb(config.launcher.mode) && hidden && (
+        <div className="banner-info" role="note" data-testid="orb-hidden">
+          O ícone está escondido (pelo botão direito ou pela bandeja).{" "}
+          <button type="button" className="link" onClick={() => orbSetHidden(false).then(() => setHidden(false), (e) => setMsg(String(e)))}>
+            Mostrar o ícone
+          </button>
         </div>
       )}
 

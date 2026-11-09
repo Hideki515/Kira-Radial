@@ -148,6 +148,11 @@ export async function orbClicked(): Promise<void> {
   if (isTauri()) await invoke("orb_clicked");
 }
 
+/** Esconde/mostra o ícone flutuante (fica salvo). */
+export async function orbSetHidden(hidden: boolean): Promise<void> {
+  if (isTauri()) await invoke("orb_set_hidden", { hidden });
+}
+
 /** Volta o ícone flutuante para o canto inferior direito. */
 export async function orbResetPosition(): Promise<void> {
   if (isTauri()) await invoke("orb_reset_position");

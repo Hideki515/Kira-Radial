@@ -96,6 +96,7 @@ pub fn run() {
             commands::hotkey_error,
             commands::orb_clicked,
             commands::orb_reset_position,
+            commands::orb_set_hidden,
             commands::read_orb_image,
             commands::orb_context_menu,
             perf::perf_log,

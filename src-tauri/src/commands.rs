@@ -22,6 +22,7 @@ pub fn save_config(app: AppHandle, state: State<'_, AppState>, mut config: Confi
     // pode estar desatualizado.
     config.launcher.orb.x = old.launcher.orb.x;
     config.launcher.orb.y = old.launcher.orb.y;
+    config.launcher.orb.hidden = old.launcher.orb.hidden;
     if old.hotkey.accelerator != config.hotkey.accelerator || old.launcher.mode != config.launcher.mode {
         menu::apply_hotkey(&app, &config)?;
     }
@@ -53,6 +54,12 @@ pub async fn read_orb_image(path: String) -> Result<String, String> {
 #[tauri::command]
 pub fn orb_context_menu(app: AppHandle) -> Result<(), String> {
     crate::orb::context_menu(&app)
+}
+
+/// Esconde/mostra o ícone (fica salvo).
+#[tauri::command]
+pub fn orb_set_hidden(app: AppHandle, hidden: bool) {
+    crate::orb::set_hidden(&app, hidden);
 }
 
 /// Volta o ícone flutuante para o canto padrão.

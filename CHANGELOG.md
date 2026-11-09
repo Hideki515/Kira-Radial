@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.5
+
+Correções:
+- "Esconder ícone" (pelo botão direito ou pela bandeja) agora é lembrado depois de reiniciar. Configurações → Ícone avisa quando ele está escondido e tem o botão "Mostrar o ícone".
+- O controle de tamanho do menu agora vai de 50% a 160%, a mesma faixa aceita pela validação.
+- Modo "segurar e soltar": soltar o atalho depois de clicar numa mídia não repete mais a ação.
+- O aviso rápido fica 2,2 s depois do último clique, e não mais do primeiro.
+- Desligar e reiniciar avisam quando a conta não tem permissão de desligamento, em vez de falhar em silêncio.
+
 ## 0.3.4
 
 - **Correção:** o ícone não sumia ao escolher "Esconder ícone" (no botão direito ou na bandeja), ao trocar o modo de abertura para "Atalho" nem em tela cheia.

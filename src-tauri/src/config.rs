@@ -61,11 +61,13 @@ pub struct OrbConfig {
     pub image: Option<String>,
     pub opacity_idle: f64,
     pub hide_on_fullscreen: bool,
+    /// Escondido pelo usuário (menu do ícone / bandeja). Persistido entre reinícios.
+    pub hidden: bool,
 }
 
 impl Default for OrbConfig {
     fn default() -> Self {
-        Self { x: None, y: None, size: 96.0, image: None, opacity_idle: 0.85, hide_on_fullscreen: true }
+        Self { x: None, y: None, size: 96.0, image: None, opacity_idle: 0.85, hide_on_fullscreen: true, hidden: false }
     }
 }
 
@@ -265,6 +267,7 @@ mod tests {
         assert_eq!((c.launcher.orb.x, c.launcher.orb.y), (Some(10), Some(20)));
         assert_eq!(c.launcher.orb.size(), OrbConfig::MAX_SIZE);
         assert!(c.launcher.orb.hide_on_fullscreen);
+        assert!(!c.launcher.orb.hidden);
         assert!(LauncherMode::Orb.wants_orb() && !LauncherMode::Orb.wants_hotkey());
     }
 

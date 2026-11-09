@@ -91,12 +91,17 @@ export interface OrbConfig {
   /** Opacidade em repouso (passar o mouse deixa 100%). */
   opacityIdle: number;
   hideOnFullscreen: boolean;
+  /** Escondido pelo usuário (botão direito no ícone / bandeja). Gerido pelo backend. */
+  hidden: boolean;
 }
 
 export interface Launcher {
   mode: LauncherMode;
   orb: OrbConfig;
 }
+
+/** Escala do menu (igual ao clamp de Config::ui_scale no Rust). */
+export const SCALE_LIMITS = { min: 0.5, max: 1.6 } as const;
 
 export const ORB_LIMITS = { minSize: 56, maxSize: 160, minOpacity: 0.4, maxOpacity: 1 } as const;
 

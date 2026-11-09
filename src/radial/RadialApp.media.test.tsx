@@ -38,7 +38,7 @@ vi.mock("../shared/perf", () => ({
   startFrameMonitor: () => () => ({ durationMs: 0, frames: 0, maxGapMs: 0, janky: 0 }),
 }));
 
-import { RadialApp } from "./RadialApp";
+import { RadialApp, TOAST_MS } from "./RadialApp";
 
 const cfg = () => cloneConfig(defaultConfig);
 const items = () => cfg().profiles[0].items;
@@ -142,5 +142,52 @@ describe("RadialApp › mídia mantém o menu aberto (Tauri)", () => {
     await click(mainPoint(idx("browser")));
     expect(ipc.runAction).toHaveBeenCalledWith(items()[idx("browser")].action);
     expect(toast()).toBeNull();
+  });
+
+  it("modo segurar: soltar o atalho depois de clicar na mídia só fecha, não repete", async () => {
+    await mountAndShow();
+    const midia = idx("midia");
+    const k = items()[midia].children!.findIndex((c) => c.id === "volup");
+    await click(mainPoint(midia));
+    await click(subPoint(midia, k));
+    expect(ipc.runAction).toHaveBeenCalledTimes(1);
+    act(() => ipc.handlers["menu:release"]?.(null));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(ipc.runAction).toHaveBeenCalledTimes(1);
+    expect(ipc.hideMenu).toHaveBeenCalledTimes(1);
+  });
+
+  it("modo segurar: soltar sobre um item NÃO clicado continua executando", async () => {
+    await mountAndShow();
+    const midia = idx("midia");
+    const k = items()[midia].children!.findIndex((c) => c.id === "next");
+    await click(mainPoint(midia));
+    ptr("pointermove", subPoint(midia, k));
+    act(() => ipc.handlers["menu:release"]?.(null));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(ipc.runAction).toHaveBeenCalledWith({ type: "media", cmd: "next" });
+  });
+
+  it("toast fica TOAST_MS após o ÚLTIMO clique, não o primeiro", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      await mountAndShow();
+      const midia = idx("midia");
+      const k = items()[midia].children!.findIndex((c) => c.id === "volup");
+      await click(mainPoint(midia));
+      await click(subPoint(midia, k));
+      act(() => void vi.advanceTimersByTime(TOAST_MS - 400));
+      await click(subPoint(midia, k));
+      act(() => void vi.advanceTimersByTime(TOAST_MS - 400));
+      expect(toast()).not.toBeNull(); // 1º clique já passou de TOAST_MS, mas o 2º renovou
+      act(() => void vi.advanceTimersByTime(500));
+      expect(toast()).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

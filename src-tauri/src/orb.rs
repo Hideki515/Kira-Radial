@@ -62,7 +62,7 @@ fn set_visible(win: &WebviewWindow, visible: bool) {
 pub fn apply(app: &AppHandle, cfg: &Config) {
     let Some(win) = window(app) else { return };
     let state = app.state::<AppState>();
-    let hidden = state.orb_hidden.load(Ordering::SeqCst)
+    let hidden = cfg.launcher.orb.hidden
         || (cfg.launcher.orb.hide_on_fullscreen && state.orb_fullscreen.load(Ordering::SeqCst));
     if !cfg.launcher.mode.wants_orb() || hidden {
         set_visible(&win, false);
@@ -241,18 +241,23 @@ pub fn context_menu(app: &AppHandle) -> Result<(), String> {
     win.popup_menu(&menu).map_err(|e| e.to_string())
 }
 
-/// Esconde/mostra o ícone temporariamente (até reiniciar o app ou alternar de novo).
+/// Esconde/mostra o ícone (menu do ícone / bandeja). Fica salvo: vale após reiniciar.
 pub fn set_hidden(app: &AppHandle, hidden: bool) {
     let cfg = {
         let state = app.state::<AppState>();
-        state.orb_hidden.store(hidden, Ordering::SeqCst);
-        state.config()
+        let mut cfg = state.config.lock().unwrap();
+        cfg.launcher.orb.hidden = hidden;
+        if let Err(e) = config::save(&cfg) {
+            eprintln!("[kira-radial] falha ao salvar ícone escondido: {e}");
+        }
+        cfg.clone()
     };
     apply(app, &cfg);
+    let _ = app.emit("config:changed", cfg);
 }
 
 pub fn toggle_hidden(app: &AppHandle) {
-    let hidden = app.state::<AppState>().orb_hidden.load(Ordering::SeqCst);
+    let hidden = app.state::<AppState>().config().launcher.orb.hidden;
     set_hidden(app, !hidden);
 }
 

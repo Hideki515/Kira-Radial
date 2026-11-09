@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { cloneConfig, defaultConfig } from "../../shared/defaults";
-import { HOLO_ACCENT, type Config } from "../../shared/types";
+import { HOLO_ACCENT, SCALE_LIMITS, type Config } from "../../shared/types";
 import { validateConfig } from "../../shared/validate";
 import { AppearancePage, applyTheme } from "./SimplePages";
 
@@ -49,5 +49,17 @@ describe("Aparência › tema", () => {
     expect(validateConfig(c)).toEqual([]);
     (c.appearance as { theme: string }).theme = "matrix";
     expect(validateConfig(c).some((e) => e.includes("Tema"))).toBe(true);
+  });
+
+  it("controle de tamanho cobre exatamente a faixa aceita pela validação", () => {
+    render(<Harness onChange={() => {}} />);
+    const slider = screen.getByLabelText(/Tamanho:/) as HTMLInputElement;
+    expect(Number(slider.min)).toBe(SCALE_LIMITS.min);
+    expect(Number(slider.max)).toBe(SCALE_LIMITS.max);
+    const c = cloneConfig(defaultConfig);
+    c.appearance.scale = SCALE_LIMITS.max;
+    expect(validateConfig(c)).toEqual([]);
+    c.appearance.scale = SCALE_LIMITS.max + 0.05;
+    expect(validateConfig(c).some((e) => e.includes("Tamanho do menu"))).toBe(true);
   });
 });

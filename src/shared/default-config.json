@@ -25,7 +25,8 @@
       "size": 96,
       "image": null,
       "opacityIdle": 0.85,
-      "hideOnFullscreen": true
+      "hideOnFullscreen": true,
+      "hidden": false
     }
   },
   "profiles": [

@@ -14,6 +14,9 @@ const CONFIRM: Record<string, string> = {
   signout: "Encerrar a sessão agora?",
 };
 
+/** Quanto tempo o aviso (toast) fica na tela após o último aviso. */
+export const TOAST_MS = 2200;
+
 /** Duração da animação de recolher para o ícone (igual a .is-closing em radial.css). */
 export const CLOSE_TO_ORB_MS = 170;
 
@@ -54,6 +57,8 @@ function RadialMenu({ config }: { config: Config }) {
   /** Animação de recolher em andamento (o menu já não aceita entrada). */
   const [closing, setClosing] = useState(false);
   const closeTimer = useRef<number | null>(null);
+  /** Item executado por clique desde que o menu abriu (modo "segurar": soltar o atalho não repete). */
+  const clickedId = useRef<string | null>(null);
   // Desmontou no meio do recolhimento: não deixa o timer chamar hideMenu depois.
   useEffect(
     () => () => {
@@ -108,6 +113,7 @@ function RadialMenu({ config }: { config: Config }) {
     cancelClosing();
     setCenter({ x, y });
     setOrigin(from);
+    clickedId.current = null;
     reset();
     setOpen(true);
     setOpenKey((k) => k + 1);
@@ -128,9 +134,16 @@ function RadialMenu({ config }: { config: Config }) {
     }, CLOSE_TO_ORB_MS);
   }, [reset]);
 
+  const toastTimer = useRef<number | null>(null);
+  useEffect(() => () => void (toastTimer.current !== null && window.clearTimeout(toastTimer.current)), []);
+  /** Mostra um aviso por 2,2 s contados do ÚLTIMO aviso (cliques repetidos renovam o prazo). */
   const flash = useCallback((text: string, error = false) => {
     setToast({ text, error });
-    window.setTimeout(() => setToast((t) => (t?.text === text ? null : t)), 2200);
+    if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => {
+      toastTimer.current = null;
+      setToast(null);
+    }, TOAST_MS);
   }, []);
 
   const execute = useCallback(
@@ -229,10 +242,16 @@ function RadialMenu({ config }: { config: Config }) {
         reset();
       }),
       // Modo "segurar": soltar o atalho executa a fatia sob o cursor.
-      onEvent<null>("menu:release", () => executeSelection(true)),
+      onEvent<null>("menu:release", () => {
+        // Já executou a seleção atual com clique (ex.: volume +): soltar o atalho só fecha.
+        const st = state.current;
+        const sel = st.activeSub !== null ? st.children[st.activeSub] : st.activeMain !== null ? st.items[st.activeMain] : undefined;
+        if (sel && sel.id === clickedId.current) return close();
+        executeSelection(true);
+      }),
     ];
     return () => offs.forEach((p) => p.then((off) => off()));
-  }, [cancelClosing, executeSelection, reset, showAt]);
+  }, [cancelClosing, close, executeSelection, reset, showAt]);
 
   // --- Mouse / teclado / roda ---
   useEffect(() => {
@@ -257,6 +276,7 @@ function RadialMenu({ config }: { config: Config }) {
         if (s.openMain !== null) closeSub();
         else close();
       } else if (hit.ring === "sub") {
+        clickedId.current = s.children[hit.index]?.id ?? null;
         void execute(s.children[hit.index]);
       } else {
         const item = s.items[hit.index];
@@ -264,7 +284,10 @@ function RadialMenu({ config }: { config: Config }) {
           // Clique na fatia abre o sub-anel; clicar de novo na mesma fecha.
           if (s.openMain === hit.index) closeSub();
           else openSub(hit.index, false);
-        } else if (item?.action) void execute(item);
+        } else if (item?.action) {
+          clickedId.current = item.id;
+          void execute(item);
+        }
       }
     };
 
