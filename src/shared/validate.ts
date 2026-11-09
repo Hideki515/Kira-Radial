@@ -1,5 +1,5 @@
 import { parseCombo } from "./keys";
-import { LIMITS, type Action, type Config, type MenuItem } from "./types";
+import { LIMITS, THEMES, type Action, type Config, type MenuItem } from "./types";
 
 /** Valida a configuração inteira. Retorna mensagens legíveis; lista vazia = válida. */
 export function validateConfig(c: Config): string[] {
@@ -8,6 +8,8 @@ export function validateConfig(c: Config): string[] {
   else if (!parseCombo(c.hotkey.accelerator)!.mods.length)
     errors.push("O atalho global precisa de pelo menos um modificador (Ctrl, Alt, Shift ou Win).");
   if (c.appearance.scale < 0.5 || c.appearance.scale > 1.6) errors.push("Escala deve estar entre 0,5 e 1,6.");
+  if (c.appearance.theme !== undefined && !THEMES.includes(c.appearance.theme))
+    errors.push(`Tema desconhecido: "${c.appearance.theme}".`);
   if (!c.profiles.length) errors.push("É necessário ao menos um perfil.");
 
   const ids = new Set<string>();

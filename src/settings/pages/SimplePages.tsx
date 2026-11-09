@@ -1,7 +1,7 @@
 import { Check, Clipboard, RotateCcw, Upload } from "lucide-react";
 import { useState } from "react";
 import { cloneConfig, defaultConfig } from "../../shared/defaults";
-import type { Config } from "../../shared/types";
+import { HOLO_ACCENT, type Config, type Theme } from "../../shared/types";
 import { Field, Section, Segmented, Toggle } from "../controls";
 import { HotkeyRecorder } from "../HotkeyRecorder";
 
@@ -54,12 +54,35 @@ export function HotkeyPage({ config, update }: PageProps) {
   );
 }
 
-const ACCENTS = ["#4ade9b", "#43c7d9", "#a78bfa", "#e879d8", "#f2c46d", "#ff5c7a"];
+const ACCENTS = ["#4ade9b", "#43c7d9", "#a78bfa", "#e879d8", "#f2c46d", HOLO_ACCENT, "#ff5c7a"];
+const GLASS_ACCENT = "#4ade9b";
+
+/** Troca o tema e sugere a cor que combina com ele (sem sobrescrever uma cor personalizada). */
+export function applyTheme(c: Config, theme: Theme) {
+  const prev = c.appearance.theme ?? "glass";
+  if (prev === theme) return;
+  c.appearance.theme = theme;
+  if (theme === "holo" && c.appearance.accent === GLASS_ACCENT) c.appearance.accent = HOLO_ACCENT;
+  if (theme === "glass" && c.appearance.accent === HOLO_ACCENT) c.appearance.accent = GLASS_ACCENT;
+}
 
 export function AppearancePage({ config, update }: PageProps) {
   const a = config.appearance;
   return (
     <Section title="Aparência">
+      <Field label="Tema" group>
+        <Segmented<Theme>
+          value={a.theme ?? "glass"}
+          options={[
+            { value: "glass", label: "Vidro" },
+            { value: "holo", label: "Holográfico" },
+          ]}
+          onChange={(t) => update((c) => applyTheme(c, t))}
+        />
+      </Field>
+      {a.theme === "holo" && (
+        <p className="muted">HUD em wireframe com esfera e anéis animados. Usa a cor de destaque abaixo (âmbar por padrão; azul-ciano também fica bom).</p>
+      )}
       <Field label={`Tamanho: ${Math.round(a.scale * 100)}%`}>
         <input type="range" min={0.5} max={1.4} step={0.05} value={a.scale} onChange={(e) => update((c) => void (c.appearance.scale = Number(e.target.value)))} />
       </Field>

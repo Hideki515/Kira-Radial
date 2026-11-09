@@ -65,10 +65,17 @@ export interface Config {
   appearance: {
     scale: number;
     accent: string;
+    /** Visual do menu. Ausente = "glass". "holo" = HUD holográfico em wireframe. */
+    theme?: Theme;
     showCpu: boolean;
     showClock: boolean;
   };
   profiles: Profile[];
 }
 
-export const LIMITS = { minSlices: 3, maxSlices: 10, maxChildren: 8 } as const;
+export type Theme = "glass" | "holo";
+export const THEMES: readonly Theme[] = ["glass", "holo"];
+/** Cor de destaque sugerida ao escolher o tema holográfico. */
+export const HOLO_ACCENT = "#ffb03a";
+
+export const LIMITS ={ minSlices: 3, maxSlices: 10, maxChildren: 8 } as const;

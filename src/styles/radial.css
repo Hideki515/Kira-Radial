@@ -192,3 +192,112 @@ html.is-tauri body { background: transparent; }
   stroke-linecap: round;
   transition: stroke-dashoffset 600ms var(--ease-out);
 }
+
+/* ======================================================================
+   Tema holográfico — HUD em wireframe, cor = cor de destaque (--active).
+   Brilho feito com traços translúcidos sobrepostos (sem filtros).
+   ====================================================================== */
+.theme-holo {
+  --holo: var(--active);
+  --holo-hi: color-mix(in srgb, var(--active) 55%, #fff6dc);
+  --holo-dim: color-mix(in srgb, var(--active) 35%, transparent);
+  --holo-faint: color-mix(in srgb, var(--active) 16%, transparent);
+  --holo-bg: color-mix(in srgb, var(--active) 5%, #050302);
+  --font-holo: "Bahnschrift", "Segoe UI Variable Display", "Segoe UI", sans-serif;
+}
+
+.holo { pointer-events: none; }
+.holo-line { fill: none; stroke: var(--holo-faint); stroke-width: 1; }
+.holo-line--outline { stroke: var(--holo-dim); }
+
+/* Esfera: cada meridiano "gira" achatando no eixo X (cos) com fase própria. */
+.holo-meridian {
+  transform-box: view-box;
+  transform-origin: 450px 450px;
+  animation: holo-meridian 18s ease-in-out infinite;
+}
+@keyframes holo-meridian {
+  0%   { transform: scaleX(1); }
+  50%  { transform: scaleX(-1); }
+  100% { transform: scaleX(1); }
+}
+
+.holo-orbit {
+  fill: none;
+  stroke: var(--holo-dim);
+  stroke-width: 1.2;
+  stroke-dasharray: 220 26 6 26;
+  animation: holo-dash 22s linear infinite;
+}
+.holo-orbit--rev { animation-direction: reverse; animation-duration: 30s; stroke: var(--holo-faint); }
+@keyframes holo-dash { to { stroke-dashoffset: -1112; } }
+
+.holo-spin {
+  transform-box: view-box;
+  transform-origin: 450px 450px;
+  animation: holo-spin 60s linear infinite;
+}
+.holo-spin--slow  { animation-duration: 120s; }
+.holo-spin--mid   { animation-duration: 40s; }
+.holo-spin--rev   { animation-duration: 50s; animation-direction: reverse; }
+.holo-spin--hub   { animation-duration: 24s; }
+.holo-spin--sweep { animation-duration: 5s; }
+@keyframes holo-spin { to { transform: rotate(360deg); } }
+
+.holo-ticks { fill: none; stroke: var(--holo-dim); stroke-width: 1.2; }
+.holo-ticks--hub { stroke: var(--holo); stroke-width: 1; opacity: 0.7; }
+.holo-dots { fill: none; stroke: var(--holo); stroke-width: 2; stroke-dasharray: 1 7; stroke-linecap: round; opacity: 0.55; }
+.holo-bracket { fill: none; stroke: var(--holo); stroke-width: 2.5; stroke-linecap: square; opacity: 0.8; }
+.holo-pip { fill: var(--holo); opacity: 0.85; }
+
+.holo-inner-ring { fill: none; stroke: var(--holo-faint); stroke-width: 1; stroke-dasharray: 2 5; }
+.holo-sweep { fill: color-mix(in srgb, var(--active) 9%, transparent); }
+.holo-sweep-edge { stroke: var(--holo-dim); stroke-width: 1.5; }
+
+/* fundo e fatias */
+.theme-holo .ring-backing { fill: var(--holo-bg); fill-opacity: 0.9; }
+.theme-holo .main-slice .slice-shape {
+  fill: color-mix(in srgb, var(--active) 4%, transparent);
+  stroke: var(--holo-dim);
+  stroke-width: 1.2;
+}
+.theme-holo .main-slice .slice-icon { color: var(--holo); }
+.theme-holo .slice-label { font-family: var(--font-holo); font-weight: 600; letter-spacing: 0.14em; fill: var(--holo); }
+.theme-holo .main-slice.is-active .slice-shape {
+  fill: color-mix(in srgb, var(--active) 16%, transparent);
+  stroke: var(--holo-hi);
+  stroke-width: 1.8;
+}
+.theme-holo .main-slice.is-active .slice-icon  { color: var(--holo-hi); }
+.theme-holo .main-slice.is-active .slice-label { fill: var(--holo-hi); }
+.theme-holo .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 26%, transparent); stroke-width: 10; }
+
+.theme-holo .sub-slice .slice-shape {
+  fill: color-mix(in srgb, var(--item-color) 6%, var(--holo-bg));
+  fill-opacity: 0.92;
+  stroke: color-mix(in srgb, var(--item-color) 55%, transparent);
+  stroke-width: 1.2;
+}
+.theme-holo .sub-slice .slice-icon { color: var(--item-color); }
+.theme-holo .sub-slice .slice-label { fill: color-mix(in srgb, var(--item-color) 75%, #fff); }
+.theme-holo .sub-slice.is-active .slice-shape {
+  fill: color-mix(in srgb, var(--item-color) 20%, var(--holo-bg));
+  stroke: var(--item-color);
+}
+
+/* hub */
+.theme-holo .hub-well { fill: var(--holo-bg); stroke: var(--holo-faint); }
+.theme-holo .hub-disc { fill: var(--holo-bg); stroke: var(--holo-dim); }
+.theme-holo .center-hub.is-hovered .hub-disc { stroke: var(--holo-hi); }
+.theme-holo .hub-track { stroke: var(--holo-faint); stroke-width: 5; stroke-dasharray: 2 4; }
+.theme-holo .hub-gauge { stroke: var(--holo); stroke-width: 5; stroke-linecap: butt; }
+.theme-holo .hub-gauge-halo { stroke: color-mix(in srgb, var(--active) 22%, transparent); stroke-width: 13; }
+.theme-holo .hub-time { font-family: var(--font-holo); font-weight: 500; letter-spacing: 0.06em; fill: var(--holo-hi); }
+.theme-holo .hub-date { font-family: var(--font-holo); fill: var(--holo-dim); letter-spacing: 0.18em; }
+.theme-holo .hub-cpu  { font-family: var(--font-holo); font-weight: 500; fill: var(--holo); }
+.theme-holo .hub-pill { fill: transparent; stroke: var(--holo-dim); }
+.theme-holo .hub-pill-text { font-family: var(--font-holo); fill: var(--holo); letter-spacing: 0.24em; }
+
+@media (prefers-reduced-motion: reduce) {
+  .holo-meridian, .holo-orbit, .holo-spin { animation: none; }
+}

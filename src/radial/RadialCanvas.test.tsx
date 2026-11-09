@@ -31,4 +31,27 @@ describe("RadialCanvas", () => {
     render(<RadialCanvas {...base} activeMain={0} activeSub={null} />);
     expect(screen.queryByTestId("submenu")).toBeNull();
   });
+
+  it("tema vidro (padrão) não desenha a camada holográfica", () => {
+    const { container } = render(<RadialCanvas {...base} activeMain={null} activeSub={null} />);
+    expect(screen.queryByTestId("holo-back")).toBeNull();
+    expect(container.querySelector("svg")!.classList.contains("theme-glass")).toBe(true);
+  });
+
+  it("tema holográfico desenha esfera, varredura e retícula sem perder fatias e hub", () => {
+    const { container } = render(
+      <RadialCanvas {...base} appearance={{ ...base.appearance, theme: "holo" }} activeMain={0} activeSub={null} />,
+    );
+    const svg = container.querySelector("svg")!;
+    expect(svg.classList.contains("theme-holo")).toBe(true);
+    expect(screen.getByTestId("holo-back")).toBeTruthy();
+    expect(svg.querySelectorAll(".holo-meridian")).toHaveLength(6);
+    expect(svg.querySelector(".holo-sweep")).toBeTruthy();
+    expect(svg.querySelector(".holo-front")).toBeTruthy();
+    expect(svg.querySelector(".orbit-hot")).toBeNull();
+    expect(screen.getAllByTestId("main-slice")).toHaveLength(defaultProfile.items.length);
+    expect(screen.getByText("85%")).toBeTruthy();
+    // Decoração não pode capturar o ponteiro.
+    svg.querySelectorAll(".holo").forEach((g) => expect(g.getAttribute("aria-hidden")).toBe("true"));
+  });
 });

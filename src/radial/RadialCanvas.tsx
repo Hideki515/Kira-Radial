@@ -1,6 +1,7 @@
 import type { StatsPayload } from "../shared/ipc";
 import type { Config, MenuItem } from "../shared/types";
 import { CenterHub } from "./CenterHub";
+import { HoloBack, HoloFront, HoloScan } from "./HoloLayer";
 import { LAYOUT, polar, sliceAngle } from "./geometry";
 import { MainSlice } from "./MainSlice";
 import { SubmenuRing } from "./SubmenuRing";
@@ -41,8 +42,9 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
   const subOpen = subParent !== null && children.length > 0;
   // Pré-visualização: escurece só com um subitem escolhido (como antes). Menu real: sempre que o sub-anel está aberto.
   const dimOthers = openMain === undefined ? activeSub !== null : subOpen;
+  const holo = appearance.theme === "holo";
   return (
-    <svg className="radial-canvas" viewBox={`0 0 ${LAYOUT.size} ${LAYOUT.size}`} role="menu" aria-label="Menu radial">
+    <svg className={`radial-canvas theme-${holo ? "holo" : "glass"}`} viewBox={`0 0 ${LAYOUT.size} ${LAYOUT.size}`} role="menu" aria-label="Menu radial">
       <defs>
         <radialGradient id="slice-glass" cx={C} cy={C} r={LAYOUT.subOuter} gradientUnits="userSpaceOnUse">
           <stop offset="0.35" stopColor="#0a0f17" />
@@ -68,18 +70,25 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
         </radialGradient>
       </defs>
 
-      {/* brilhos ambientes */}
-      <circle cx={C + 250} cy={C - 250} r={170} fill="url(#glow-teal)" className="ambient" />
-      <circle cx={C - 280} cy={C + 250} r={150} fill="url(#glow-violet)" className="ambient" />
+      {holo ? (
+        <HoloBack />
+      ) : (
+        <>
+          {/* brilhos ambientes */}
+          <circle cx={C + 250} cy={C - 250} r={170} fill="url(#glow-teal)" className="ambient" />
+          <circle cx={C - 280} cy={C + 250} r={150} fill="url(#glow-violet)" className="ambient" />
 
-      {/* órbitas */}
-      <circle cx={C} cy={C} r={LAYOUT.subOuter + 10} className="orbit-soft" />
-      {ORBIT_ARCS.map(([r, a0, a1], i) => (
-        <path key={i} d={orbitArc(r, a0, a1)} className="orbit-hot" />
-      ))}
+          {/* órbitas */}
+          <circle cx={C} cy={C} r={LAYOUT.subOuter + 10} className="orbit-soft" />
+          {ORBIT_ARCS.map(([r, a0, a1], i) => (
+            <path key={i} d={orbitArc(r, a0, a1)} className="orbit-hot" />
+          ))}
+        </>
+      )}
 
       {/* fundo escuro sob o anel: as frestas entre fatias não mostram a área de trabalho */}
       <circle cx={C} cy={C} r={LAYOUT.mainOuter + 4} className="ring-backing" />
+      {holo && <HoloScan />}
 
       <g className="main-slices">
         {items.map((item, i) => (
@@ -110,6 +119,7 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
         hovered={hubHovered}
         inSubmenu={openMain === undefined ? activeSub !== null : subOpen}
       />
+      {holo && <HoloFront />}
     </svg>
   );
 }
