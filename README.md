@@ -42,6 +42,15 @@ O alerta acontece porque o Kira usa recursos que malware também usa: hook de te
 ## Desenvolvimento
 
 ### Requisitos
+Tudo está listado em [`prerequisites.txt`](prerequisites.txt). Para instalar o que faltar de uma vez (via winget), rode na raiz do projeto:
+
+```powershell
+powershell -ExecutionPolicy RemoteSigned -File scripts\install-prerequisites.ps1
+```
+
+O script pula o que já estiver instalado, configura o Rust e roda `npm ci`. Use `-DryRun` para só ver o que seria instalado e `-SkipNpm` para pular o `npm ci`.
+
+Pré-requisitos:
 - Windows 10 ou 11 com WebView2 (já vem no Windows 11)
 - [Node.js](https://nodejs.org) 22 ou mais recente
 - [Rust](https://rustup.rs), toolchain `stable-x86_64-pc-windows-msvc`

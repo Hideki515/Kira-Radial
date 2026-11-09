@@ -1,0 +1,23 @@
+# Pré-requisitos para compilar o Kira Radial a partir do código-fonte (Windows 10/11).
+# Para instalar tudo de uma vez, rode na raiz do projeto:
+#
+#   powershell -ExecutionPolicy RemoteSigned -File scripts\install-prerequisites.ps1
+#
+# Formato: um pacote do winget por linha -> <id do winget> [? comando que já indica instalado] [| argumentos extras do winget]
+# Linhas começando com # são ignoradas. O que já estiver instalado é pulado.
+# (Só para USAR a Kira, não precisa de nada disso: baixe o instalador na página Releases.)
+
+# Node.js (LTS) — front-end React/Vite e npm
+OpenJS.NodeJS.LTS ? node
+
+# Rust (rustup) — back-end Tauri; o script define a toolchain stable-x86_64-pc-windows-msvc
+Rustlang.Rustup ? rustup
+
+# Compilador C++ da Microsoft (MSVC) — exigido pelo Rust no Windows
+Microsoft.VisualStudio.2022.BuildTools | --override "--wait --passive --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
+
+# WebView2 — motor da interface (já vem no Windows 11)
+Microsoft.EdgeWebView2Runtime
+
+# Git — para clonar e atualizar o repositório
+Git.Git ? git
