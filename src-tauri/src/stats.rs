@@ -52,9 +52,23 @@ fn ram_percent() -> f32 {
     ((m.ullTotalPhys - m.ullAvailPhys) as f64 / m.ullTotalPhys as f64 * 100.0) as f32
 }
 
+/// O ícone está na tela e com o alerta de CPU ligado?
+fn orb_wants_cpu(app: &AppHandle) -> bool {
+    use windows::Win32::Foundation::HWND;
+    use windows::Win32::UI::WindowsAndMessaging::IsWindowVisible;
+    let cfg = app.state::<AppState>().config();
+    if !cfg.launcher.mode.wants_orb() || !cfg.launcher.orb.cpu_alert {
+        return false;
+    }
+    let h = crate::orb::hwnd(app);
+    h != 0 && unsafe { IsWindowVisible(HWND(h as *mut _)) }.as_bool()
+}
+
 pub fn spawn(app: AppHandle) {
     std::thread::spawn(move || {
         let mut prev = cpu_times().unwrap_or_default();
+        let mut prev_orb = prev;
+        let mut tick: u32 = 0;
         let mut was_visible = false;
         loop {
             let visible = app.state::<AppState>().visible.load(Ordering::SeqCst);
@@ -65,6 +79,15 @@ pub fn spawn(app: AppHandle) {
                     let _ = app.emit_to(RADIAL, "stats", s);
                 }
                 prev = now;
+                // Ícone flutuante (alerta de CPU alta): a cada ~2 s, só se ele estiver visível.
+                tick = tick.wrapping_add(1);
+                if !visible && tick.is_multiple_of(5) {
+                    if orb_wants_cpu(&app) {
+                        let s = Stats { cpu: cpu_percent(prev_orb, now), ram: 0.0 };
+                        let _ = app.emit_to(crate::orb::ORB, "stats", s);
+                    }
+                    prev_orb = now;
+                }
             }
             // Ao abrir, responde rápido; aberto, a cada 1s; fechado, quase sem custo.
             let wait = if visible && !was_visible { 250 } else if visible { 1000 } else { 400 };

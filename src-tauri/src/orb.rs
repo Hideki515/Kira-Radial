@@ -74,7 +74,7 @@ pub fn apply(app: &AppHandle, cfg: &Config) {
     let side = win.outer_size().map(|s| s.width as i32).unwrap_or(side_logical as i32);
     let saved = orb.x.zip(orb.y);
     let (monitors, primary_work) = positioning::monitors();
-    let (x, y) = positioning::orb_position(saved, side, &monitors, primary_work);
+    let (x, y) = positioning::orb_position(saved, side, &monitors, primary_work, orb.docked);
     // Movimento feito pelo próprio app: não deve virar "posição escolhida pelo usuário"
     // (senão o canto padrão seria gravado como posição fixa).
     *PLACED.lock().unwrap() = Some((x, y));
@@ -128,10 +128,29 @@ pub fn on_moved(app: &AppHandle, x: i32, y: i32) {
         if !cfg.launcher.mode.wants_orb() || !should_save((x, y), placed, (cfg.launcher.orb.x, cfg.launcher.orb.y)) {
             return;
         }
-        cfg.launcher.orb.x = Some(x);
-        cfg.launcher.orb.y = Some(y);
+        // Solto perto de uma borda: encaixa (metade para fora). Longe: solta do encaixe.
+        let side = window(&app).and_then(|w| w.outer_size().ok()).map(|s| s.width as i32).unwrap_or(144);
+        let (monitors, _) = positioning::monitors();
+        let edge = positioning::orb_dock((x, y), side, &monitors);
+        let (fx, fy) = match (edge, positioning::monitor_of((x, y), side, &monitors)) {
+            (Some(e), Some(m)) => positioning::docked_position((x, y), side, e, m),
+            _ => (x, y),
+        };
+        let dock_changed = cfg.launcher.orb.docked != edge;
+        cfg.launcher.orb.x = Some(fx);
+        cfg.launcher.orb.y = Some(fy);
+        cfg.launcher.orb.docked = edge;
         if let Err(e) = config::save(&cfg) {
             eprintln!("[kira-radial] falha ao salvar posição do ícone: {e}");
+        }
+        if (fx, fy) != (x, y) {
+            *PLACED.lock().unwrap() = Some((fx, fy));
+            if let Some(w) = window(&app) {
+                let _ = w.set_position(PhysicalPosition::new(fx, fy));
+            }
+        }
+        if dock_changed {
+            let _ = app.emit("config:changed", cfg.clone());
         }
     });
 }
@@ -143,10 +162,14 @@ pub fn reset_position(app: &AppHandle) {
         let mut cfg = state.config.lock().unwrap();
         cfg.launcher.orb.x = None;
         cfg.launcher.orb.y = None;
+        // Volta ao canto = sai do encaixe (senão o front manteria a classe dock-* e o
+        // orbe deslizaria para fora da janela no hover).
+        cfg.launcher.orb.docked = None;
         let _ = config::save(&cfg);
         cfg.clone()
     };
     apply(app, &cfg);
+    let _ = app.emit("config:changed", cfg);
 }
 
 #[cfg(test)]

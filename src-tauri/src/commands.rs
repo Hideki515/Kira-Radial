@@ -23,6 +23,7 @@ pub fn save_config(app: AppHandle, state: State<'_, AppState>, mut config: Confi
     config.launcher.orb.x = old.launcher.orb.x;
     config.launcher.orb.y = old.launcher.orb.y;
     config.launcher.orb.hidden = old.launcher.orb.hidden;
+    config.launcher.orb.docked = old.launcher.orb.docked;
     if old.hotkey.accelerator != config.hotkey.accelerator || old.launcher.mode != config.launcher.mode {
         menu::apply_hotkey(&app, &config)?;
     }

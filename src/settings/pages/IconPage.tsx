@@ -109,6 +109,14 @@ export function IconPage({ config, update, goToLauncher }: Props) {
         </Field>
 
         <Toggle
+          label="Alerta de CPU alta"
+          hint="O núcleo fica avermelhado e pulsa mais rápido quando o uso de CPU passa de 85%."
+          checked={orb.cpuAlert !== false}
+          onChange={(v) => update((c) => void (c.launcher.orb.cpuAlert = v))}
+        />
+        <p className="muted">Dica: solte o ícone encostado numa borda da tela para ele ficar meio escondido; passe o mouse para ele aparecer. Gire a roda do mouse sobre o ícone para ajustar o volume.</p>
+
+        <Toggle
           label="Esconder em tela cheia"
           hint="Some durante jogos, vídeos e apresentações em tela cheia e volta sozinho ao sair."
           checked={orb.hideOnFullscreen}

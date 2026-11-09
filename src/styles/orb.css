@@ -117,3 +117,20 @@
 @media (prefers-reduced-motion: reduce) {
   .orb-spin, .orb-glow, .orb-core { animation: none; }
 }
+
+/* --- encaixado na borda: metade fora da tela; desliza para dentro ao passar o mouse --- */
+.dock-left .orb:hover   { transform: translateX(calc(var(--orb-size) * 0.5)); opacity: 1; }
+.dock-right .orb:hover  { transform: translateX(calc(var(--orb-size) * -0.5)); opacity: 1; }
+.dock-top .orb:hover    { transform: translateY(calc(var(--orb-size) * 0.5)); opacity: 1; }
+.dock-bottom .orb:hover { transform: translateY(calc(var(--orb-size) * -0.5)); opacity: 1; }
+.orb-stage[class*="dock-"] .orb { transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease; }
+
+/* --- CPU alta: núcleo avermelhado, pulso rápido --- */
+.orb.is-hot { --orb-accent: #ff5c7a; }
+.orb.is-hot .orb-core { animation-duration: 0.7s; }
+.orb.is-hot .orb-glow { animation-duration: 0.9s; }
+
+/* --- arco de volume (roda do mouse sobre o ícone) --- */
+.orb-volume { position: absolute; inset: -4%; width: 108%; height: 108%; overflow: visible; pointer-events: none; }
+.orb-volume-track { fill: none; stroke: color-mix(in srgb, var(--orb-accent) 18%, transparent); stroke-width: 3; }
+.orb-volume-arc { fill: none; stroke: var(--orb-hi); stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 160ms ease; }

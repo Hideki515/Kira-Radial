@@ -27,7 +27,9 @@
       "image": null,
       "opacityIdle": 0.85,
       "hideOnFullscreen": true,
-      "hidden": false
+      "hidden": false,
+      "docked": null,
+      "cpuAlert": true
     }
   },
   "profiles": [

@@ -159,3 +159,15 @@ describe("Área de transferência", () => {
     expect(clipboardChildren("c", [])[0].action).toBeUndefined();
   });
 });
+
+describe("tipo automático desconhecido", () => {
+  it("não quebra: vira sub-anel vazio e a validação acusa", async () => {
+    const weird = { id: "z", label: "Z", icon: "code", dynamic: "telepatia" } as unknown as MenuItem;
+    expect(resolveItems([weird], {})[0].children).toEqual([]);
+    const { validateConfig } = await import("../shared/validate");
+    const { cloneConfig, defaultConfig } = await import("../shared/defaults");
+    const c = cloneConfig(defaultConfig);
+    c.profiles[0].items[0] = weird;
+    expect(validateConfig(c).some((e) => e.includes("desconhecido"))).toBe(true);
+  });
+});

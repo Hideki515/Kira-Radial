@@ -1,5 +1,5 @@
-import { ChevronDown, ChevronUp, CornerDownRight, Plus, Sparkles, Trash2 } from "lucide-react";
-import type { CSSProperties } from "react";
+import { ChevronDown, ChevronUp, CornerDownRight, GripVertical, Plus, Sparkles, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { getIcon, ICONS } from "../../shared/icons";
 import { DYNAMIC_HINT, DYNAMIC_LABEL } from "../../radial/dynamic";
 import { DYNAMIC_KINDS, LIMITS, type DynamicKind, type MenuItem, type Profile } from "../../shared/types";
@@ -69,10 +69,45 @@ export function ItemsPage({ profile, selection, onSelect, edit }: Props) {
     onSelect(ci === null ? { main: Math.max(0, mi - 1), child: null } : { main: mi, child: null });
   };
 
-  const reorder = (mi: number, ci: number | null, d: number) => {
-    edit((p) => (ci === null ? move(p.items, mi, mi + d) : move(p.items[mi].children!, ci, ci + d)));
-    if (ci === null) onSelect({ main: Math.min(Math.max(mi + d, 0), items.length - 1), child: null });
-    else onSelect({ main: mi, child: Math.min(Math.max(ci + d, 0), items[mi].children!.length - 1) });
+  /** Move a fatia (ou subitem) para a posição `to` e mantém a seleção nele. */
+  const moveTo = (mi: number, ci: number | null, to: number) => {
+    const len = ci === null ? items.length : items[mi].children!.length;
+    const from = ci ?? mi;
+    if (to < 0 || to >= len || to === from) return;
+    edit((p) => (ci === null ? move(p.items, mi, to) : move(p.items[mi].children!, ci, to)));
+    onSelect(ci === null ? { main: to, child: null } : { main: mi, child: to });
+  };
+  const reorder = (mi: number, ci: number | null, d: number) => moveTo(mi, ci, (ci ?? mi) + d);
+
+  // --- Arrastar pela alça (eventos de ponteiro; a API HTML5 de drag é ruim no WebView2) ---
+  type Drag = { mi: number; ci: number | null; over: number | null };
+  const [drag, setDrag] = useState<Drag | null>(null);
+  const dragRef = useRef<Drag | null>(null);
+  dragRef.current = drag;
+  useEffect(() => {
+    if (!drag) return;
+    const up = () => {
+      const d = dragRef.current;
+      setDrag(null);
+      if (d && d.over !== null) moveTo(d.mi, d.ci, d.over);
+    };
+    window.addEventListener("pointerup", up);
+    return () => window.removeEventListener("pointerup", up);
+  });
+  /** Ponteiro passou sobre a linha (mi, ci): vira o destino se for do mesmo grupo. */
+  const hover = (mi: number, ci: number | null) => {
+    const d = dragRef.current;
+    if (!d) return;
+    const sameGroup = d.ci === null ? ci === null : ci !== null && mi === d.mi;
+    if (sameGroup) setDrag({ ...d, over: ci ?? mi });
+  };
+  const isDropTarget = (mi: number, ci: number | null) =>
+    !!drag && drag.over === (ci ?? mi) && (drag.ci === null ? ci === null : ci !== null && drag.mi === mi) && drag.over !== (drag.ci ?? drag.mi);
+  /** Alt+↑/↓ na linha move o item (atalho de teclado). */
+  const onRowKey = (mi: number, ci: number | null) => (e: ReactKeyboardEvent) => {
+    if (!e.altKey || (e.key !== "ArrowUp" && e.key !== "ArrowDown")) return;
+    e.preventDefault();
+    reorder(mi, ci, e.key === "ArrowUp" ? -1 : 1);
   };
 
   return (
@@ -90,7 +125,15 @@ export function ItemsPage({ profile, selection, onSelect, edit }: Props) {
             const isSel = selection.main === mi && selection.child === null;
             return (
               <li key={it.id}>
-                <div className={`tree-row${isSel ? " is-selected" : ""}`} onClick={() => onSelect({ main: mi, child: null })}>
+                <div
+                  className={`tree-row${isSel ? " is-selected" : ""}${isDropTarget(mi, null) ? " is-drop" : ""}${drag && drag.ci === null && drag.mi === mi ? " is-dragging" : ""}`}
+                  onClick={() => onSelect({ main: mi, child: null })}
+                  onPointerOver={() => hover(mi, null)}
+                  onKeyDown={onRowKey(mi, null)}
+                  tabIndex={0}
+                  data-testid={`row-${mi}`}
+                >
+                  <DragHandle onStart={() => setDrag({ mi, ci: null, over: null })} />
                   <Icon size={16} />
                   <span className="tree-label">{it.label || "(sem nome)"}</span>
                   {it.dynamic ? (
@@ -112,10 +155,15 @@ export function ItemsPage({ profile, selection, onSelect, edit }: Props) {
                       return (
                         <li key={ch.id}>
                           <div
-                            className={`tree-row is-child${sel ? " is-selected" : ""}`}
+                            className={`tree-row is-child${sel ? " is-selected" : ""}${isDropTarget(mi, ci) ? " is-drop" : ""}${drag && drag.ci === ci && drag.mi === mi ? " is-dragging" : ""}`}
                             style={{ "--item-color": ch.color ?? "var(--accent)" } as CSSProperties}
                             onClick={() => onSelect({ main: mi, child: ci })}
+                            onPointerOver={() => hover(mi, ci)}
+                            onKeyDown={onRowKey(mi, ci)}
+                            tabIndex={0}
+                            data-testid={`row-${mi}-${ci}`}
                           >
+                            <DragHandle onStart={() => setDrag({ mi, ci, over: null })} />
                             <CornerDownRight size={13} className="tree-elbow" />
                             <CIcon size={15} />
                             <span className="tree-label">{ch.label || "(sem nome)"}</span>
@@ -231,6 +279,27 @@ export function ItemsPage({ profile, selection, onSelect, edit }: Props) {
         </div>
       )}
     </div>
+  );
+}
+
+/** Alça de arrastar (inicia o arrasto; o destino é a linha sob o ponteiro). */
+function DragHandle({ onStart }: { onStart: () => void }) {
+  return (
+    <span
+      className="drag-handle"
+      title="Arraste para reordenar (ou Alt+↑/↓)"
+      aria-label="Arrastar para reordenar"
+      role="button"
+      onPointerDown={(e) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        onStart();
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <GripVertical size={13} />
+    </span>
   );
 }
 

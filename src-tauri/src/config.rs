@@ -63,11 +63,15 @@ pub struct OrbConfig {
     pub hide_on_fullscreen: bool,
     /// Escondido pelo usuário (menu do ícone / bandeja). Persistido entre reinícios.
     pub hidden: bool,
+    /// Borda onde o ícone está encaixado (metade para fora), se houver.
+    pub docked: Option<crate::positioning::Edge>,
+    /// Núcleo fica avermelhado e pulsa mais rápido com CPU alta.
+    pub cpu_alert: bool,
 }
 
 impl Default for OrbConfig {
     fn default() -> Self {
-        Self { x: None, y: None, size: 96.0, image: None, opacity_idle: 0.85, hide_on_fullscreen: true, hidden: false }
+        Self { x: None, y: None, size: 96.0, image: None, opacity_idle: 0.85, hide_on_fullscreen: true, hidden: false, docked: None, cpu_alert: true }
     }
 }
 
@@ -302,5 +306,34 @@ mod fase2_qa_tests {
         let c: Config = serde_json::from_value(v).unwrap();
         c.validate().unwrap();
         assert!(!c.behavior.clipboard_history);
+    }
+}
+
+#[cfg(test)]
+mod dock_qa_tests {
+    use super::*;
+
+    #[test]
+    fn config_antiga_sem_docked_cpu_alert_usa_padroes() {
+        let mut v: Value = serde_json::to_value(Config::default_config()).unwrap();
+        let orb = v["launcher"]["orb"].as_object_mut().unwrap();
+        orb.remove("docked");
+        orb.remove("cpuAlert");
+        let c: Config = serde_json::from_value(v).unwrap();
+        c.validate().unwrap();
+        assert_eq!(c.launcher.orb.docked, None);
+        assert!(c.launcher.orb.cpu_alert);
+    }
+
+    #[test]
+    fn bordas_do_front_desserializam_em_minusculas() {
+        use crate::positioning::Edge;
+        for (s, e) in [("left", Edge::Left), ("right", Edge::Right), ("top", Edge::Top), ("bottom", Edge::Bottom)] {
+            let mut v: Value = serde_json::to_value(Config::default_config()).unwrap();
+            v["launcher"]["orb"]["docked"] = Value::String(s.into());
+            let c: Config = serde_json::from_value(v).unwrap();
+            assert_eq!(c.launcher.orb.docked, Some(e));
+            assert_eq!(serde_json::to_value(c).unwrap()["launcher"]["orb"]["docked"], s);
+        }
     }
 }

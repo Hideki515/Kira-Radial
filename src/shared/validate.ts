@@ -1,5 +1,5 @@
 import { parseCombo } from "./keys";
-import { LAUNCHER_MODES, LIMITS, ORB_LIMITS, SCALE_LIMITS, THEMES, wantsHotkey, type Action, type Config, type MenuItem } from "./types";
+import { DYNAMIC_KINDS, LAUNCHER_MODES, LIMITS, ORB_LIMITS, SCALE_LIMITS, THEMES, wantsHotkey, type Action, type Config, type MenuItem } from "./types";
 
 /** Valida a configuração inteira. Retorna mensagens legíveis; lista vazia = válida. */
 export function validateConfig(c: Config): string[] {
@@ -43,6 +43,7 @@ function validateItem(it: MenuItem, where: string, allowChildren: boolean, error
   if (!it.label.trim()) errors.push(`${where}: rótulo vazio.`);
   if (it.dynamic) {
     if (!allowChildren) errors.push(`${where}: submenu automático só em fatias principais.`);
+    if (!DYNAMIC_KINDS.includes(it.dynamic)) errors.push(`${where}: submenu automático desconhecido ("${it.dynamic}").`);
     return;
   }
   const kids = it.children ?? [];

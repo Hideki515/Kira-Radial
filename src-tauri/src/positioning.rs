@@ -74,11 +74,84 @@ pub fn place(cursor: (i32, i32), work: Rect, dpi_scale: f64, ui_scale: f64, cent
 /// Margem do ícone flutuante até as bordas da área de trabalho na posição padrão.
 pub const ORB_MARGIN: i32 = 24;
 
+/// Borda de monitor onde o ícone fica encaixado (metade para fora da tela).
+#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum Edge {
+    Left,
+    Right,
+    Top,
+    Bottom,
+}
+
+/// Distância (px) entre o orbe e a borda que faz o ícone encaixar ao ser solto.
+pub const DOCK_DISTANCE: i32 = 24;
+
+fn monitor_at(monitors: &[Rect], x: i32, y: i32) -> Option<Rect> {
+    monitors.iter().copied().find(|m| x >= m.left && x < m.right && y >= m.top && y < m.bottom)
+}
+
+/// Ao soltar o ícone (janela de lado `side` em `pos`): encaixa na borda do monitor se o
+/// orbe (1/1,5 da janela, centralizado) estiver a até `DOCK_DISTANCE` dela ou passando dela.
+pub fn orb_dock(pos: (i32, i32), side: i32, monitors: &[Rect]) -> Option<Edge> {
+    let (cx, cy) = (pos.0 + side / 2, pos.1 + side / 2);
+    let m = monitor_at(monitors, cx, cy)?;
+    let r = side / 3; // raio do orbe = (side / 1,5) / 2
+    let gaps = [
+        (Edge::Left, cx - r - m.left),
+        (Edge::Right, m.right - (cx + r)),
+        (Edge::Top, cy - r - m.top),
+        (Edge::Bottom, m.bottom - (cy + r)),
+    ];
+    // Borda compartilhada com outro monitor (ex.: dois lado a lado) não é borda da tela:
+    // ali o ícone ficaria metade em cada monitor, então não encaixa.
+    let outside = |e: Edge| match e {
+        Edge::Left => (m.left - 1, cy),
+        Edge::Right => (m.right, cy),
+        Edge::Top => (cx, m.top - 1),
+        Edge::Bottom => (cx, m.bottom),
+    };
+    gaps.iter()
+        .filter(|(e, g)| *g <= DOCK_DISTANCE && monitor_at(monitors, outside(*e).0, outside(*e).1).is_none())
+        .min_by_key(|(_, g)| *g)
+        .map(|(e, _)| *e)
+}
+
+/// Monitor que contém o centro da janela do ícone.
+pub fn monitor_of(pos: (i32, i32), side: i32, monitors: &[Rect]) -> Option<Rect> {
+    monitor_at(monitors, pos.0 + side / 2, pos.1 + side / 2)
+}
+
+/// Posição encaixada: centro do orbe exatamente sobre a borda; o outro eixo cabe no monitor.
+pub fn docked_position(pos: (i32, i32), side: i32, edge: Edge, m: Rect) -> (i32, i32) {
+    let half = side / 2;
+    let fit = |v: i32, lo: i32, hi: i32| if hi - lo <= side { lo } else { v.clamp(lo, hi - side) };
+    match edge {
+        Edge::Left => (m.left - half, fit(pos.1, m.top, m.bottom)),
+        Edge::Right => (m.right - half, fit(pos.1, m.top, m.bottom)),
+        Edge::Top => (fit(pos.0, m.left, m.right), m.top - half),
+        Edge::Bottom => (fit(pos.0, m.left, m.right), m.bottom - half),
+    }
+}
+
 /// Posição (canto superior esquerdo, px físicos) do ícone flutuante de lado `side`.
 /// A posição salva vale em qualquer lugar da tela: só é ajustada para a janela caber
 /// inteira no monitor onde está o centro. Se esse monitor não existe mais (desconectado,
 /// resolução menor), volta ao canto inferior direito da área de trabalho principal.
-pub fn orb_position(saved: Option<(i32, i32)>, side: i32, monitors: &[Rect], primary_work: Rect) -> (i32, i32) {
+pub fn orb_position(saved: Option<(i32, i32)>, side: i32, monitors: &[Rect], primary_work: Rect, docked: Option<Edge>) -> (i32, i32) {
+    if let (Some((x, y)), Some(edge)) = (saved, docked) {
+        // Encaixado: o centro está sobre a borda; procura o monitor 1 px para dentro.
+        let (cx, cy) = (x + side / 2, y + side / 2);
+        let (ix, iy) = match edge {
+            Edge::Left => (cx + 1, cy),
+            Edge::Right => (cx - 1, cy),
+            Edge::Top => (cx, cy + 1),
+            Edge::Bottom => (cx, cy - 1),
+        };
+        if let Some(m) = monitor_at(monitors, ix, iy) {
+            return docked_position((x, y), side, edge, m);
+        }
+    }
     if let Some((x, y)) = saved {
         let (cx, cy) = (x + side / 2, y + side / 2);
         if let Some(m) = monitors.iter().find(|m| cx >= m.left && cx < m.right && cy >= m.top && cy < m.bottom) {
@@ -206,29 +279,75 @@ mod tests {
 
     #[test]
     fn icone_sem_posicao_vai_para_o_canto_inferior_direito() {
-        assert_eq!(orb_position(None, 144, &MONS, WORK), (1920 - 144 - ORB_MARGIN, 1032 - 144 - ORB_MARGIN));
+        assert_eq!(orb_position(None, 144, &MONS, WORK, None), (1920 - 144 - ORB_MARGIN, 1032 - 144 - ORB_MARGIN));
     }
 
     #[test]
     fn icone_fica_em_qualquer_lugar_de_qualquer_monitor() {
         // Sobre a barra de tarefas, no topo, no 2º monitor (coordenada negativa): tudo vale.
-        assert_eq!(orb_position(Some((900, 1000)), 144, &MONS, WORK), (900, 1000 - 64));
-        assert_eq!(orb_position(Some((0, 0)), 144, &MONS, WORK), (0, 0));
-        assert_eq!(orb_position(Some((3000, -150)), 144, &MONS, WORK), (3000, -150));
+        assert_eq!(orb_position(Some((900, 1000)), 144, &MONS, WORK, None), (900, 1000 - 64));
+        assert_eq!(orb_position(Some((0, 0)), 144, &MONS, WORK, None), (0, 0));
+        assert_eq!(orb_position(Some((3000, -150)), 144, &MONS, WORK, None), (3000, -150));
         // Metade para fora da borda: puxa só o necessário para caber.
-        assert_eq!(orb_position(Some((-50, 500)), 144, &MONS, WORK), (0, 500));
+        assert_eq!(orb_position(Some((-50, 500)), 144, &MONS, WORK, None), (0, 500));
     }
 
     #[test]
     fn icone_em_monitor_desconectado_volta_ao_canto() {
         let only_main = [MONS[0]];
-        let p = orb_position(Some((3000, 300)), 144, &only_main, WORK);
+        let p = orb_position(Some((3000, 300)), 144, &only_main, WORK, None);
         assert_eq!(p, (1920 - 144 - ORB_MARGIN, 1032 - 144 - ORB_MARGIN));
+    }
+
+    #[test]
+    fn encaixa_so_perto_da_borda() {
+        assert_eq!(orb_dock((-10, 400), 144, &MONS), Some(Edge::Left));
+        assert_eq!(orb_dock((800, 1080 - 130), 144, &MONS), Some(Edge::Bottom));
+        assert_eq!(orb_dock((800, 400), 144, &MONS), None);
+        assert_eq!(orb_dock((10_000, 10_000), 144, &MONS), None);
+        // Borda direita do monitor 1 encosta no monitor 2: não é borda da tela.
+        assert_eq!(orb_dock((1920 - 144 + 10, 400), 144, &MONS[..1]), Some(Edge::Right));
+        assert_eq!(orb_dock((1920 - 144 + 10, 400), 144, &MONS), None);
+    }
+
+    #[test]
+    fn posicao_encaixada_fica_meio_para_fora_e_sobrevive_ao_reaplicar() {
+        let m = MONS[0];
+        let p = docked_position((-10, 400), 144, Edge::Left, m);
+        assert_eq!(p, (-72, 400));
+        assert_eq!(orb_position(Some(p), 144, &MONS, WORK, Some(Edge::Left)), p);
+        let r = docked_position((1900, 2000), 144, Edge::Right, m);
+        assert_eq!(r, (1920 - 72, 1080 - 144));
+        assert_eq!(orb_position(Some(r), 144, &MONS, WORK, Some(Edge::Right)), r);
+        // Monitor sumiu: volta ao canto.
+        let gone = orb_position(Some((3000 - 72, 300)), 144, &[m], WORK, Some(Edge::Left));
+        assert_eq!(gone, (1920 - 144 - ORB_MARGIN, 1032 - 144 - ORB_MARGIN));
     }
 
     #[test]
     fn modo_centro_ignora_cursor() {
         let p = place((5, 5), WORK, 1.0, 0.75, true);
         assert_eq!((p.x, p.y), (960 - 337, 516 - 337));
+    }
+}
+
+#[cfg(test)]
+mod dock_edge_qa_tests {
+    use super::*;
+
+    // QA (v0.6.0): monitores de alturas diferentes — a borda esquerda do monitor 2 só é
+    // compartilhada no trecho em que o monitor 1 existe ao lado.
+    #[test]
+    fn borda_compartilhada_so_no_trecho_com_vizinho() {
+        let mons = [
+            Rect { left: 0, top: 0, right: 1920, bottom: 1080 },
+            Rect { left: 1920, top: -200, right: 4480, bottom: 1240 },
+        ];
+        // Ao lado do monitor 1: não encaixa.
+        assert_eq!(orb_dock((1888, 328), 144, &mons), None);
+        // Abaixo do fim do monitor 1 (y = 1150): é borda real da tela, encaixa.
+        assert_eq!(orb_dock((1888, 1078), 144, &mons), Some(Edge::Left));
+        // Acima do monitor 1 (y = -100): também borda real.
+        assert_eq!(orb_dock((1888, -172), 144, &mons), Some(Edge::Left));
     }
 }

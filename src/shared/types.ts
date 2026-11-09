@@ -118,7 +118,13 @@ export interface OrbConfig {
   hideOnFullscreen: boolean;
   /** Escondido pelo usuário (botão direito no ícone / bandeja). Gerido pelo backend. */
   hidden: boolean;
+  /** Borda onde o ícone está encaixado (metade para fora). Gerido pelo backend ao soltar. */
+  docked?: OrbEdge | null;
+  /** Núcleo avermelhado e pulsando mais rápido com CPU alta. */
+  cpuAlert?: boolean;
 }
+
+export type OrbEdge = "left" | "right" | "top" | "bottom";
 
 export interface Launcher {
   mode: LauncherMode;

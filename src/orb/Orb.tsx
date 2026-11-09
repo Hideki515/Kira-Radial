@@ -1,4 +1,5 @@
 import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
+import type { OrbEdge } from "../shared/types";
 
 /** Distância (px) que o mouse precisa andar com o botão pressionado para virar arrasto. */
 export const DRAG_THRESHOLD = 4;
@@ -13,7 +14,18 @@ interface Props {
   onActivate: () => void;
   onDragStart: () => void;
   onContextMenu?: () => void;
+  /** Encaixado numa borda (metade fora da tela; desliza para dentro ao passar o mouse). */
+  docked?: OrbEdge | null;
+  /** CPU alta: núcleo avermelhado e pulso mais rápido. */
+  hot?: boolean;
+  /** Volume (0–1) mostrado como arco por um instante após girar a roda. */
+  volume?: number | null;
+  /** Roda do mouse sobre o ícone (true = para cima). */
+  onWheel?: (up: boolean) => void;
 }
+
+const VOL_R = 47;
+const VOL_C = 2 * Math.PI * VOL_R;
 
 /** Anel em wireframe (SVG estático); o giro é feito por CSS no <div> pai (só transform, roda na GPU). */
 function Ring({ variant }: { variant: 1 | 2 | 3 | 4 }) {
@@ -66,7 +78,7 @@ function Ring({ variant }: { variant: 1 | 2 | 3 | 4 }) {
  * Ícone flutuante: núcleo pulsante com anéis girando em eixos diferentes (efeito 3D).
  * Clique (sem mover) abre o menu; arrastar move a janela.
  */
-export function Orb({ size, accent, opacityIdle, imageSrc, onActivate, onDragStart, onContextMenu }: Props) {
+export function Orb({ size, accent, opacityIdle, imageSrc, onActivate, onDragStart, onContextMenu, docked, hot, volume, onWheel }: Props) {
   const down = useRef<{ x: number; y: number; dragging: boolean } | null>(null);
   const [firing, setFiring] = useState(0);
 
@@ -97,10 +109,11 @@ export function Orb({ size, accent, opacityIdle, imageSrc, onActivate, onDragSta
   } as CSSProperties;
 
   return (
-    <div className="orb-stage" style={style}>
+    <div className={`orb-stage${docked ? ` dock-${docked}` : ""}`} style={style} data-testid="orb-stage">
       <button
         type="button"
-        className={`orb${imageSrc ? " has-image" : ""}`}
+        className={`orb${imageSrc ? " has-image" : ""}${hot ? " is-hot" : ""}`}
+        onWheel={(e) => onWheel?.(e.deltaY < 0)}
         aria-label="Abrir o menu Kira"
         data-testid="orb"
         onPointerDown={onPointerDown}
@@ -125,6 +138,20 @@ export function Orb({ size, accent, opacityIdle, imageSrc, onActivate, onDragSta
           </span>
         )}
         {firing > 0 && <span key={firing} className="orb-burst" data-testid="orb-burst" />}
+        {volume !== null && volume !== undefined && (
+          <svg viewBox="0 0 100 100" className="orb-volume" data-testid="orb-volume" aria-label={`Volume ${Math.round(volume * 100)}%`}>
+            <circle cx="50" cy="50" r={VOL_R} className="orb-volume-track" />
+            <circle
+              cx="50"
+              cy="50"
+              r={VOL_R}
+              className="orb-volume-arc"
+              strokeDasharray={VOL_C}
+              strokeDashoffset={VOL_C * (1 - Math.max(0, Math.min(1, volume)))}
+              transform="rotate(-90 50 50)"
+            />
+          </svg>
+        )}
       </button>
     </div>
   );

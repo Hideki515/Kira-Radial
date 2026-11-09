@@ -1,5 +1,5 @@
 import type { AudioDevice, DisplayInfo, PowerPlan, RadioInfo, RecentFile, WindowInfo } from "../shared/ipc";
-import { LIMITS, type DynamicKind, type MenuItem } from "../shared/types";
+import { DYNAMIC_KINDS, LIMITS, type DynamicKind, type MenuItem } from "../shared/types";
 
 /** Cor do dispositivo em uso e dos demais no sub-anel. */
 export const AUDIO_CURRENT_COLOR = "#4ade9b";
@@ -199,7 +199,12 @@ function childrenFor(it: MenuItem, src: DynamicSources): MenuItem[] {
 /** Troca os itens dinâmicos pelos filhos gerados (o restante fica intacto). */
 export function resolveItems(items: MenuItem[], src: DynamicSources = {}): MenuItem[] {
   if (!items.some((it) => it.dynamic)) return items;
-  return items.map((it) => (it.dynamic ? { ...it, action: undefined, children: childrenFor(it, src) } : it));
+  return items.map((it) => {
+    if (!it.dynamic) return it;
+    // Tipo desconhecido: sub-anel vazio em vez de quebrar o menu.
+    const children = DYNAMIC_KINDS.includes(it.dynamic) ? childrenFor(it, src) : [];
+    return { ...it, action: undefined, children };
+  });
 }
 
 export const hasDynamic = (items: MenuItem[], kind: MenuItem["dynamic"]) => items.some((it) => it.dynamic === kind);

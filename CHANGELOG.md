@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.0
+
+- **Reordenar fatias e subitens arrastando** pela alça ⋮⋮ na página Itens. Também funciona com Alt+↑/↓ na linha selecionada.
+- **Ícone encaixa na borda:** solto perto de uma borda da tela, ele fica metade escondido e desliza para fora ao passar o mouse. Arrastar para longe desfaz o encaixe, e a posição encaixada continua depois de reiniciar.
+- **Alerta de CPU alta no ícone:** acima de 85%, o núcleo fica avermelhado e pulsa mais rápido. Pode ser desligado em Configurações → Ícone.
+- **Roda do mouse sobre o ícone** ajusta o volume e mostra um arco em volta dele.
+- Correção: um submenu automático de tipo desconhecido (por exemplo, numa config de versão mais nova) não derruba mais o menu. Ele vira um sub-anel vazio e a validação avisa.
+
 ## 0.5.0
 
 - **"Tocando agora" no centro**: capa, título e artista da mídia em reprodução, atualizados a cada 2 s com o menu aberto. A opção fica em Aparência e vem ligada.

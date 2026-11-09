@@ -60,3 +60,29 @@ describe("Orb (ícone flutuante)", () => {
     expect(withImg.querySelector(".orb-spin")).toBeNull();
   });
 });
+
+describe("Orb › borda, CPU e volume", () => {
+  const base = { size: 96, accent: "#ffb03a", opacityIdle: 0.85, onActivate: () => {}, onDragStart: () => {} };
+
+  it("encaixado ganha a classe da borda (CSS desliza para dentro no hover)", () => {
+    render(<Orb {...base} docked="left" />);
+    expect(screen.getByTestId("orb-stage").className).toContain("dock-left");
+    cleanup();
+    render(<Orb {...base} />);
+    expect(screen.getByTestId("orb-stage").className).not.toContain("dock-");
+  });
+
+  it("CPU alta deixa o núcleo em alerta", () => {
+    render(<Orb {...base} hot />);
+    expect(screen.getByTestId("orb").className).toContain("is-hot");
+  });
+
+  it("roda para cima/baixo avisa a direção e o arco mostra o volume", () => {
+    const onWheel = vi.fn();
+    render(<Orb {...base} onWheel={onWheel} volume={0.3} />);
+    fireEvent.wheel(screen.getByTestId("orb"), { deltaY: -120 });
+    fireEvent.wheel(screen.getByTestId("orb"), { deltaY: 120 });
+    expect(onWheel.mock.calls).toEqual([[true], [false]]);
+    expect(screen.getByTestId("orb-volume").getAttribute("aria-label")).toBe("Volume 30%");
+  });
+});

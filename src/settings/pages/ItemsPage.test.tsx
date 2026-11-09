@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Profile } from "../../shared/types";
@@ -106,5 +106,42 @@ describe("ItemsPage › Ao selecionar", () => {
     fireEvent.change(screen.getByDisplayValue("Janelas abertas"), { target: { value: "powerPlans" } });
     expect(latest.items[0].dynamic).toBe("powerPlans");
     expect(radio(/Submenu automático/).getAttribute("aria-checked")).toBe("true");
+  });
+});
+
+describe("ItemsPage › reordenar", () => {
+  const mouse = (el: Element, type: string) =>
+    act(() => void el.dispatchEvent(new MouseEvent(type, { bubbles: true, button: 0 })));
+
+  it("arrastar a alça da 1ª fatia até a 3ª move e mantém selecionada", () => {
+    const p = baseProfile();
+    const ids = p.items.map((i) => i.id);
+    render(<Harness initial={p} main={0} />);
+    const handle = screen.getByTestId("row-0").querySelector(".drag-handle")!;
+    mouse(handle, "pointerdown");
+    expect(screen.getByTestId("row-0").className).toContain("is-dragging");
+    mouse(screen.getByTestId("row-2"), "pointerover");
+    expect(screen.getByTestId("row-2").className).toContain("is-drop");
+    mouse(window as unknown as Element, "pointerup");
+    expect(latest.items.map((i) => i.id)).toEqual([ids[1], ids[2], ids[0], ...ids.slice(3)]);
+  });
+
+  it("subitem não pode ser solto entre as fatias principais", () => {
+    const p = baseProfile();
+    const before = JSON.stringify(p.items.map((i) => i.id));
+    render(<Harness initial={p} main={1} />);
+    const childHandle = screen.getByTestId("row-1-0").querySelector(".drag-handle")!;
+    mouse(childHandle, "pointerdown");
+    mouse(screen.getByTestId("row-0"), "pointerover");
+    mouse(window as unknown as Element, "pointerup");
+    expect(JSON.stringify(latest.items.map((i) => i.id))).toBe(before);
+  });
+
+  it("Alt+↓ na linha desce o item", () => {
+    const p = baseProfile();
+    const ids = p.items.map((i) => i.id);
+    render(<Harness initial={p} main={0} />);
+    fireEvent.keyDown(screen.getByTestId("row-0"), { key: "ArrowDown", altKey: true });
+    expect(latest.items[1].id).toBe(ids[0]);
   });
 });

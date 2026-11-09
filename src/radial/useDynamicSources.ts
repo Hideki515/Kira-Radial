@@ -31,6 +31,8 @@ export function useDynamicSources(items: MenuItem[], active: boolean, refreshKey
     if (!active || !kinds) return;
     let alive = true;
     for (const kind of kinds.split(",") as DynamicKind[]) {
+      // Tipo desconhecido (config de versão mais nova / editada à mão): ignora.
+      if (!LOADERS[kind]) continue;
       const { key, load } = LOADERS[kind];
       load().then(
         (data) => alive && setSources((s) => ({ ...s, [key]: data })),
