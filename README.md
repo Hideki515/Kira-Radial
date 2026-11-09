@@ -22,6 +22,8 @@ Feito com **Tauri 2 (Rust) + React 18 + TypeScript + Vite**.
   - comandos do sistema (bloquear, suspender, desligar, reiniciar, sair, print, Gerenciador de Tarefas, Configurações do Windows);
   - scripts PowerShell e CMD;
   - **trocar a saída de áudio**, para um dispositivo fixo ou alternando entre eles.
+- **Submenu automático de janelas abertas**, com o ícone de cada app, e **ações de janela**: sempre no topo, mover para outro monitor, encaixar, maximizar e minimizar.
+- **Teclas 1–9** escolhem a fatia direto.
 - **Submenu automático de áudio:** lista sozinho as saídas reconhecidas pelo Windows e destaca a que está em uso.
 - **Perfis por aplicativo:** fatias diferentes conforme o app em primeiro plano (ex.: `code.exe`).
 - **Tela de configurações** com pré-visualização ao vivo, backup/restauração da configuração, ícone na bandeja e opção de iniciar com o Windows.

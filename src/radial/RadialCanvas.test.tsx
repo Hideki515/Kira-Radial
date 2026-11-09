@@ -54,4 +54,12 @@ describe("RadialCanvas", () => {
     // Decoração não pode capturar o ponteiro.
     svg.querySelectorAll(".holo").forEach((g) => expect(g.getAttribute("aria-hidden")).toBe("true"));
   });
+
+  it("números das fatias só aparecem com showNumbers", () => {
+    const { rerender } = render(<RadialCanvas {...base} activeMain={null} activeSub={null} />);
+    expect(screen.queryAllByTestId("slice-num")).toHaveLength(0);
+    rerender(<RadialCanvas {...base} appearance={{ ...base.appearance, showNumbers: true }} activeMain={null} activeSub={null} />);
+    const nums = screen.getAllByTestId("slice-num").map((e) => e.textContent);
+    expect(nums).toEqual(defaultProfile.items.slice(0, 9).map((_, i) => String(i + 1)));
+  });
 });

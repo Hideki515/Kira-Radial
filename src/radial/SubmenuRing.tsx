@@ -1,15 +1,16 @@
 import type { CSSProperties } from "react";
 import type { MenuItem } from "../shared/types";
 import { LAYOUT, donutSlicePath, polar, submenuAngles, submenuItemSpan } from "./geometry";
-import { SliceContent } from "./SliceContent";
+import { SliceContent, SliceNumber } from "./SliceContent";
 
 interface Props {
   items: MenuItem[];
   parentAngle: number;
   activeIndex: number | null;
+  showNumbers?: boolean;
 }
 
-export function SubmenuRing({ items, parentAngle, activeIndex }: Props) {
+export function SubmenuRing({ items, parentAngle, activeIndex, showNumbers }: Props) {
   const c = LAYOUT.size / 2;
   const span = submenuItemSpan(items.length);
   const centers = submenuAngles(parentAngle, items.length);
@@ -33,7 +34,8 @@ export function SubmenuRing({ items, parentAngle, activeIndex }: Props) {
           >
             {activeIndex === i && <path d={d} className="slice-halo" />}
             <path d={d} className="slice-shape" />
-            <SliceContent x={mid.x} y={mid.y} icon={item.icon} label={item.label} size="sub" />
+            <SliceContent x={mid.x} y={mid.y} icon={item.icon} label={item.label} size="sub" iconSrc={item.iconSrc} />
+            {showNumbers && <SliceNumber c={c} r={LAYOUT.subOuter - 10} angle={a} n={i + 1} />}
           </g>
         );
       })}

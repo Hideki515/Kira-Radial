@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0
+
+- **Teclas 1–9**: com o menu aberto, escolhem a fatia (e o subitem, com o sub-anel aberto). Funcionam também no teclado numérico. A opção "Mostrar números nas fatias" fica em Aparência.
+- **Submenu automático "Janelas abertas"**: as 8 janelas mais recentes, com o ícone de cada app. Clique para trazer a janela para a frente.
+- **Ação "Controlar a janela ativa"**: sempre no topo, mover para o próximo monitor, encaixar à esquerda ou à direita, maximizar/restaurar, minimizar e minimizar todas. Tudo usa a API de janelas do Windows, sem simular teclas.
+
 ## 0.3.5
 
 Correções:

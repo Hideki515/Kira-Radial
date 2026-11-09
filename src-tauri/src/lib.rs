@@ -11,6 +11,8 @@ mod orb;
 mod perf;
 mod positioning;
 mod stats;
+mod winlist;
+mod winops;
 
 use menu::{AppState, RADIAL, SETTINGS};
 use std::sync::atomic::Ordering;
@@ -97,6 +99,7 @@ pub fn run() {
             commands::orb_clicked,
             commands::orb_reset_position,
             commands::orb_set_hidden,
+            commands::list_windows,
             commands::read_orb_image,
             commands::orb_context_menu,
             perf::perf_log,

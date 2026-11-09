@@ -55,6 +55,10 @@ pub enum Action {
         #[serde(default, rename = "deviceName")]
         device_name: Option<String>,
     },
+    /// Traz uma janela para a frente (gerada pelo submenu "Janelas abertas").
+    FocusWindow { hwnd: i64 },
+    /// Controla a janela que estava ativa antes do menu (topo, monitor, encaixe...).
+    Window { cmd: crate::winops::WindowCmd },
 }
 
 #[derive(Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
@@ -172,6 +176,9 @@ pub fn execute(action: &Action) -> Result<(), String> {
         Action::AudioOutput { mode, device_id, device_name } => {
             crate::audio::run(*mode == AudioMode::Cycle, device_id.as_deref(), device_name.as_deref())
         }
+        Action::FocusWindow { hwnd } => crate::winlist::focus(*hwnd),
+        // Precisa da janela anterior: executado por run_action (commands.rs).
+        Action::Window { .. } => Err("ação de janela sem janela-alvo".into()),
     }
 }
 
@@ -364,5 +371,30 @@ mod tests {
         let home = std::env::var("USERPROFILE").unwrap();
         assert_eq!(expand_env("%USERPROFILE%\\Downloads"), format!("{home}\\Downloads"));
         assert_eq!(expand_env("C:\\sem\\var"), "C:\\sem\\var");
+    }
+}
+
+/// QA (v0.4.0): o JSON gerado pelo front para as ações de janela desserializa no Rust.
+#[cfg(test)]
+mod window_qa_tests {
+    use super::Action;
+    use crate::winops::WindowCmd;
+
+    #[test]
+    fn focus_window_do_front_ignora_titulo_extra() {
+        let a: Action = serde_json::from_str(r#"{"type":"focusWindow","hwnd":4589012,"title":"Doc - Word"}"#).unwrap();
+        assert!(matches!(a, Action::FocusWindow { hwnd: 4589012 }));
+        assert!(!a.keeps_menu_open() && !a.needs_previous_focus());
+    }
+
+    #[test]
+    fn window_aceita_todos_os_comandos_do_front() {
+        for c in ["topmost", "nextMonitor", "snapLeft", "snapRight", "maximize", "minimize", "minimizeAll"] {
+            let a: Action = serde_json::from_str(&format!(r#"{{"type":"window","cmd":"{c}"}}"#)).unwrap();
+            assert!(matches!(a, Action::Window { .. }), "{c}");
+            assert!(!a.keeps_menu_open());
+        }
+        assert!(serde_json::from_str::<Action>(r#"{"type":"window","cmd":"snapUp"}"#).is_err());
+        let _ = WindowCmd::MinimizeAll;
     }
 }

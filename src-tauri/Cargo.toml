@@ -1,6 +1,6 @@
 [package]
 name = "kira-radial"
-version = "0.3.5"
+version = "0.4.0"
 description = "Menu radial para controle do Windows"
 license = "MIT"
 edition = "2021"
@@ -22,6 +22,8 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # Necessário pelo macro #[windows::core::interface] (IPolicyConfig em audio.rs).
 windows-core = "0.61"
+# PNG dos ícones de janela (mesma versão que o Tauri já usa).
+png = "0.18"
 windows = { version = "0.61", features = [
   "Win32_Devices_FunctionDiscovery",
   "Win32_Foundation",

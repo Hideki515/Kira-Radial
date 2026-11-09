@@ -12,6 +12,8 @@ export type SystemCmd =
   | "taskmgr"
   | "settings";
 
+export type WindowCmd = "topmost" | "nextMonitor" | "snapLeft" | "snapRight" | "maximize" | "minimize" | "minimizeAll";
+
 export type Action =
   | { type: "launch"; path: string; args?: string; cwd?: string; admin?: boolean }
   | { type: "folder"; path: string }
@@ -29,7 +31,11 @@ export type Action =
       deviceId?: string;
       /** Nome amigável; usado como alternativa quando o id não é encontrado. */
       deviceName?: string;
-    };
+    }
+  /** Traz uma janela para a frente (gerada pelo submenu "Janelas abertas"; não aparece no editor). */
+  | { type: "focusWindow"; hwnd: number; title?: string }
+  /** Controla a janela que estava ativa antes de o menu abrir. */
+  | { type: "window"; cmd: WindowCmd };
 
 export interface MenuItem {
   id: string;
@@ -40,9 +46,13 @@ export interface MenuItem {
   color?: string;
   action?: Action;
   children?: MenuItem[];
-  /** Submenu gerado na hora (ignora children/action). "audioOutputs" = saídas de áudio detectadas. */
-  dynamic?: "audioOutputs";
+  /** Imagem no lugar do ícone (data URL; ex.: ícone do app nas "Janelas abertas"). */
+  iconSrc?: string;
+  /** Submenu gerado na hora (ignora children/action): saídas de áudio ou janelas abertas. */
+  dynamic?: DynamicKind;
 }
+
+export type DynamicKind = "audioOutputs" | "windows";
 
 export interface Profile {
   id: string;
@@ -69,6 +79,8 @@ export interface Config {
     theme?: Theme;
     showCpu: boolean;
     showClock: boolean;
+    /** Mostra o número (atalho 1–9) em cada fatia. */
+    showNumbers?: boolean;
   };
   launcher: Launcher;
   profiles: Profile[];

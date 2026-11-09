@@ -95,3 +95,25 @@ describe("ação de saída de áudio", () => {
     expect((screen.getByRole("combobox", { name: "Dispositivo de saída" }) as HTMLSelectElement).value).toBe("{0.0.0.00000000}.{fake-headset}");
   });
 });
+
+describe("ação de janela", () => {
+  it("tipo 'Controlar a janela ativa' começa em maximizar e troca o comando", () => {
+    let last: Action | null = null;
+    function Host() {
+      const [a, setA] = useState<Action>({ type: "url", url: "https://x.y" });
+      return <ActionEditor action={a} onChange={(n) => { last = n; setA(n); }} />;
+    }
+    render(<Host />);
+    fireEvent.change(screen.getByDisplayValue("Abrir site (URL)"), { target: { value: "window" } });
+    expect(last).toEqual({ type: "window", cmd: "maximize" });
+    fireEvent.change(screen.getByDisplayValue("Maximizar / restaurar"), { target: { value: "nextMonitor" } });
+    expect(last).toEqual({ type: "window", cmd: "nextMonitor" });
+  });
+
+  it("focusWindow (gerada) não aparece na lista de tipos", () => {
+    render(<ActionEditor action={{ type: "window", cmd: "minimize" }} onChange={() => {}} />);
+    const values = Array.from(document.querySelectorAll("option")).map((o) => o.getAttribute("value"));
+    expect(values).toContain("window");
+    expect(values).not.toContain("focusWindow");
+  });
+});

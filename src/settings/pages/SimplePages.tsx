@@ -132,6 +132,12 @@ export function AppearancePage({ config, update }: PageProps) {
         </div>
       </Field>
       <Toggle label="Mostrar relógio e data" checked={a.showClock} onChange={(v) => update((c) => void (c.appearance.showClock = v))} />
+      <Toggle
+        label="Mostrar números nas fatias"
+        hint="Com o menu aberto, as teclas 1–9 escolhem a fatia (e o subitem, com o sub-anel aberto)."
+        checked={!!a.showNumbers}
+        onChange={(v) => update((c) => void (c.appearance.showNumbers = v))}
+      />
       <Toggle label="Mostrar medidor de CPU" checked={a.showCpu} onChange={(v) => update((c) => void (c.appearance.showCpu = v))} />
     </Section>
   );

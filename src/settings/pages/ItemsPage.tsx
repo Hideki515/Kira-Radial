@@ -182,15 +182,16 @@ export function ItemsPage({ profile, selection, onSelect, edit }: Props) {
           {selection.child === null && (
             <Field label="Ao selecionar">
               <Segmented
-                value={selected.dynamic ? "audio" : selected.children ? "submenu" : "action"}
+                value={selected.dynamic === "windows" ? "windows" : selected.dynamic ? "audio" : selected.children ? "submenu" : "action"}
                 options={[
                   { value: "action", label: "Executar ação" },
                   { value: "submenu", label: "Abrir submenu" },
                   { value: "audio", label: "Saídas de áudio (auto)" },
+                  { value: "windows", label: "Janelas abertas (auto)" },
                 ]}
                 onChange={(v) =>
                   editSelected((it) => {
-                    const current = it.dynamic ? "audio" : it.children ? "submenu" : "action";
+                    const current = it.dynamic === "windows" ? "windows" : it.dynamic ? "audio" : it.children ? "submenu" : "action";
                     if (v === current) return;
                     if (it.children?.length && !window.confirm("Remover os subitens desta fatia?")) return;
                     delete it.children;
@@ -198,6 +199,7 @@ export function ItemsPage({ profile, selection, onSelect, edit }: Props) {
                     delete it.dynamic;
                     if (v === "submenu") it.children = [];
                     else if (v === "audio") it.dynamic = "audioOutputs";
+                    else if (v === "windows") it.dynamic = "windows";
                     else it.action = defaultAction("launch");
                   })
                 }
@@ -209,6 +211,11 @@ export function ItemsPage({ profile, selection, onSelect, edit }: Props) {
             <p className="muted">
               O sub-anel mostra automaticamente as saídas de áudio reconhecidas pelo Windows (até {LIMITS.maxChildren}),
               atualizadas a cada abertura do menu. A saída em uso aparece em verde; clique em outra para trocar.
+            </p>
+          ) : selected.dynamic === "windows" ? (
+            <p className="muted">
+              O sub-anel mostra as janelas abertas (as {LIMITS.maxChildren} mais recentes), com o ícone de cada app,
+              atualizadas a cada abertura do menu. Clique numa para trazê-la para a frente.
             </p>
           ) : selected.children ? (
             <p className="muted">

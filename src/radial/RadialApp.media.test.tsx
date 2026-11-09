@@ -191,3 +191,37 @@ describe("RadialApp › mídia mantém o menu aberto (Tauri)", () => {
     }
   });
 });
+
+const key = (code: string, extra: KeyboardEventInit = {}) =>
+  act(() => void window.dispatchEvent(new KeyboardEvent("keydown", { code, key: code.slice(-1), bubbles: true, ...extra })));
+const settle = () => act(async () => { await Promise.resolve(); await Promise.resolve(); });
+
+describe("RadialApp › teclas 1–9", () => {
+  it("número de fatia com ação executa direto", async () => {
+    await mountAndShow();
+    const b = idx("browser");
+    key(`Digit${b + 1}`);
+    await settle();
+    expect(ipc.runAction).toHaveBeenCalledWith(items()[b].action);
+  });
+
+  it("número de fatia com submenu abre o sub-anel; depois o teclado numérico escolhe o subitem", async () => {
+    await mountAndShow();
+    const m = idx("midia");
+    key(`Digit${m + 1}`);
+    expect(submenu()).not.toBeNull();
+    expect(ipc.runAction).not.toHaveBeenCalled();
+    key("Numpad1");
+    await settle();
+    expect(ipc.runAction).toHaveBeenCalledWith(items()[m].children![0].action);
+  });
+
+  it("número sem fatia correspondente e Ctrl+número são ignorados", async () => {
+    await mountAndShow();
+    key("Digit9");
+    key("Digit1", { ctrlKey: true });
+    await settle();
+    if (n() < 9) expect(ipc.runAction).not.toHaveBeenCalled();
+    expect(root()).not.toBeNull();
+  });
+});

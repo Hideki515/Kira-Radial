@@ -1,7 +1,7 @@
 import { CircleDot, Orbit, Keyboard, LayoutGrid, Palette, Save, Settings2, Undo2, Users, Archive, AlertTriangle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useSystemStats } from "../hooks/useSystemStats";
-import { getConfig, getHotkeyError, listAudioOutputs, saveConfig, type AudioDevice } from "../shared/ipc";
+import { getConfig, getHotkeyError, listAudioOutputs, listWindows, saveConfig, type AudioDevice, type WindowInfo } from "../shared/ipc";
 import { wantsOrb, type Config, type Profile } from "../shared/types";
 import { IconPage } from "./pages/IconPage";
 import { validateConfig } from "../shared/validate";
@@ -34,6 +34,7 @@ export function SettingsApp() {
   const [hotkeyError, setHotkeyError] = useState<string | null>(null);
   const stats = useSystemStats();
   const [audio, setAudio] = useState<AudioDevice[] | null>(null);
+  const [windows, setWindows] = useState<WindowInfo[] | null>(null);
 
   useEffect(() => {
     getConfig().then((c) => {
@@ -59,6 +60,10 @@ export function SettingsApp() {
   useEffect(() => {
     if (wantsAudio && audio === null) listAudioOutputs().then(setAudio, () => setAudio([]));
   }, [wantsAudio, audio]);
+  const wantsWindows = !!draft?.profiles.some((p) => hasDynamic(p.items, "windows"));
+  useEffect(() => {
+    if (wantsWindows && windows === null) listWindows().then(setWindows, () => setWindows([]));
+  }, [wantsWindows, windows]);
 
   const errors = useMemo(() => (draft ? validateConfig(draft) : []), [draft]);
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(saved), [draft, saved]);
@@ -102,7 +107,7 @@ export function SettingsApp() {
   const selMain = profile.items[sel.main];
   const previewMain = page === "items" ? sel.main : null;
   const previewSub = page === "items" && sel.child !== null && selMain?.children?.[sel.child] ? sel.child : null;
-  const previewItems = resolveItems(profile.items, audio);
+  const previewItems = resolveItems(profile.items, audio, windows);
 
   return (
     <div className="settings" style={{ "--active": draft.appearance.accent } as CSSProperties}>

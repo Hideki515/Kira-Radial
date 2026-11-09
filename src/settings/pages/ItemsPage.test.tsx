@@ -93,4 +93,12 @@ describe("ItemsPage › Ao selecionar", () => {
     pick(/Executar ação/);
     expect(JSON.stringify(latest)).toBe(before);
   });
+
+  it("Janelas abertas (auto) vira item dinâmico 'windows'", () => {
+    render(<Harness initial={baseProfile()} main={0} />);
+    pick(/Janelas abertas/);
+    expect(latest.items[0].dynamic).toBe("windows");
+    expect(latest.items[0].action).toBeUndefined();
+    expect(radio(/Janelas abertas/).getAttribute("aria-checked")).toBe("true");
+  });
 });

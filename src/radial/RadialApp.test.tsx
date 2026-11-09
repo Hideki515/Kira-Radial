@@ -8,6 +8,7 @@ import type { Config } from "../shared/types";
 const ipc = vi.hoisted(() => ({
   config: null as unknown as Config,
   listAudioOutputs: vi.fn(),
+  listWindows: vi.fn(),
   runAction: vi.fn(async () => {}),
 }));
 
@@ -17,6 +18,7 @@ vi.mock("../shared/ipc", async (orig) => {
     ...real,
     getConfig: async () => ipc.config,
     listAudioOutputs: ipc.listAudioOutputs,
+    listWindows: ipc.listWindows,
     runAction: ipc.runAction,
   };
 });
@@ -26,6 +28,11 @@ import { RadialApp } from "./RadialApp";
 const devices = [
   { id: "nv", name: "Monitor (NVIDIA High Definition Audio)", isDefault: true },
   { id: "rt", name: "Speakers (Realtek(R) Audio)", isDefault: false },
+];
+
+const wins = [
+  { hwnd: 101, title: "Notas.txt - Bloco de Notas", exe: "notepad.exe", icon: "data:image/png;base64,AAA" },
+  { hwnd: 202, title: "YouTube — Google Chrome", exe: "chrome.exe", icon: null },
 ];
 
 const key = (k: string) => fireEvent.keyDown(window, { key: k });
@@ -41,6 +48,7 @@ async function mount(cfg: Config) {
 
 beforeEach(() => {
   ipc.listAudioOutputs.mockReset().mockResolvedValue(devices);
+  ipc.listWindows.mockReset().mockResolvedValue(wins);
   ipc.runAction.mockClear();
 });
 afterEach(cleanup);
@@ -119,5 +127,22 @@ describe("RadialApp › sub-anel abre com clique e Esc volta", () => {
     key("Backspace");
     expect(submenu()).toBeNull();
     expect(root()).not.toBeNull();
+  });
+});
+
+describe("RadialApp › submenu Janelas abertas", () => {
+  it("lista as janelas com ícone do app e foca a escolhida", async () => {
+    const cfg = cloneConfig(defaultConfig);
+    cfg.profiles[0].items[0] = { id: "win", label: "Janelas", icon: "app-window", dynamic: "windows" };
+    await mount(cfg);
+    expect(ipc.listWindows).toHaveBeenCalledTimes(1);
+    expect(ipc.listAudioOutputs).not.toHaveBeenCalled();
+    key("ArrowRight");
+    key("Enter"); // abre o sub-anel no 1º filho
+    expect(document.querySelector('[data-testid="slice-img"]')?.getAttribute("href")).toBe("data:image/png;base64,AAA");
+    expect(document.querySelector('[aria-label="Notas.txt"]')).not.toBeNull();
+    key("ArrowRight");
+    key("Enter");
+    expect(ipc.runAction).toHaveBeenCalledWith({ type: "focusWindow", hwnd: 202, title: "YouTube — Google Chrome" });
   });
 });

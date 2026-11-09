@@ -1,12 +1,13 @@
 import { FolderSearch, Play, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { listAudioOutputs, pickPath, runAction, type AudioDevice } from "../shared/ipc";
-import type { Action, MediaCmd, SystemCmd } from "../shared/types";
+import { WINDOW_LABEL, listAudioOutputs, pickPath, runAction, type AudioDevice } from "../shared/ipc";
+import type { Action, MediaCmd, SystemCmd, WindowCmd } from "../shared/types";
 import { validateAction } from "../shared/validate";
 import { Field, Segmented, Toggle } from "./controls";
 import { HotkeyRecorder } from "./HotkeyRecorder";
 
-type ActionType = Action["type"];
+/** Tipos editáveis (focusWindow é gerado pelo submenu "Janelas abertas"). */
+type ActionType = Exclude<Action["type"], "focusWindow">;
 
 export const ACTION_TYPES: { value: ActionType; label: string }[] = [
   { value: "launch", label: "Abrir programa / arquivo" },
@@ -17,6 +18,7 @@ export const ACTION_TYPES: { value: ActionType; label: string }[] = [
   { value: "system", label: "Comando do sistema" },
   { value: "script", label: "Script (PowerShell / CMD)" },
   { value: "audioOutput", label: "Trocar saída de áudio" },
+  { value: "window", label: "Controlar a janela ativa" },
   { value: "openSettings", label: "Abrir estas configurações" },
 ];
 
@@ -51,6 +53,7 @@ export function defaultAction(type: ActionType): Action {
     case "script": return { type, shell: "powershell", command: "", hidden: false };
     case "openSettings": return { type };
     case "audioOutput": return { type, mode: "cycle" };
+    case "window": return { type, cmd: "maximize" };
   }
 }
 
@@ -238,6 +241,14 @@ export function ActionEditor({ action, onChange }: { action: Action; onChange: (
         <Field label="Comando">
           <select value={action.cmd} onChange={(e) => onChange({ ...action, cmd: e.target.value as SystemCmd })}>
             {SYSTEM.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+          </select>
+        </Field>
+      )}
+
+      {action.type === "window" && (
+        <Field label="Comando" hint="Age sobre a janela que estava em uso quando o menu abriu.">
+          <select value={action.cmd} onChange={(e) => onChange({ ...action, cmd: e.target.value as WindowCmd })}>
+            {(Object.keys(WINDOW_LABEL) as WindowCmd[]).map((c) => <option key={c} value={c}>{WINDOW_LABEL[c]}</option>)}
           </select>
         </Field>
       )}

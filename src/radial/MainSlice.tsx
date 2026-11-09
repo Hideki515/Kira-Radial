@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import type { MenuItem } from "../shared/types";
 import { LAYOUT, donutSlicePath, polar, sliceAngle, sliceSpan } from "./geometry";
-import { SliceContent } from "./SliceContent";
+import { SliceContent, SliceNumber } from "./SliceContent";
 
 interface Props {
   item: MenuItem;
@@ -9,9 +9,11 @@ interface Props {
   count: number;
   active: boolean;
   dimmed: boolean;
+  /** Mostra o número da tecla de atalho (1–9). */
+  showNumber?: boolean;
 }
 
-export function MainSlice({ item, index, count, active, dimmed }: Props) {
+export function MainSlice({ item, index, count, active, dimmed, showNumber }: Props) {
   const c = LAYOUT.size / 2;
   const angle = sliceAngle(index, count);
   const span = sliceSpan(count);
@@ -25,7 +27,8 @@ export function MainSlice({ item, index, count, active, dimmed }: Props) {
       {/* Halo: traço largo e translúcido sob a borda (substitui filter: drop-shadow, caro). */}
       {active && <path d={d} className="slice-halo" />}
       <path d={d} className="slice-shape" />
-      <SliceContent x={mid.x} y={mid.y} icon={item.icon} label={item.label} size="main" active={active} />
+      <SliceContent x={mid.x} y={mid.y} icon={item.icon} label={item.label} size="main" active={active} iconSrc={item.iconSrc} />
+      {showNumber && index < 9 && <SliceNumber c={c} r={LAYOUT.mainOuter - 18} angle={angle} n={index + 1} />}
     </g>
   );
 }

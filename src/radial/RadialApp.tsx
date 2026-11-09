@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useConfig } from "../hooks/useConfig";
 import { useSystemStats } from "../hooks/useSystemStats";
-import { describeAction, hideMenu, isTauri, listAudioOutputs, onEvent, runAction, type AudioDevice, type MenuShowPayload } from "../shared/ipc";
+import { describeAction, hideMenu, isTauri, listAudioOutputs, listWindows, onEvent, runAction, type AudioDevice, type MenuShowPayload, type WindowInfo } from "../shared/ipc";
 import { observeLongTasks, perfLog, startFrameMonitor } from "../shared/perf";
 import type { Config, MenuItem } from "../shared/types";
 import { hasDynamic, resolveItems } from "./dynamic";
@@ -46,8 +46,10 @@ function RadialMenu({ config }: { config: Config }) {
   const [profileId, setProfileId] = useState(config.profiles[0].id);
   const profile = config.profiles.find((p) => p.id === profileId) ?? config.profiles[0];
   const [audio, setAudio] = useState<AudioDevice[] | null>(null);
-  const items = useMemo(() => resolveItems(profile.items, audio), [profile.items, audio]);
+  const [windows, setWindows] = useState<WindowInfo[] | null>(null);
+  const items = useMemo(() => resolveItems(profile.items, audio, windows), [profile.items, audio, windows]);
   const wantsAudio = hasDynamic(profile.items, "audioOutputs");
+  const wantsWindows = hasDynamic(profile.items, "windows");
   const scale = config.appearance.scale;
 
   const [center, setCenter] = useState(() => ({ x: window.innerWidth / 2, y: window.innerHeight / 2 }));
@@ -202,6 +204,21 @@ function RadialMenu({ config }: { config: Config }) {
     };
   }, [open, openKey, wantsAudio]);
 
+  // Submenu "Janelas abertas": relê a cada abertura (a lista muda o tempo todo).
+  useEffect(() => {
+    if (!open || !wantsWindows) return;
+    let alive = true;
+    listWindows()
+      .then((w) => alive && setWindows(w))
+      .catch((e) => {
+        if (alive) setWindows([]);
+        perfLog(`falha ao listar janelas: ${String(e)}`);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [open, openKey, wantsWindows]);
+
   // --- Diagnóstico de desempenho (perf.log) ---
   const showReceivedAt = useRef<number | null>(null);
   useEffect(() => {
@@ -294,6 +311,23 @@ function RadialMenu({ config }: { config: Config }) {
     const onKey = (e: KeyboardEvent) => {
       const s = state.current;
       if (!s.open) return;
+      // 1–9 (linha de números ou teclado numérico): escolhe a fatia/subitem direto.
+      const digit = /^(Digit|Numpad)([1-9])$/.exec(e.code)?.[2];
+      if (digit && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        const n = Number(digit) - 1;
+        e.preventDefault();
+        if (s.openMain !== null && s.children.length) {
+          const child = s.children[n];
+          if (!child) return;
+          setActiveSub(n);
+          return void execute(child);
+        }
+        const item = s.items[n];
+        if (!item) return;
+        setActiveMain(n);
+        if (item.children?.length) return openSub(n, false);
+        return void execute(item);
+      }
       const n = s.items.length;
       const step = (d: number) => {
         if (s.openMain !== null && s.children.length) {

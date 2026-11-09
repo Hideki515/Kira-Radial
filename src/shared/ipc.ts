@@ -1,7 +1,7 @@
 // Ponte com o backend Tauri. No navegador (npm run dev) tudo cai em fallbacks,
 // o que permite desenvolver o visual e a tela de configuração sem Rust.
 import { cloneConfig, defaultConfig, withDefaults } from "./defaults";
-import type { Action, Config } from "./types";
+import type { Action, Config, WindowCmd } from "./types";
 
 export const isTauri = (): boolean =>
   typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
@@ -37,6 +37,16 @@ const MEDIA_LABEL: Record<string, string> = {
   mute: "mudo",
 };
 
+export const WINDOW_LABEL: Record<WindowCmd, string> = {
+  topmost: "Sempre no topo (liga/desliga)",
+  nextMonitor: "Mover para o próximo monitor",
+  snapLeft: "Encaixar à esquerda",
+  snapRight: "Encaixar à direita",
+  maximize: "Maximizar / restaurar",
+  minimize: "Minimizar",
+  minimizeAll: "Minimizar todas as janelas",
+};
+
 export function describeAction(a: Action): string {
   switch (a.type) {
     case "launch": return `Executar ${a.path}`;
@@ -47,6 +57,10 @@ export function describeAction(a: Action): string {
     case "system": return `Sistema: ${a.cmd}`;
     case "script": return `Script (${a.shell})`;
     case "openSettings": return "Abrir configurações";
+    case "window":
+      return WINDOW_LABEL[a.cmd];
+    case "focusWindow":
+      return `Ir para ${a.title ?? "a janela"}`;
     case "audioOutput":
       return a.mode === "cycle" ? "Alternar saída de áudio" : `Saída de áudio: ${a.deviceName ?? a.deviceId ?? "?"}`;
   }
@@ -133,6 +147,24 @@ export async function listAudioOutputs(): Promise<AudioDevice[]> {
   return [
     { id: "{0.0.0.00000000}.{fake-speakers}", name: "Alto-falantes (Realtek Audio)", isDefault: true },
     { id: "{0.0.0.00000000}.{fake-headset}", name: "Headset (USB Audio)", isDefault: false },
+  ];
+}
+
+export interface WindowInfo {
+  hwnd: number;
+  title: string;
+  exe: string | null;
+  /** Ícone do app (data URL PNG 32×32). */
+  icon: string | null;
+}
+
+/** Janelas de app abertas, mais recentes primeiro (até 8). */
+export async function listWindows(): Promise<WindowInfo[]> {
+  if (isTauri()) return invoke<WindowInfo[]>("list_windows");
+  return [
+    { hwnd: 1, title: "Kira-Radial — Visual Studio Code", exe: "code.exe", icon: null },
+    { hwnd: 2, title: "YouTube — Google Chrome", exe: "chrome.exe", icon: null },
+    { hwnd: 3, title: "Downloads", exe: "explorer.exe", icon: null },
   ];
 }
 

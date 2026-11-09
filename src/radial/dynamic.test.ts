@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { cloneConfig, defaultConfig } from "../shared/defaults";
 import type { MenuItem } from "../shared/types";
 import { validateConfig } from "../shared/validate";
-import { AUDIO_CURRENT_COLOR, audioIcon, audioLabels, resolveItems } from "./dynamic";
+import { AUDIO_CURRENT_COLOR, audioIcon, audioLabels, resolveItems, windowChildren, windowIcon, windowLabel } from "./dynamic";
 
 const devices = [
   { id: "nv", name: "24G2W1G3- (NVIDIA High Definition Audio)", isDefault: true },
@@ -53,5 +53,31 @@ describe("submenu dinâmico de áudio", () => {
     const c = cloneConfig(defaultConfig);
     c.profiles[0].items[0] = { ...audioSlice };
     expect(validateConfig(c)).toEqual([]);
+  });
+});
+
+describe("Janelas abertas", () => {
+  it("rótulo usa a parte principal do título", () => {
+    expect(windowLabel("Notas.txt - Bloco de Notas", "notepad.exe")).toBe("Notas.txt");
+    expect(windowLabel("YouTube — Google Chrome", "chrome.exe")).toBe("YouTube");
+    expect(windowLabel("Um título bem comprido demais para caber", null).length).toBeLessThanOrEqual(14);
+    expect(windowLabel("", "notepad.exe")).toBe("notepad");
+  });
+
+  it("ícone de reserva por app e estados de carregamento/vazio", () => {
+    expect(windowIcon("msedge.exe")).toBe("globe");
+    expect(windowIcon("explorer.exe")).toBe("folder-open");
+    expect(windowIcon(null)).toBe("app-window");
+    expect(windowChildren("w", null)[0].label).toBe("Carregando…");
+    expect(windowChildren("w", [])[0]).toMatchObject({ label: "Nenhuma janela" });
+    expect(windowChildren("w", [])[0].action).toBeUndefined();
+  });
+
+  it("gera ação focusWindow com a imagem do app e respeita o limite", () => {
+    const many = Array.from({ length: 12 }, (_, i) => ({ hwnd: i + 1, title: `J${i}`, exe: "a.exe", icon: i ? null : "data:x" }));
+    const kids = resolveItems([{ id: "w", label: "Janelas", icon: "app-window", dynamic: "windows" }], null, many)[0].children!;
+    expect(kids).toHaveLength(8);
+    expect(kids[0]).toMatchObject({ iconSrc: "data:x", action: { type: "focusWindow", hwnd: 1 } });
+    expect(kids[1].iconSrc).toBeUndefined();
   });
 });

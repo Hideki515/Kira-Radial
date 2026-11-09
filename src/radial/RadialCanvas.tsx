@@ -99,6 +99,7 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
             count={items.length}
             active={activeMain === i}
             dimmed={dimOthers && subParent !== i && activeMain !== i}
+            showNumber={!!appearance.showNumbers}
           />
         ))}
       </g>
@@ -109,6 +110,7 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
           items={children}
           parentAngle={sliceAngle(subParent!, items.length)}
           activeIndex={activeSub}
+          showNumbers={!!appearance.showNumbers}
         />
       )}
 

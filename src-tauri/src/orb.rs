@@ -188,7 +188,7 @@ pub fn image_mime(path: &str) -> Option<&'static str> {
     }
 }
 
-fn base64(data: &[u8]) -> String {
+pub fn base64(data: &[u8]) -> String {
     const T: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     let mut out = String::with_capacity(data.len().div_ceil(3) * 4);
     for chunk in data.chunks(3) {

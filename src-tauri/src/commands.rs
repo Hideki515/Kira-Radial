@@ -56,6 +56,12 @@ pub fn orb_context_menu(app: AppHandle) -> Result<(), String> {
     crate::orb::context_menu(&app)
 }
 
+/// Janelas abertas (submenu automático "Janelas abertas").
+#[tauri::command]
+pub async fn list_windows() -> Result<Vec<crate::winlist::WindowInfo>, String> {
+    tauri::async_runtime::spawn_blocking(crate::winlist::list).await.map_err(|e| e.to_string())
+}
+
 /// Esconde/mostra o ícone (fica salvo).
 #[tauri::command]
 pub fn orb_set_hidden(app: AppHandle, hidden: bool) {
@@ -108,6 +114,9 @@ pub async fn run_action(app: AppHandle, action: Action) -> Result<(), String> {
         }
         // Atraso extra configurado na ação (ex.: apps de print mais lentos).
         std::thread::sleep(action.delay());
+        if let Action::Window { cmd } = &action {
+            return crate::winops::run(*cmd, prev);
+        }
         actions::execute(&action)
     })
     .await
