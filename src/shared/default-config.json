@@ -9,7 +9,8 @@
     "closeOnBlur": true,
     "closeOnAction": true,
     "deadZonePx": 120,
-    "autostart": false
+    "autostart": false,
+    "clipboardHistory": false
   },
   "appearance": {
     "scale": 0.75,

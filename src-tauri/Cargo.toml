@@ -1,6 +1,6 @@
 [package]
 name = "kira-radial"
-version = "0.4.0"
+version = "0.5.0"
 description = "Menu radial para controle do Windows"
 license = "MIT"
 edition = "2021"
@@ -25,21 +25,33 @@ windows-core = "0.61"
 # PNG dos ícones de janela (mesma versão que o Tauri já usa).
 png = "0.18"
 windows = { version = "0.61", features = [
+  "Devices_Radios",
+  "Foundation",
+  "Foundation_Collections",
+  "Media_Control",
+  "Storage_Streams",
+  "Win32_Devices_Display",
   "Win32_Devices_FunctionDiscovery",
   "Win32_Foundation",
   "Win32_Graphics_Dwm",
   "Win32_Graphics_Gdi",
   "Win32_Media_Audio",
+  "Win32_Media_Audio_Endpoints",
   "Win32_Security",
   "Win32_System_Com",
   "Win32_System_Com_StructuredStorage",
+  "Win32_System_DataExchange",
   "Win32_System_Environment",
+  "Win32_System_IO",
   "Win32_System_LibraryLoader",
+  "Win32_System_Memory",
   "Win32_System_Power",
+  "Win32_System_Registry",
   "Win32_System_Shutdown",
   "Win32_System_SystemInformation",
   "Win32_System_Threading",
   "Win32_System_Variant",
+  "Win32_Storage_FileSystem",
   "Win32_UI_HiDpi",
   "Win32_UI_Input_KeyboardAndMouse",
   "Win32_UI_Shell",

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.0
+
+- **"Tocando agora" no centro**: capa, título e artista da mídia em reprodução, atualizados a cada 2 s com o menu aberto. A opção fica em Aparência e vem ligada.
+- **Roda do mouse sobre o centro** ajusta o volume e mostra um arco com o "VOL %".
+- **Novos submenus automáticos** (em "Ao selecionar → Submenu automático → Conteúdo"):
+  - Planos de energia.
+  - Brilho da tela, de 10% a 100%. Funciona na tela do notebook e em monitores com DDC/CI.
+  - Wi-Fi e Bluetooth (ligar/desligar).
+  - Arquivos recentes.
+  - Área de transferência, que cola um dos últimos textos copiados.
+- **Novas ações**: "Brilho da tela" (aumentar, diminuir ou definir) e "Wi-Fi / Bluetooth" (alternar, ligar ou desligar).
+- **Histórico da área de transferência**: opcional e desligado por padrão. Fica só na memória (máx. 8 textos) e respeita os formatos de exclusão dos gerenciadores de senha.
+- O seletor "Ao selecionar" ficou com 3 opções (ação, submenu, submenu automático) e uma lista de conteúdo.
+
 ## 0.4.0
 
 - **Teclas 1–9**: com o menu aberto, escolhem a fatia (e o subitem, com o sub-anel aberto). Funcionam também no teclado numérico. A opção "Mostrar números nas fatias" fica em Aparência.

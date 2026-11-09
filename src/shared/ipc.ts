@@ -59,6 +59,16 @@ export function describeAction(a: Action): string {
     case "openSettings": return "Abrir configurações";
     case "window":
       return WINDOW_LABEL[a.cmd];
+    case "paste":
+      return `Colar "${a.preview ?? "texto"}"`;
+    case "radio": {
+      const what = a.kind === "wifi" ? "Wi-Fi" : "Bluetooth";
+      return a.mode === "on" ? `Ligar ${what}` : a.mode === "off" ? `Desligar ${what}` : `Ligar/desligar ${what}`;
+    }
+    case "brightness":
+      return a.mode === "up" ? "Aumentar brilho" : a.mode === "down" ? "Diminuir brilho" : `Brilho ${a.value ?? 100}%`;
+    case "powerPlan":
+      return `Plano de energia: ${a.name ?? a.guid}`;
     case "focusWindow":
       return `Ir para ${a.title ?? "a janela"}`;
     case "audioOutput":
@@ -147,6 +157,97 @@ export async function listAudioOutputs(): Promise<AudioDevice[]> {
   return [
     { id: "{0.0.0.00000000}.{fake-speakers}", name: "Alto-falantes (Realtek Audio)", isDefault: true },
     { id: "{0.0.0.00000000}.{fake-headset}", name: "Headset (USB Audio)", isDefault: false },
+  ];
+}
+
+export interface NowPlaying {
+  title: string;
+  artist: string;
+  app: string;
+  playing: boolean;
+  /** Capa (data URL) ou null. */
+  thumb: string | null;
+}
+
+/** Música/vídeo em reprodução no Windows, ou null. */
+export async function nowPlaying(): Promise<NowPlaying | null> {
+  if (isTauri()) return invoke<NowPlaying | null>("now_playing");
+  return { title: "Back in Black", artist: "AC/DC", app: "Spotify", playing: true, thumb: null };
+}
+
+/** Volume da saída padrão (0–1). */
+export async function getVolume(): Promise<{ level: number; muted: boolean }> {
+  if (isTauri()) return invoke("get_volume");
+  return { level: 0.42, muted: false };
+}
+
+/** Prévias do histórico da área de transferência (vazio se desligado). */
+export async function clipboardList(): Promise<string[]> {
+  if (isTauri()) return invoke<string[]>("clipboard_list");
+  return ["texto copiado de exemplo", "https://github.com/Hideki515/Kira-Radial"];
+}
+
+export async function clipboardClear(): Promise<void> {
+  if (isTauri()) await invoke("clipboard_clear");
+}
+
+export interface RecentFile {
+  path: string;
+  name: string;
+  /** Extensão sem ponto, minúscula. */
+  ext: string;
+}
+
+/** Arquivos abertos recentemente (até 8), do mais novo para o mais antigo. */
+export async function listRecentFiles(): Promise<RecentFile[]> {
+  if (isTauri()) return invoke<RecentFile[]>("list_recent_files");
+  return [
+    { path: "C:/Users/kira/Documents/Relatorio.docx", name: "Relatorio.docx", ext: "docx" },
+    { path: "C:/Users/kira/Pictures/foto.png", name: "foto.png", ext: "png" },
+  ];
+}
+
+export interface RadioInfo {
+  kind: "wifi" | "bluetooth";
+  name: string;
+  on: boolean;
+}
+
+/** Wi-Fi e Bluetooth presentes, com o estado atual. */
+export async function listRadios(): Promise<RadioInfo[]> {
+  if (isTauri()) return invoke<RadioInfo[]>("list_radios");
+  return [
+    { kind: "wifi", name: "Wi-Fi", on: true },
+    { kind: "bluetooth", name: "Bluetooth", on: false },
+  ];
+}
+
+export interface DisplayInfo {
+  /** "lcd" (notebook) ou "ddc:N" (monitor externo com DDC/CI). */
+  id: string;
+  name: string;
+  /** 0–100 */
+  level: number;
+}
+
+/** Telas com brilho ajustável (vazio = nenhuma aceita controle). */
+export async function listDisplays(): Promise<DisplayInfo[]> {
+  if (isTauri()) return invoke<DisplayInfo[]>("list_displays");
+  return [{ id: "lcd", name: "Tela do notebook", level: 60 }];
+}
+
+export interface PowerPlan {
+  guid: string;
+  name: string;
+  active: boolean;
+}
+
+/** Planos de energia do Windows, com o ativo marcado. */
+export async function listPowerPlans(): Promise<PowerPlan[]> {
+  if (isTauri()) return invoke<PowerPlan[]>("list_power_plans");
+  return [
+    { guid: "381b4222-f694-41f0-9685-ff5bb260df2e", name: "Equilibrado", active: true },
+    { guid: "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c", name: "Alto desempenho", active: false },
   ];
 }
 

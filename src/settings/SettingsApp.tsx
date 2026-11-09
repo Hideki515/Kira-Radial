@@ -1,12 +1,13 @@
 import { CircleDot, Orbit, Keyboard, LayoutGrid, Palette, Save, Settings2, Undo2, Users, Archive, AlertTriangle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useSystemStats } from "../hooks/useSystemStats";
-import { getConfig, getHotkeyError, listAudioOutputs, listWindows, saveConfig, type AudioDevice, type WindowInfo } from "../shared/ipc";
+import { getConfig, getHotkeyError, saveConfig } from "../shared/ipc";
 import { wantsOrb, type Config, type Profile } from "../shared/types";
 import { IconPage } from "./pages/IconPage";
 import { validateConfig } from "../shared/validate";
 import { RadialCanvas } from "../radial/RadialCanvas";
-import { hasDynamic, resolveItems } from "../radial/dynamic";
+import { resolveItems } from "../radial/dynamic";
+import { useDynamicSources } from "../radial/useDynamicSources";
 import { ItemsPage, type Selection } from "./pages/ItemsPage";
 import { ProfilesPage } from "./pages/ProfilesPage";
 import { AppearancePage, BackupPage, GeneralPage, HotkeyPage } from "./pages/SimplePages";
@@ -33,8 +34,6 @@ export function SettingsApp() {
   const [saving, setSaving] = useState(false);
   const [hotkeyError, setHotkeyError] = useState<string | null>(null);
   const stats = useSystemStats();
-  const [audio, setAudio] = useState<AudioDevice[] | null>(null);
-  const [windows, setWindows] = useState<WindowInfo[] | null>(null);
 
   useEffect(() => {
     getConfig().then((c) => {
@@ -55,15 +54,9 @@ export function SettingsApp() {
     setStatus(null);
   }, []);
 
-  // Pré-visualização do submenu automático de áudio com os dispositivos reais.
-  const wantsAudio = !!draft?.profiles.some((p) => hasDynamic(p.items, "audioOutputs"));
-  useEffect(() => {
-    if (wantsAudio && audio === null) listAudioOutputs().then(setAudio, () => setAudio([]));
-  }, [wantsAudio, audio]);
-  const wantsWindows = !!draft?.profiles.some((p) => hasDynamic(p.items, "windows"));
-  useEffect(() => {
-    if (wantsWindows && windows === null) listWindows().then(setWindows, () => setWindows([]));
-  }, [wantsWindows, windows]);
+  // Pré-visualização dos submenus automáticos com os dados reais (lidos uma vez).
+  const allItems = useMemo(() => draft?.profiles.flatMap((p) => p.items) ?? [], [draft?.profiles]);
+  const sources = useDynamicSources(allItems, true, 0);
 
   const errors = useMemo(() => (draft ? validateConfig(draft) : []), [draft]);
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(saved), [draft, saved]);
@@ -107,7 +100,7 @@ export function SettingsApp() {
   const selMain = profile.items[sel.main];
   const previewMain = page === "items" ? sel.main : null;
   const previewSub = page === "items" && sel.child !== null && selMain?.children?.[sel.child] ? sel.child : null;
-  const previewItems = resolveItems(profile.items, audio, windows);
+  const previewItems = resolveItems(profile.items, sources);
 
   return (
     <div className="settings" style={{ "--active": draft.appearance.accent } as CSSProperties}>

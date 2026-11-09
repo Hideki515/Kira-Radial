@@ -378,3 +378,17 @@ html.is-tauri body { background: transparent; }
 .slice-num { font-family: var(--font-display); font-size: 11px; font-weight: 700; fill: var(--text-muted); }
 .main-slice.is-active .slice-num { fill: var(--active); }
 .theme-holo .slice-num { font-family: var(--font-holo); fill: var(--holo-dim); }
+
+/* --- "Tocando agora" e volume no hub --- */
+.hub-cover-empty { fill: color-mix(in srgb, var(--accent) 10%, #0c1118); }
+.hub-cover-ring { fill: none; stroke: color-mix(in srgb, var(--accent) 55%, transparent); stroke-width: 1.5; }
+.hub-paused { font-size: 16px; fill: #fff; opacity: 0.85; }
+.hub-np-title { font-family: var(--font-display); font-size: 13px; font-weight: 700; fill: #f2f5fa; }
+.hub-np-artist { font-size: 10.5px; font-weight: 600; fill: var(--text-secondary); }
+.hub-np-time { font-family: var(--font-display); font-size: 12px; font-weight: 700; fill: var(--text-muted); letter-spacing: 0.06em; }
+.hub-vol { stroke: var(--active); transition: stroke-dashoffset 160ms var(--ease-out); }
+.hub-vol-halo { stroke: color-mix(in srgb, var(--active) 20%, transparent); transition: stroke-dashoffset 160ms var(--ease-out); }
+.theme-holo .hub-np-title { font-family: var(--font-holo); fill: var(--holo-hi); letter-spacing: 0.04em; }
+.theme-holo .hub-np-artist, .theme-holo .hub-np-time { font-family: var(--font-holo); fill: var(--holo-dim); }
+.theme-holo .hub-cover-ring { stroke: var(--holo); }
+.theme-holo .hub-vol { stroke: var(--holo-hi); }

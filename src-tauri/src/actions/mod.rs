@@ -59,6 +59,28 @@ pub enum Action {
     FocusWindow { hwnd: i64 },
     /// Controla a janela que estava ativa antes do menu (topo, monitor, encaixe...).
     Window { cmd: crate::winops::WindowCmd },
+    /// Ativa um plano de energia (gerada pelo submenu "Planos de energia").
+    PowerPlan { guid: String },
+    /// Brilho: "set" (valor 0–100, numa tela ou em todas) ou "up"/"down" (±10%).
+    Brightness {
+        mode: BrightnessMode,
+        #[serde(default)]
+        value: Option<u32>,
+        #[serde(default)]
+        target: Option<String>,
+    },
+    /// Liga/desliga Wi-Fi ou Bluetooth.
+    Radio { kind: crate::radios::Kind, mode: crate::radios::Mode },
+    /// Cola o item `index` do histórico da área de transferência no app anterior.
+    Paste { index: usize },
+}
+
+#[derive(Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum BrightnessMode {
+    Set,
+    Up,
+    Down,
 }
 
 #[derive(Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
@@ -102,7 +124,7 @@ pub enum Shell {
 impl Action {
     /// Ações que enviam teclas precisam que o foco volte ao app anterior antes de rodar.
     pub fn needs_previous_focus(&self) -> bool {
-        matches!(self, Action::Keys { .. } | Action::System { cmd: SystemCmd::Screenshot })
+        matches!(self, Action::Keys { .. } | Action::Paste { .. } | Action::System { cmd: SystemCmd::Screenshot })
     }
 
     /// Ações que mantêm o menu aberto (ex.: mídia — dá para clicar várias vezes em volume +).
@@ -177,6 +199,17 @@ pub fn execute(action: &Action) -> Result<(), String> {
             crate::audio::run(*mode == AudioMode::Cycle, device_id.as_deref(), device_name.as_deref())
         }
         Action::FocusWindow { hwnd } => crate::winlist::focus(*hwnd),
+        Action::PowerPlan { guid } => crate::power::set(guid),
+        Action::Paste { index } => {
+            crate::clipboard::put(*index)?;
+            keys::send_combo("Ctrl+V")
+        }
+        Action::Radio { kind, mode } => crate::radios::set(*kind, *mode).map(|_| ()),
+        Action::Brightness { mode, value, target } => match mode {
+            BrightnessMode::Set => crate::brightness::set(target.as_deref().unwrap_or("all"), value.unwrap_or(100)),
+            BrightnessMode::Up => crate::brightness::step_all(10),
+            BrightnessMode::Down => crate::brightness::step_all(-10),
+        },
         // Precisa da janela anterior: executado por run_action (commands.rs).
         Action::Window { .. } => Err("ação de janela sem janela-alvo".into()),
     }
@@ -396,5 +429,41 @@ mod window_qa_tests {
         }
         assert!(serde_json::from_str::<Action>(r#"{"type":"window","cmd":"snapUp"}"#).is_err());
         let _ = WindowCmd::MinimizeAll;
+    }
+}
+
+/// QA (v0.5.0): o JSON gerado pelo front para as ações da Fase 2 desserializa no Rust
+/// (só serde — nenhuma ação é executada).
+#[cfg(test)]
+mod fase2_qa_tests {
+    use super::{Action, BrightnessMode};
+
+    #[test]
+    fn acoes_da_fase2_do_front_desserializam() {
+        let a: Action = serde_json::from_str(
+            r#"{"type":"powerPlan","guid":"381b4222-f694-41f0-9685-ff5bb260df2e","name":"Equilibrado"}"#,
+        )
+        .unwrap();
+        assert!(matches!(a, Action::PowerPlan { .. }));
+        assert!(!a.needs_previous_focus() && !a.keeps_menu_open());
+
+        let a: Action = serde_json::from_str(r#"{"type":"paste","index":3,"preview":"olá"}"#).unwrap();
+        assert!(matches!(a, Action::Paste { index: 3 }));
+        assert!(a.needs_previous_focus());
+
+        let a: Action = serde_json::from_str(r#"{"type":"brightness","mode":"set","value":40,"target":"all"}"#).unwrap();
+        assert!(matches!(a, Action::Brightness { mode: BrightnessMode::Set, value: Some(40), .. }));
+        for m in ["up", "down"] {
+            let a: Action = serde_json::from_str(&format!(r#"{{"type":"brightness","mode":"{m}"}}"#)).unwrap();
+            assert!(matches!(a, Action::Brightness { value: None, target: None, .. }), "{m}");
+        }
+        assert!(serde_json::from_str::<Action>(r#"{"type":"brightness","mode":"max"}"#).is_err());
+
+        for k in ["wifi", "bluetooth"] {
+            for m in ["toggle", "on", "off"] {
+                let a: Action = serde_json::from_str(&format!(r#"{{"type":"radio","kind":"{k}","mode":"{m}"}}"#)).unwrap();
+                assert!(matches!(a, Action::Radio { .. }), "{k}/{m}");
+            }
+        }
     }
 }

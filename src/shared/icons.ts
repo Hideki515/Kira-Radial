@@ -1,7 +1,9 @@
 import {
-  Activity, AppWindow, Calculator, Camera, Circle, Code, FileText, FolderOpen, Github, Globe, Headphones,
-  Lock, Monitor, Moon, Music, NotebookPen, Play, Server, Settings, SkipBack, SkipForward,
-  SlidersHorizontal, Speaker, Terminal, Volume1, Volume2, VolumeX,
+  Activity, AppWindow, Bluetooth, BluetoothOff, Calculator, Camera, Circle, Clipboard, Code, File, FileCode,
+  FileImage, FileSpreadsheet, FileText, FolderOpen, Gauge, Github, Globe, Headphones, History, Layers, Leaf,
+  Lock, Maximize2, Minimize2, Monitor, MonitorUp, Moon, Music, NotebookPen, PanelLeft, PanelRight, Pin, Play,
+  Server, Settings, SkipBack, SkipForward, SlidersHorizontal, Speaker, Sun, SunDim, Terminal, Volume1,
+  Volume2, VolumeX, Wifi, WifiOff, Zap,
   type LucideIcon,
 } from "lucide-react";
 
@@ -33,6 +35,28 @@ export const ICONS: Record<string, LucideIcon> = {
   "volume-1": Volume1,
   "volume-2": Volume2,
   "volume-x": VolumeX,
+  bluetooth: Bluetooth,
+  "bluetooth-off": BluetoothOff,
+  clipboard: Clipboard,
+  file: File,
+  "file-code": FileCode,
+  "file-image": FileImage,
+  "file-spreadsheet": FileSpreadsheet,
+  gauge: Gauge,
+  history: History,
+  layers: Layers,
+  leaf: Leaf,
+  "maximize-2": Maximize2,
+  "minimize-2": Minimize2,
+  "monitor-up": MonitorUp,
+  "panel-left": PanelLeft,
+  "panel-right": PanelRight,
+  pin: Pin,
+  sun: Sun,
+  "sun-dim": SunDim,
+  wifi: Wifi,
+  "wifi-off": WifiOff,
+  zap: Zap,
 };
 
 export function getIcon(name: string): LucideIcon {

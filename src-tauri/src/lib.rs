@@ -2,14 +2,20 @@
 
 mod actions;
 mod audio;
+mod clipboard;
+mod brightness;
 mod commands;
 mod config;
 mod foreground;
 mod keycapture;
 mod menu;
+mod nowplaying;
 mod orb;
 mod perf;
 mod positioning;
+mod radios;
+mod recent;
+mod power;
 mod stats;
 mod winlist;
 mod winops;
@@ -57,6 +63,7 @@ pub fn run() {
                 }
             }
 
+            clipboard::set_enabled(cfg.behavior.clipboard_history);
             orb::init(&handle);
             orb::apply(&handle, &cfg);
             orb::spawn_fullscreen_watch(handle.clone());
@@ -100,6 +107,14 @@ pub fn run() {
             commands::orb_reset_position,
             commands::orb_set_hidden,
             commands::list_windows,
+            commands::now_playing,
+            commands::list_power_plans,
+            commands::list_displays,
+            commands::list_radios,
+            commands::list_recent_files,
+            commands::clipboard_list,
+            commands::clipboard_clear,
+            commands::get_volume,
             commands::read_orb_image,
             commands::orb_context_menu,
             perf::perf_log,

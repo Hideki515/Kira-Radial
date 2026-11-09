@@ -26,6 +26,9 @@ pub fn save_config(app: AppHandle, state: State<'_, AppState>, mut config: Confi
     if old.hotkey.accelerator != config.hotkey.accelerator || old.launcher.mode != config.launcher.mode {
         menu::apply_hotkey(&app, &config)?;
     }
+    if old.behavior.clipboard_history != config.behavior.clipboard_history {
+        crate::clipboard::set_enabled(config.behavior.clipboard_history);
+    }
     if old.behavior.autostart != config.behavior.autostart {
         apply_autostart(&app, config.behavior.autostart)?;
     }
@@ -54,6 +57,61 @@ pub async fn read_orb_image(path: String) -> Result<String, String> {
 #[tauri::command]
 pub fn orb_context_menu(app: AppHandle) -> Result<(), String> {
     crate::orb::context_menu(&app)
+}
+
+/// Música/vídeo em reprodução (hub "Tocando agora").
+#[tauri::command]
+pub async fn now_playing() -> Result<Option<crate::nowplaying::NowPlaying>, String> {
+    tauri::async_runtime::spawn_blocking(crate::nowplaying::current).await.map_err(|e| e.to_string())
+}
+
+#[derive(serde::Serialize)]
+pub struct Volume {
+    level: f32,
+    muted: bool,
+}
+
+/// Volume da saída padrão (arco de volume ao girar a roda no hub/ícone).
+#[tauri::command]
+pub async fn get_volume() -> Result<Volume, String> {
+    let (level, muted) = tauri::async_runtime::spawn_blocking(crate::audio::master_volume).await.map_err(|e| e.to_string())??;
+    Ok(Volume { level, muted })
+}
+
+/// Prévias do histórico da área de transferência (vazio se desligado).
+#[tauri::command]
+pub fn clipboard_list() -> Vec<String> {
+    crate::clipboard::list()
+}
+
+/// Apaga o histórico da área de transferência.
+#[tauri::command]
+pub fn clipboard_clear() {
+    crate::clipboard::clear();
+}
+
+/// Arquivos recentes (submenu automático).
+#[tauri::command]
+pub async fn list_recent_files() -> Result<Vec<crate::recent::RecentFile>, String> {
+    tauri::async_runtime::spawn_blocking(crate::recent::list).await.map_err(|e| e.to_string())
+}
+
+/// Wi-Fi e Bluetooth (submenu automático "Rádios").
+#[tauri::command]
+pub async fn list_radios() -> Result<Vec<crate::radios::RadioInfo>, String> {
+    tauri::async_runtime::spawn_blocking(crate::radios::list).await.map_err(|e| e.to_string())
+}
+
+/// Telas com brilho ajustável (submenu automático "Brilho").
+#[tauri::command]
+pub async fn list_displays() -> Result<Vec<crate::brightness::Display>, String> {
+    tauri::async_runtime::spawn_blocking(crate::brightness::list).await.map_err(|e| e.to_string())
+}
+
+/// Planos de energia (submenu automático).
+#[tauri::command]
+pub async fn list_power_plans() -> Result<Vec<crate::power::PowerPlan>, String> {
+    tauri::async_runtime::spawn_blocking(crate::power::list).await.map_err(|e| e.to_string())
 }
 
 /// Janelas abertas (submenu automático "Janelas abertas").

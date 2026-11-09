@@ -7,7 +7,7 @@ import { Field, Segmented, Toggle } from "./controls";
 import { HotkeyRecorder } from "./HotkeyRecorder";
 
 /** Tipos editáveis (focusWindow é gerado pelo submenu "Janelas abertas"). */
-type ActionType = Exclude<Action["type"], "focusWindow">;
+type ActionType = Exclude<Action["type"], "focusWindow" | "powerPlan" | "paste">;
 
 export const ACTION_TYPES: { value: ActionType; label: string }[] = [
   { value: "launch", label: "Abrir programa / arquivo" },
@@ -19,6 +19,8 @@ export const ACTION_TYPES: { value: ActionType; label: string }[] = [
   { value: "script", label: "Script (PowerShell / CMD)" },
   { value: "audioOutput", label: "Trocar saída de áudio" },
   { value: "window", label: "Controlar a janela ativa" },
+  { value: "brightness", label: "Brilho da tela" },
+  { value: "radio", label: "Wi-Fi / Bluetooth" },
   { value: "openSettings", label: "Abrir estas configurações" },
 ];
 
@@ -54,6 +56,8 @@ export function defaultAction(type: ActionType): Action {
     case "openSettings": return { type };
     case "audioOutput": return { type, mode: "cycle" };
     case "window": return { type, cmd: "maximize" };
+    case "brightness": return { type, mode: "up" };
+    case "radio": return { type, kind: "wifi", mode: "toggle" };
   }
 }
 
@@ -251,6 +255,42 @@ export function ActionEditor({ action, onChange }: { action: Action; onChange: (
             {(Object.keys(WINDOW_LABEL) as WindowCmd[]).map((c) => <option key={c} value={c}>{WINDOW_LABEL[c]}</option>)}
           </select>
         </Field>
+      )}
+
+      {action.type === "brightness" && (
+        <>
+          <Field label="Ajuste" group hint="Vale para a tela do notebook e monitores externos com DDC/CI.">
+            <Segmented
+              value={action.mode}
+              options={[{ value: "up", label: "Aumentar 10%" }, { value: "down", label: "Diminuir 10%" }, { value: "set", label: "Definir valor" }]}
+              onChange={(m) => onChange(m === "set" ? { type: "brightness", mode: m, value: action.value ?? 50, target: "all" } : { type: "brightness", mode: m })}
+            />
+          </Field>
+          {action.mode === "set" && (
+            <Field label={`Brilho: ${action.value ?? 50}%`}>
+              <input type="range" min={0} max={100} step={5} value={action.value ?? 50} onChange={(e) => onChange({ ...action, value: Number(e.target.value) })} />
+            </Field>
+          )}
+        </>
+      )}
+
+      {action.type === "radio" && (
+        <>
+          <Field label="Rádio" group>
+            <Segmented
+              value={action.kind}
+              options={[{ value: "wifi", label: "Wi-Fi" }, { value: "bluetooth", label: "Bluetooth" }]}
+              onChange={(k) => onChange({ ...action, kind: k })}
+            />
+          </Field>
+          <Field label="Ao executar" group>
+            <Segmented
+              value={action.mode}
+              options={[{ value: "toggle", label: "Alternar" }, { value: "on", label: "Ligar" }, { value: "off", label: "Desligar" }]}
+              onChange={(m) => onChange({ ...action, mode: m })}
+            />
+          </Field>
+        </>
       )}
 
       {action.type === "script" && (

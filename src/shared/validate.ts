@@ -69,6 +69,9 @@ export function validateAction(a: Action): string | null {
         return "o atraso deve ser um número inteiro entre 0 e 10000 ms.";
       return null;
     case "script": return a.command.trim() ? null : "comando vazio.";
+    case "brightness":
+      if (a.mode === "set" && !(Number.isInteger(a.value) && a.value! >= 0 && a.value! <= 100)) return "o brilho deve ser um inteiro de 0 a 100.";
+      return null;
     case "audioOutput":
       if (a.mode === "set" && !a.deviceId?.trim() && !a.deviceName?.trim()) return "escolha o dispositivo de saída.";
       return null;

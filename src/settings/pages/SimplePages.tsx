@@ -4,6 +4,7 @@ import { cloneConfig, defaultConfig, withDefaults } from "../../shared/defaults"
 import { HOLO_ACCENT, SCALE_LIMITS, wantsHotkey, wantsOrb, type Config, type LauncherMode, type Theme } from "../../shared/types";
 import { Field, Section, Segmented, Toggle } from "../controls";
 import { HotkeyRecorder } from "../HotkeyRecorder";
+import { clipboardClear } from "../../shared/ipc";
 
 interface PageProps {
   config: Config;
@@ -24,6 +25,17 @@ export function GeneralPage({ config, update }: PageProps) {
       <Toggle label="Iniciar com o Windows" checked={b.autostart} onChange={(v) => update((c) => void (c.behavior.autostart = v))} />
       <Toggle label="Fechar ao perder o foco" hint="Clicar em outra janela fecha o menu." checked={b.closeOnBlur} onChange={(v) => update((c) => void (c.behavior.closeOnBlur = v))} />
       <Toggle label="Fechar após executar uma ação" checked={b.closeOnAction} onChange={(v) => update((c) => void (c.behavior.closeOnAction = v))} />
+      <Toggle
+        label="Guardar os últimos textos copiados"
+        hint="Para o submenu automático “Área de transferência”. Só os 8 últimos textos, só na memória (somem ao fechar a Kira). Senhas copiadas de gerenciadores que pedem exclusão não são guardadas."
+        checked={!!b.clipboardHistory}
+        onChange={(v) => update((c) => void (c.behavior.clipboardHistory = v))}
+      />
+      {b.clipboardHistory && (
+        <div className="row-actions">
+          <button type="button" className="btn" onClick={() => void clipboardClear()}>Limpar histórico agora</button>
+        </div>
+      )}
       <Field label={`Zona morta central: ${b.deadZonePx}px`} hint="Dentro deste raio nenhuma fatia é selecionada.">
         <input type="range" min={60} max={140} step={5} value={b.deadZonePx} onChange={(e) => update((c) => void (c.behavior.deadZonePx = Number(e.target.value)))} />
       </Field>
@@ -137,6 +149,12 @@ export function AppearancePage({ config, update }: PageProps) {
         hint="Com o menu aberto, as teclas 1–9 escolhem a fatia (e o subitem, com o sub-anel aberto)."
         checked={!!a.showNumbers}
         onChange={(v) => update((c) => void (c.appearance.showNumbers = v))}
+      />
+      <Toggle
+        label="Mostrar a música no centro"
+        hint="Com algo tocando (Spotify, YouTube…), o centro mostra capa, título e artista. Gire a roda do mouse sobre o centro para ajustar o volume."
+        checked={a.showMedia !== false}
+        onChange={(v) => update((c) => void (c.appearance.showMedia = v))}
       />
       <Toggle label="Mostrar medidor de CPU" checked={a.showCpu} onChange={(v) => update((c) => void (c.appearance.showCpu = v))} />
     </Section>

@@ -55,7 +55,7 @@ describe("ItemsPage › Ao selecionar", () => {
     render(<Harness initial={baseProfile()} main={0} />);
     expect(radio(/Executar ação/).getAttribute("aria-checked")).toBe("true");
 
-    pick(/Saídas de áudio/);
+    pick(/Submenu automático/);
     expect(latest.items[0]).toMatchObject({ dynamic: "audioOutputs" });
     expect(latest.items[0].action).toBeUndefined();
     expect(latest.items[0].children).toBeUndefined();
@@ -76,13 +76,13 @@ describe("ItemsPage › Ao selecionar", () => {
   it("submenu com subitens pede confirmação; cancelar mantém, confirmar troca para áudio", () => {
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     render(<Harness initial={baseProfile()} main={1} />);
-    pick(/Saídas de áudio/);
+    pick(/Submenu automático/);
     expect(confirm).toHaveBeenCalled();
     expect(latest.items[1].children).toHaveLength(1);
     expect(latest.items[1].dynamic).toBeUndefined();
 
     confirm.mockReturnValue(true);
-    pick(/Saídas de áudio/);
+    pick(/Submenu automático/);
     expect(latest.items[1].children).toBeUndefined();
     expect(latest.items[1].dynamic).toBe("audioOutputs");
   });
@@ -94,11 +94,17 @@ describe("ItemsPage › Ao selecionar", () => {
     expect(JSON.stringify(latest)).toBe(before);
   });
 
-  it("Janelas abertas (auto) vira item dinâmico 'windows'", () => {
+  it("Submenu automático: escolhe o conteúdo (janelas, energia) na lista", () => {
     render(<Harness initial={baseProfile()} main={0} />);
-    pick(/Janelas abertas/);
+    pick(/Submenu automático/);
+    expect(latest.items[0].dynamic).toBe("audioOutputs");
+    const sel = screen.getByDisplayValue("Saídas de áudio");
+    fireEvent.change(sel, { target: { value: "windows" } });
     expect(latest.items[0].dynamic).toBe("windows");
     expect(latest.items[0].action).toBeUndefined();
-    expect(radio(/Janelas abertas/).getAttribute("aria-checked")).toBe("true");
+    expect(screen.getByText(/janelas abertas mais recentes/)).toBeTruthy();
+    fireEvent.change(screen.getByDisplayValue("Janelas abertas"), { target: { value: "powerPlans" } });
+    expect(latest.items[0].dynamic).toBe("powerPlans");
+    expect(radio(/Submenu automático/).getAttribute("aria-checked")).toBe("true");
   });
 });

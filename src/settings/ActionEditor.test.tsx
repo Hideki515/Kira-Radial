@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import type { Action } from "../shared/types";
+import { validateAction } from "../shared/validate";
 import { ActionEditor } from "./ActionEditor";
 import { HotkeyRecorder } from "./HotkeyRecorder";
 
@@ -115,5 +116,25 @@ describe("ação de janela", () => {
     const values = Array.from(document.querySelectorAll("option")).map((o) => o.getAttribute("value"));
     expect(values).toContain("window");
     expect(values).not.toContain("focusWindow");
+  });
+});
+
+describe("ação de brilho", () => {
+  it("começa em aumentar; 'Definir valor' mostra o controle e valida 0–100", () => {
+    let last: Action | null = null;
+    function Host() {
+      const [a, setA] = useState<Action>({ type: "url", url: "https://x.y" });
+      return <ActionEditor action={a} onChange={(n) => { last = n; setA(n); }} />;
+    }
+    render(<Host />);
+    fireEvent.change(screen.getByDisplayValue("Abrir site (URL)"), { target: { value: "brightness" } });
+    expect(last).toEqual({ type: "brightness", mode: "up" });
+    fireEvent.click(screen.getByRole("radio", { name: "Definir valor" }));
+    expect(last).toEqual({ type: "brightness", mode: "set", value: 50, target: "all" });
+    fireEvent.change(screen.getByLabelText(/Brilho: 50%/), { target: { value: "80" } });
+    expect(last).toMatchObject({ value: 80 });
+    expect(validateAction({ type: "brightness", mode: "set", value: 80 })).toBeNull();
+    expect(validateAction({ type: "brightness", mode: "set", value: 150 })).toMatch(/0 a 100/);
+    expect(validateAction({ type: "brightness", mode: "down" })).toBeNull();
   });
 });

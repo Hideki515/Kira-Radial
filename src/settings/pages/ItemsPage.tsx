@@ -1,7 +1,8 @@
 import { ChevronDown, ChevronUp, CornerDownRight, Plus, Sparkles, Trash2 } from "lucide-react";
 import type { CSSProperties } from "react";
 import { getIcon, ICONS } from "../../shared/icons";
-import { LIMITS, type MenuItem, type Profile } from "../../shared/types";
+import { DYNAMIC_HINT, DYNAMIC_LABEL } from "../../radial/dynamic";
+import { DYNAMIC_KINDS, LIMITS, type DynamicKind, type MenuItem, type Profile } from "../../shared/types";
 import { ActionEditor, defaultAction } from "../ActionEditor";
 import { Field, Segmented } from "../controls";
 
@@ -182,24 +183,22 @@ export function ItemsPage({ profile, selection, onSelect, edit }: Props) {
           {selection.child === null && (
             <Field label="Ao selecionar">
               <Segmented
-                value={selected.dynamic === "windows" ? "windows" : selected.dynamic ? "audio" : selected.children ? "submenu" : "action"}
+                value={selected.dynamic ? "auto" : selected.children ? "submenu" : "action"}
                 options={[
                   { value: "action", label: "Executar ação" },
                   { value: "submenu", label: "Abrir submenu" },
-                  { value: "audio", label: "Saídas de áudio (auto)" },
-                  { value: "windows", label: "Janelas abertas (auto)" },
+                  { value: "auto", label: "Submenu automático" },
                 ]}
                 onChange={(v) =>
                   editSelected((it) => {
-                    const current = it.dynamic === "windows" ? "windows" : it.dynamic ? "audio" : it.children ? "submenu" : "action";
+                    const current = it.dynamic ? "auto" : it.children ? "submenu" : "action";
                     if (v === current) return;
                     if (it.children?.length && !window.confirm("Remover os subitens desta fatia?")) return;
                     delete it.children;
                     delete it.action;
                     delete it.dynamic;
                     if (v === "submenu") it.children = [];
-                    else if (v === "audio") it.dynamic = "audioOutputs";
-                    else if (v === "windows") it.dynamic = "windows";
+                    else if (v === "auto") it.dynamic = "audioOutputs";
                     else it.action = defaultAction("launch");
                   })
                 }
@@ -207,16 +206,18 @@ export function ItemsPage({ profile, selection, onSelect, edit }: Props) {
             </Field>
           )}
 
-          {selected.dynamic === "audioOutputs" ? (
-            <p className="muted">
-              O sub-anel mostra automaticamente as saídas de áudio reconhecidas pelo Windows (até {LIMITS.maxChildren}),
-              atualizadas a cada abertura do menu. A saída em uso aparece em verde; clique em outra para trocar.
-            </p>
-          ) : selected.dynamic === "windows" ? (
-            <p className="muted">
-              O sub-anel mostra as janelas abertas (as {LIMITS.maxChildren} mais recentes), com o ícone de cada app,
-              atualizadas a cada abertura do menu. Clique numa para trazê-la para a frente.
-            </p>
+          {selected.dynamic ? (
+            <>
+              <Field label="Conteúdo do submenu">
+                <select value={selected.dynamic} onChange={(e) => editSelected((it) => void (it.dynamic = e.target.value as DynamicKind))}>
+                  {DYNAMIC_KINDS.map((k) => <option key={k} value={k}>{DYNAMIC_LABEL[k]}</option>)}
+                </select>
+              </Field>
+              <p className="muted">
+                O sub-anel mostra automaticamente {DYNAMIC_HINT[selected.dynamic]} Até {LIMITS.maxChildren} itens; as informações são
+                atualizadas a cada abertura do menu.
+              </p>
+            </>
           ) : selected.children ? (
             <p className="muted">
               Esta fatia abre um sub-anel com {selected.children.length} item(ns). Use “+ Subitem” na lista ao lado.

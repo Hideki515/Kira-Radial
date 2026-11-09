@@ -1,4 +1,4 @@
-import type { StatsPayload } from "../shared/ipc";
+import type { NowPlaying, StatsPayload } from "../shared/ipc";
 import type { Config, MenuItem } from "../shared/types";
 import { CenterHub } from "./CenterHub";
 import { HoloBack, HoloFront, HoloScan } from "./HoloLayer";
@@ -14,6 +14,8 @@ export interface RadialCanvasProps {
   openMain?: number | null;
   hubHovered: boolean;
   stats: StatsPayload | null;
+  nowPlaying?: NowPlaying | null;
+  volume?: number | null;
   appearance: Config["appearance"];
 }
 
@@ -35,7 +37,7 @@ const ORBIT_ARCS: [number, number, number][] = [
 ];
 
 /** Componente puramente visual — reutilizado pela janela radial e pelo preview das configurações. */
-export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovered, stats, appearance }: RadialCanvasProps) {
+export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovered, stats, appearance, nowPlaying, volume }: RadialCanvasProps) {
   const subParent = openMain === undefined ? activeMain : openMain;
   const parentItem = subParent !== null ? items[subParent] : undefined;
   const children = parentItem?.children ?? [];
@@ -120,6 +122,8 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
         showClock={appearance.showClock}
         hovered={hubHovered}
         inSubmenu={openMain === undefined ? activeSub !== null : subOpen}
+        nowPlaying={appearance.showMedia === false ? null : nowPlaying}
+        volume={volume}
       />
       {holo && <HoloFront />}
     </svg>

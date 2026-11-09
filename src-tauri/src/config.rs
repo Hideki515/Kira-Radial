@@ -108,6 +108,9 @@ pub struct Behavior {
     pub close_on_action: bool,
     pub dead_zone_px: f64,
     pub autostart: bool,
+    /// Histórico da área de transferência (só memória). Desligado por padrão.
+    #[serde(default)]
+    pub clipboard_history: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -279,5 +282,25 @@ mod tests {
         let mut d = Config::default_config();
         d.profiles[0].items.truncate(2);
         assert!(d.validate().is_err());
+    }
+}
+
+/// QA (v0.5.0): config antiga sem `clipboardHistory`/`showMedia` continua válida e o
+/// histórico fica desligado.
+#[cfg(test)]
+mod fase2_qa_tests {
+    use super::*;
+
+    #[test]
+    fn config_antiga_sem_clipboard_history_fica_desligado() {
+        assert!(!Config::default_config().behavior.clipboard_history);
+        let mut v: Value = serde_json::to_value(Config::default_config()).unwrap();
+        v["behavior"].as_object_mut().unwrap().remove("clipboardHistory");
+        if let Some(a) = v["appearance"].as_object_mut() {
+            a.remove("showMedia");
+        }
+        let c: Config = serde_json::from_value(v).unwrap();
+        c.validate().unwrap();
+        assert!(!c.behavior.clipboard_history);
     }
 }

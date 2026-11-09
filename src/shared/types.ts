@@ -35,7 +35,15 @@ export type Action =
   /** Traz uma janela para a frente (gerada pelo submenu "Janelas abertas"; não aparece no editor). */
   | { type: "focusWindow"; hwnd: number; title?: string }
   /** Controla a janela que estava ativa antes de o menu abrir. */
-  | { type: "window"; cmd: WindowCmd };
+  | { type: "window"; cmd: WindowCmd }
+  /** Ativa um plano de energia (gerada pelo submenu "Planos de energia"). */
+  | { type: "powerPlan"; guid: string; name?: string }
+  /** Brilho: "set" aplica `value` (0–100) em `target` ("all" = todas as telas); "up"/"down" = ±10%. */
+  | { type: "brightness"; mode: "set" | "up" | "down"; value?: number; target?: string }
+  /** Liga/desliga Wi-Fi ou Bluetooth. */
+  | { type: "radio"; kind: "wifi" | "bluetooth"; mode: "toggle" | "on" | "off" }
+  /** Cola um item do histórico da área de transferência (gerada pelo submenu; não aparece no editor). */
+  | { type: "paste"; index: number; preview?: string };
 
 export interface MenuItem {
   id: string;
@@ -52,7 +60,8 @@ export interface MenuItem {
   dynamic?: DynamicKind;
 }
 
-export type DynamicKind = "audioOutputs" | "windows";
+export type DynamicKind = "audioOutputs" | "windows" | "powerPlans" | "brightness" | "radios" | "recentFiles" | "clipboard";
+export const DYNAMIC_KINDS: readonly DynamicKind[] = ["audioOutputs", "windows", "powerPlans", "brightness", "radios", "recentFiles", "clipboard"];
 
 export interface Profile {
   id: string;
@@ -71,6 +80,8 @@ export interface Config {
     closeOnAction: boolean;
     deadZonePx: number;
     autostart: boolean;
+    /** Guarda os últimos textos copiados (só na memória). Padrão: desligado. */
+    clipboardHistory?: boolean;
   };
   appearance: {
     scale: number;
@@ -81,6 +92,8 @@ export interface Config {
     showClock: boolean;
     /** Mostra o número (atalho 1–9) em cada fatia. */
     showNumbers?: boolean;
+    /** Mostra a música em reprodução no centro (padrão: ligado). */
+    showMedia?: boolean;
   };
   launcher: Launcher;
   profiles: Profile[];

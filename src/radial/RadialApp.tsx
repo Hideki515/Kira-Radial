@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useConfig } from "../hooks/useConfig";
 import { useSystemStats } from "../hooks/useSystemStats";
-import { describeAction, hideMenu, isTauri, listAudioOutputs, listWindows, onEvent, runAction, type AudioDevice, type MenuShowPayload, type WindowInfo } from "../shared/ipc";
+import { describeAction, getVolume, hideMenu, isTauri, nowPlaying as fetchNowPlaying, type NowPlaying, onEvent, runAction, type MenuShowPayload } from "../shared/ipc";
 import { observeLongTasks, perfLog, startFrameMonitor } from "../shared/perf";
 import type { Config, MenuItem } from "../shared/types";
-import { hasDynamic, resolveItems } from "./dynamic";
+import { resolveItems } from "./dynamic";
+import { useDynamicSources } from "./useDynamicSources";
 import { LAYOUT, hitTest, sliceAngle, type Hit } from "./geometry";
 import { RadialCanvas } from "./RadialCanvas";
 
@@ -13,6 +14,11 @@ const CONFIRM: Record<string, string> = {
   restart: "Reiniciar o computador agora?",
   signout: "Encerrar a sessão agora?",
 };
+
+/** Intervalo de atualização do "Tocando agora" com o menu aberto. */
+export const MEDIA_POLL_MS = 2000;
+/** Quanto tempo o arco de volume fica visível após girar a roda. */
+export const VOLUME_SHOW_MS = 1200;
 
 /** Quanto tempo o aviso (toast) fica na tela após o último aviso. */
 export const TOAST_MS = 2200;
@@ -45,15 +51,18 @@ function initialSelection(items: MenuItem[]): [number | null, number | null] {
 function RadialMenu({ config }: { config: Config }) {
   const [profileId, setProfileId] = useState(config.profiles[0].id);
   const profile = config.profiles.find((p) => p.id === profileId) ?? config.profiles[0];
-  const [audio, setAudio] = useState<AudioDevice[] | null>(null);
-  const [windows, setWindows] = useState<WindowInfo[] | null>(null);
-  const items = useMemo(() => resolveItems(profile.items, audio, windows), [profile.items, audio, windows]);
-  const wantsAudio = hasDynamic(profile.items, "audioOutputs");
-  const wantsWindows = hasDynamic(profile.items, "windows");
+  const [media, setMedia] = useState<NowPlaying | null>(null);
+  const [volume, setVolume] = useState<number | null>(null);
+  const volumeTimer = useRef<number | null>(null);
+  const showMedia = config.appearance.showMedia !== false;
   const scale = config.appearance.scale;
 
   const [center, setCenter] = useState(() => ({ x: window.innerWidth / 2, y: window.innerHeight / 2 }));
   const [open, setOpen] = useState(!isTauri());
+  const [openKey, setOpenKey] = useState(0);
+  // Submenus automáticos (áudio, janelas, energia...): relidos a cada abertura.
+  const sources = useDynamicSources(profile.items, open, openKey);
+  const items = useMemo(() => resolveItems(profile.items, sources), [profile.items, sources]);
   /** Aberto pelo ícone: ponto (px da janela) de onde o menu nasce e para onde se recolhe. */
   const [origin, setOrigin] = useState<Point | null>(null);
   /** Animação de recolher em andamento (o menu já não aceita entrada). */
@@ -69,7 +78,6 @@ function RadialMenu({ config }: { config: Config }) {
     },
     [],
   );
-  const [openKey, setOpenKey] = useState(0);
   const [activeMain, setActiveMain] = useState<number | null>(() => initialSelection(items)[0]);
   const [activeSub, setActiveSub] = useState<number | null>(() => initialSelection(items)[1]);
   /** Fatia cujo sub-anel está aberto (abre com clique/Enter; Esc/Backspace volta ao anel principal). */
@@ -189,35 +197,42 @@ function RadialMenu({ config }: { config: Config }) {
     [config.behavior.deadZonePx, scale],
   );
 
-  // Submenu dinâmico de áudio: relê as saídas a cada abertura (fones podem ter sido ligados/desligados).
-  useEffect(() => {
-    if (!open || !wantsAudio) return;
-    let alive = true;
-    listAudioOutputs()
-      .then((d) => alive && setAudio(d))
-      .catch((e) => {
-        if (alive) setAudio([]);
-        perfLog(`falha ao listar saídas de áudio: ${String(e)}`);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [open, openKey, wantsAudio]);
 
-  // Submenu "Janelas abertas": relê a cada abertura (a lista muda o tempo todo).
+  // "Tocando agora": lê ao abrir e a cada 2 s enquanto o menu está aberto.
   useEffect(() => {
-    if (!open || !wantsWindows) return;
+    if (!open || !showMedia) return void setMedia(null);
     let alive = true;
-    listWindows()
-      .then((w) => alive && setWindows(w))
-      .catch((e) => {
-        if (alive) setWindows([]);
-        perfLog(`falha ao listar janelas: ${String(e)}`);
-      });
+    const load = () =>
+      fetchNowPlaying().then(
+        (m) => alive && setMedia(m),
+        (e) => perfLog(`falha ao ler mídia: ${String(e)}`),
+      );
+    void load();
+    const t = window.setInterval(load, MEDIA_POLL_MS);
     return () => {
       alive = false;
+      window.clearInterval(t);
     };
-  }, [open, openKey, wantsWindows]);
+  }, [open, openKey, showMedia]);
+
+  useEffect(() => () => void (volumeTimer.current !== null && window.clearTimeout(volumeTimer.current)), []);
+
+  /** Roda sobre o centro: ajusta o volume e mostra o arco por um instante. */
+  const nudgeVolume = useCallback(async (up: boolean) => {
+    try {
+      await runAction({ type: "media", cmd: up ? "volup" : "voldown" });
+      const v = await getVolume();
+      setVolume(v.muted ? 0 : v.level);
+    } catch (e) {
+      perfLog(`falha ao ajustar volume: ${String(e)}`);
+    }
+    if (volumeTimer.current !== null) window.clearTimeout(volumeTimer.current);
+    volumeTimer.current = window.setTimeout(() => {
+      volumeTimer.current = null;
+      setVolume(null);
+    }, VOLUME_SHOW_MS);
+  }, []);
+
 
   // --- Diagnóstico de desempenho (perf.log) ---
   const showReceivedAt = useRef<number | null>(null);
@@ -358,6 +373,8 @@ function RadialMenu({ config }: { config: Config }) {
       const s = state.current;
       if (!s.open) return;
       const d = e.deltaY > 0 ? 1 : -1;
+      // Roda sobre o centro: volume (para cima = aumenta), em vez de girar a seleção.
+      if (computeHit(e.clientX, e.clientY).ring === "center") return void nudgeVolume(d < 0);
       if (s.openMain !== null && s.children.length) {
         setActiveSub(((s.activeSub ?? -1) + d + s.children.length) % s.children.length);
       } else {
@@ -389,7 +406,7 @@ function RadialMenu({ config }: { config: Config }) {
       window.removeEventListener("contextmenu", onContext);
       window.removeEventListener("blur", onBlur);
     };
-  }, [close, closeSub, computeHit, config.behavior.closeOnBlur, execute, executeSelection, openSub, showAt]);
+  }, [close, closeSub, computeHit, config.behavior.closeOnBlur, execute, executeSelection, nudgeVolume, openSub, showAt]);
 
   const px = LAYOUT.size * scale;
   const style = {
@@ -418,6 +435,8 @@ function RadialMenu({ config }: { config: Config }) {
             openMain={openMain}
             hubHovered={hubHovered}
             stats={stats}
+            nowPlaying={media}
+            volume={volume}
             appearance={config.appearance}
           />
         </div>

@@ -125,6 +125,21 @@ fn list_outputs_inner() -> Result<Vec<AudioDevice>, String> {
     }
 }
 
+/// Volume da saída padrão (0–1) e se está mudo.
+pub fn master_volume() -> Result<(f32, bool), String> {
+    use windows::Win32::Media::Audio::Endpoints::IAudioEndpointVolume;
+    let _com = ComGuard::new()?;
+    let en = enumerator()?;
+    let err = |e: windows::core::Error| format!("falha ao ler o volume: {e}");
+    unsafe {
+        let dev = en.GetDefaultAudioEndpoint(eRender, eConsole).map_err(err)?;
+        let vol: IAudioEndpointVolume = dev.Activate(CLSCTX_ALL, None).map_err(err)?;
+        let level = vol.GetMasterVolumeLevelScalar().map_err(err)?;
+        let muted = vol.GetMute().map_err(err)?.as_bool();
+        Ok((level.clamp(0.0, 1.0), muted))
+    }
+}
+
 /// Saídas de áudio ativas. Inicializa COM por conta própria: chame numa thread bloqueante.
 pub fn list_outputs() -> Result<Vec<AudioDevice>, String> {
     // Thread dedicada: não interfere no modelo COM de quem chamou.
