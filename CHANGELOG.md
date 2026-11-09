@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0
+
+- **Tema "Holográfico"**: HUD em wireframe.
+  - Esfera com meridianos animados, órbitas inclinadas, réguas graduadas, varredura de radar e retícula no hub.
+  - A cor segue o destaque, âmbar por padrão.
+  - Escolha em Configurações → Aparência → Tema. O tema "Vidro" continua sendo o padrão.
+
 ## 0.1.0
 
 Primeira versão.

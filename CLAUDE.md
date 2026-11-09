@@ -15,6 +15,7 @@ O **usuário atualiza por conta própria** — não rode o script nem feche/rein
 ## Git / GitHub
 - Repositório privado no GitHub (`main`), licença MIT. Projeto solo: commits direto em `main`.
 - **Commit automático:** após cada melhoria com QA **APROVADO**, faça commit em `main` (mensagem descritiva). Push, tags e releases só quando o usuário pedir.
+- **Versão a cada melhoria** (semver): recurso novo → minor (0.2.0 → 0.3.0); correção/ajuste → patch (0.2.0 → 0.2.1). Rode `node scripts/bump-version.mjs x.y.z`, acrescente a entrada no `CHANGELOG.md` e inclua no mesmo commit da melhoria.
 - CI (`.github/workflows/ci.yml`) roda typecheck, Vitest, cargo test e clippy a cada push.
 - Lançar versão: `node scripts/bump-version.mjs x.y.z` → CHANGELOG → commit → `git tag -a vx.y.z -m vx.y.z && git push --follow-tags` (tag anotada — tag leve não sobe com --follow-tags) (workflow Release gera rascunho com o instalador). Criar tag/push só com confirmação.
 - `.claude/qa/` é local (no `.gitignore`).
