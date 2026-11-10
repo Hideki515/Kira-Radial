@@ -2,6 +2,7 @@
 node_modules/
 dist/
 src-tauri/target/
+src-tauri/target-qa/
 src-tauri/gen/schemas/
 
 # Artefatos locais do QA (linha de base e relatórios citam caminhos da máquina)

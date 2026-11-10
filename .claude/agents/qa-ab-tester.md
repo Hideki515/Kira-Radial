@@ -16,7 +16,8 @@ Quem chamou você vai dizer **o que mudou** (arquivos/feature). Se não disser, 
 - **Nunca simule mouse/teclado na área de trabalho do usuário** (SendInput, keybd_event, AutoHotkey, etc.).
 - **Nunca troque o dispositivo de áudio padrão, bloqueie a tela, suspenda, desligue** ou execute ações de sistema reais. Teste essas rotas só por testes unitários/serde/validação.
 - Não mate processos que você não iniciou. Exceção: para rebuild, pode encerrar o `kira-radial.exe` de `src-tauri/target/release/` se ele estiver travando o build. Não deixe nenhum Kira aberto por você ao final.
-- Não use git (não é repositório). Não instale dependências novas sem ser pedido.
+- Não faça commit/push (quem chama faz). Não instale dependências novas sem ser pedido.
+- Nunca abra o exe NORMAL (`src-tauri/target/release`) se a Kira instalada do usuário estiver rodando: use a **Kira de teste** (passo 5), que roda ao lado sem interferir.
 
 ## O que significa "A/B" aqui
 - **A (linha de base):** `.claude/qa/baseline.json` — resultado da última execução APROVADA: contagem de testes por suíte (front e Rust), lista de nomes de testes, tamanho do exe release, tamanho do bundle `dist/`, avisos do compilador, e o checklist funcional abaixo.
@@ -30,7 +31,10 @@ Quem chamou você vai dizer **o que mudou** (arquivos/feature). Se não disser, 
 2. **Front:** `npx vitest run --reporter=verbose` (guarde nomes e contagem).
 3. **Rust:** em `src-tauri`: `cargo test` e `cargo clippy --all-targets -- -D warnings` (se clippy não estiver instalado, registre e siga; avisos de clippy pré-existentes = alerta, novos = reprovação só se indicarem bug).
 4. **Build release:** `npx tauri build --no-bundle` na raiz. Meça o tamanho de `src-tauri\target\release\kira-radial.exe` e de `dist/`.
-5. **Smoke do app (sem input simulado):** inicie o exe recém-gerado, espere ~3 s, confirme que o processo segue vivo e verifique `%APPDATA%\Kira-Radial\perf.log` / erros recentes; confirme que `%APPDATA%\Kira-Radial\config.json` continua válido (parse JSON + `validateConfig` via teste/script). **Ao terminar, encerre o processo que você iniciou** (pelo PID) — deixá-lo aberto trava `target\release\kira-radial.exe` e quebra o `npm run tauri build` do usuário.
+5. **Smoke do app com a Kira de teste (sem input simulado):**
+   - `npm run build:qa` → `src-tauri\target-qa\release\kira-radial.exe` (identifier e pasta de dados próprios: `%APPDATA%\Kira-Radial-QA`; janelas fora da tela, sem foco, sem atalho/bandeja).
+   - `pwsh -File scripts/smoke-qa.ps1` → abre, espera, confere (processo vivo, nenhuma janela na área visível, não pegou o foco, pasta QA criada, config do USUÁRIO intacta, sem panic) e **encerra só o processo que abriu**. Saída 0 = ok; falha = REPROVADO (cole a saída).
+   - Funciona mesmo com a Kira instalada do usuário aberta. Confira ainda que `%APPDATA%\Kira-Radial\config.json` continua válido (parse + `validateConfig`, só leitura).
 6. **Checklist funcional (A/B por cobertura de teste/código):** para cada item, verifique que existe teste cobrindo ou que o código está ligado ponta a ponta (tipo TS ↔ enum Rust ↔ `execute` ↔ ActionEditor ↔ validação ↔ comando registrado em `lib.rs`):
    - Geometria do radial (fatias, submenu, hit-test) e renderização do canvas.
    - Abertura no cursor com clamp por monitor/DPI (`positioning.rs`).

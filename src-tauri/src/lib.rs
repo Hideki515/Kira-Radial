@@ -13,6 +13,7 @@ mod nowplaying;
 mod orb;
 mod perf;
 mod positioning;
+mod qa;
 mod radios;
 mod recent;
 mod power;
@@ -26,6 +27,19 @@ use tauri::menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{Manager, WindowEvent};
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
+
+/// Comandos do app. Na Kira de teste (feature `qa`) entram também os de automação;
+/// no build normal eles nem são compilados.
+#[cfg(not(feature = "qa"))]
+macro_rules! handlers {
+    ($($cmd:path),* $(,)?) => { tauri::generate_handler![$($cmd),*] };
+}
+#[cfg(feature = "qa")]
+macro_rules! handlers {
+    ($($cmd:path),* $(,)?) => {
+        tauri::generate_handler![$($cmd,)* qa::commands::qa_show_menu, qa::commands::qa_open_settings, qa::commands::qa_state]
+    };
+}
 
 pub fn run() {
     let cfg = config::load();
@@ -44,7 +58,9 @@ pub fn run() {
         .setup(move |app| {
             let handle = app.handle().clone();
 
-            if let Err(e) = menu::apply_hotkey(&handle, &cfg) {
+            // Kira de teste: não disputa o atalho global com a instância do usuário.
+            if qa::ENABLED {
+            } else if let Err(e) = menu::apply_hotkey(&handle, &cfg) {
                 eprintln!("[kira-radial] {e}");
                 *handle.state::<AppState>().hotkey_error.lock().unwrap() = Some(e);
                 // Sem atalho o app ainda é usável pela bandeja; abre as configurações para corrigir.
@@ -52,7 +68,7 @@ pub fn run() {
             }
 
             // Mantém o registro do Windows coerente com a configuração.
-            if handle.autolaunch().is_enabled().unwrap_or(false) != cfg.behavior.autostart {
+            if !qa::ENABLED && handle.autolaunch().is_enabled().unwrap_or(false) != cfg.behavior.autostart {
                 let _ = commands::apply_autostart(&handle, cfg.behavior.autostart);
             }
 
@@ -68,7 +84,9 @@ pub fn run() {
             orb::apply(&handle, &cfg);
             orb::spawn_fullscreen_watch(handle.clone());
 
-            build_tray(app)?;
+            if !qa::ENABLED {
+                build_tray(app)?;
+            }
             stats::spawn(handle);
             Ok(())
         })
@@ -94,7 +112,7 @@ pub fn run() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![
+        .invoke_handler(handlers!(
             commands::get_config,
             commands::save_config,
             commands::run_action,
@@ -121,7 +139,7 @@ pub fn run() {
             perf::perf_log,
             keycapture::start_key_capture,
             keycapture::stop_key_capture,
-        ])
+        ))
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o Kira Radial");
 }

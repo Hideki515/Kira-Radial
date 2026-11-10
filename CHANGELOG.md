@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.0
+
+- **"Kira de teste" para desenvolvimento e QA**: `npm run build:qa` gera uma variante isolada que roda ao lado da Kira instalada, sem interferir nela.
+  - Usa o identifier `com.kira.radial.qa` e uma pasta de dados própria (`%APPDATA%\Kira-Radial-QA`).
+  - Não registra o atalho, não cria ícone na bandeja e não ativa o início com o Windows.
+  - Abre todas as janelas fora da tela e sem pegar o foco.
+  - Tem comandos de automação (`qa_*`), que o build normal não contém (o CI confere isso).
+  - `scripts/smoke-qa.ps1` abre a Kira de teste, faz as verificações e a encerra.
+- Correção: ao iniciar (inclusive junto com o Windows), a Kira roubava o foco do app em uso para a janela de Configurações, que ficava invisível. Agora o foco não muda.
+
 ## 0.8.0
 
 - **Cinco temas novos**, cada um com uma linguagem visual diferente:

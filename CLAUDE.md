@@ -5,6 +5,7 @@ Menu radial para Windows — Tauri 2 + Rust (`src-tauri/`) + React 18/TS + Vite 
 ## Comandos
 - `npm run typecheck` · `npm test` (Vitest) · `cd src-tauri && cargo test`
 - Release: `npx tauri build --no-bundle` → `src-tauri/target/release/kira-radial.exe`
+- **Kira de teste** (QA, roda ao lado da instalada, janelas fora da tela, dados em `%APPDATA%\Kira-Radial-QA`): `npm run build:qa` → `src-tauri/target-qa/release/kira-radial.exe`; smoke: `pwsh -File scripts/smoke-qa.ps1`
 
 ## Regra de validação
 Após **todo** ajuste ou melhoria, chame o agente `qa-ab-tester` (`.claude/agents/qa-ab-tester.md`) informando o que mudou e **aguarde o veredito** (APROVADO/REPROVADO) antes de considerar a tarefa concluída. Se REPROVADO, corrija e rode de novo. Linha de base e relatórios ficam em `.claude/qa/`.

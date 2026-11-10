@@ -79,6 +79,7 @@ pub fn apply(app: &AppHandle, cfg: &Config) {
     // (senão o canto padrão seria gravado como posição fixa).
     *PLACED.lock().unwrap() = Some((x, y));
     let _ = win.set_position(PhysicalPosition::new(x, y));
+    crate::qa::keep_offscreen(&win);
     set_visible(&win, true);
     let _ = app.emit_to(ORB, "orb:config", cfg.launcher.orb.clone());
 }

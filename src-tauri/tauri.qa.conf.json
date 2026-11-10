@@ -1,0 +1,5 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Kira Radial (QA)",
+  "identifier": "com.kira.radial.qa"
+}

@@ -42,3 +42,16 @@ jobs:
 
       - name: cargo clippy
         run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+
+      # "Kira de teste" (feature qa) precisa compilar e passar no clippy também.
+      - name: cargo clippy (feature qa)
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --features qa -- -D warnings
+
+      # O app normal NÃO pode conter os comandos de automação da Kira de teste.
+      - name: build normal sem comandos qa_*
+        shell: pwsh
+        run: |
+          cargo build --manifest-path src-tauri/Cargo.toml
+          if (Select-String -Path src-tauri/target/debug/kira-radial.exe -Pattern "qa_show_menu" -SimpleMatch -Quiet) {
+            Write-Error "o build normal contém comandos da Kira de teste"; exit 1
+          }

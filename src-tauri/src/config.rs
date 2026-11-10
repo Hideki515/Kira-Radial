@@ -176,7 +176,7 @@ impl Config {
 
 pub fn config_dir() -> PathBuf {
     let base = std::env::var_os("APPDATA").map(PathBuf::from).unwrap_or_else(std::env::temp_dir);
-    base.join("Kira-Radial")
+    base.join(crate::qa::data_dir_name())
 }
 
 pub fn config_path() -> PathBuf {

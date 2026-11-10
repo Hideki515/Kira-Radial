@@ -121,7 +121,12 @@ pub fn show_from(app: &AppHandle, origin: Origin) -> Result<(), String> {
     mark("show");
     // Reaplica: ao trocar de monitor com DPI diferente o Windows pode redimensionar a janela.
     place(&win);
-    let _ = win.set_focus();
+    if crate::qa::ENABLED {
+        // Kira de teste: janela existe e é "mostrada", mas fora da tela e sem foco.
+        crate::qa::keep_offscreen(&win);
+    } else {
+        let _ = win.set_focus();
+    }
     mark("focar");
     state.visible.store(true, Ordering::SeqCst);
     crate::perf::log(
@@ -144,6 +149,11 @@ pub fn open_settings(app: &AppHandle) {
     hide(app);
     if let Some(w) = app.get_webview_window(SETTINGS) {
         let _ = w.unminimize();
+        if crate::qa::ENABLED {
+            crate::qa::keep_offscreen(&w);
+            let _ = w.show();
+            return;
+        }
         let _ = w.show();
         let _ = w.set_focus();
     }
