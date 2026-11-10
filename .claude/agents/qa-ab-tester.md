@@ -35,6 +35,7 @@ Quem chamou você vai dizer **o que mudou** (arquivos/feature). Se não disser, 
    - `npm run build:qa` → `src-tauri\target-qa\release\kira-radial.exe` (identifier e pasta de dados próprios: `%APPDATA%\Kira-Radial-QA`; janelas fora da tela, sem foco, sem atalho/bandeja).
    - `pwsh -NoProfile -File scripts/smoke-qa.ps1` → abre, espera, confere (processo vivo, nenhuma janela na área visível, não pegou o foco, pasta QA criada, config do USUÁRIO intacta, sem panic) e **encerra só o processo que abriu**. Saída 0 = ok; falha = REPROVADO (cole a saída).
    - Funciona mesmo com a Kira instalada do usuário aberta. Confira ainda que `%APPDATA%\Kira-Radial\config.json` continua válido (parse + `validateConfig`, só leitura).
+5b. **E2E (quando a mudança mexe em interface, menu, configurações ou comandos):** `npm run e2e:run` (depois do build QA do passo 5). Roda os cenários de `e2e/specs` na Kira de teste (fora da tela, pasta QA). Falha em qualquer cenário = REPROVADO (cole a saída). Se o `tauri-driver` não estiver instalado, registre como alerta.
 6. **Checklist funcional (A/B por cobertura de teste/código):** para cada item, verifique que existe teste cobrindo ou que o código está ligado ponta a ponta (tipo TS ↔ enum Rust ↔ `execute` ↔ ActionEditor ↔ validação ↔ comando registrado em `lib.rs`):
    - Geometria do radial (fatias, submenu, hit-test) e renderização do canvas.
    - Abertura no cursor com clamp por monitor/DPI (`positioning.rs`).

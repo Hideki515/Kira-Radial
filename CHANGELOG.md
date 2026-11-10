@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.12.0
+
+- **Testes de ponta a ponta** (WebDriver + tauri-driver) rodando na Kira de teste. Clicam e digitam dentro das páginas, sem mexer no mouse ou teclado do Windows. São 7 cenários:
+  1. As Configurações abrem e mostram a versão certa.
+  2. Trocar o tema para Terminal e salvar grava a config e muda o menu; Esc fecha o menu.
+  3. Renomear uma fatia, salvar e vê-la no menu.
+  4. Submenu automático "Planos de energia" lista os planos (só leitura).
+  5. Salvamentos geram versões anteriores e o diff abre.
+  6. No modo Ícone, o menu nasce do ícone.
+  7. Diagnóstico mostra o resumo e gera o relatório, sem ERROR ou panic no log.
+- `npm run e2e` (build QA + testes) e `npm run e2e:run` (só os testes).
+- `scripts/get-edgedriver.ps1` baixa o msedgedriver da mesma versão do WebView2 para `tools/`, pasta ignorada pelo git.
+
 ## 0.11.0
 
 - **Configurações → Diagnóstico** (página nova):

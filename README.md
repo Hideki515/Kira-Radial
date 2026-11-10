@@ -72,6 +72,9 @@ npm run typecheck      # tsc
 npm test               # Vitest
 cd src-tauri && cargo test
 npm run tauri build    # instalador em src-tauri/target/release/bundle/nsis/
+npm run build:qa       # "Kira de teste": roda ao lado da instalada, janelas fora da tela, dados em %APPDATA%\Kira-Radial-QA
+npm run e2e            # testes de ponta a ponta (WebDriver) na Kira de teste
+                       #   requer: cargo install tauri-driver (o msedgedriver é baixado sozinho)
 ```
 
 ### Estrutura
