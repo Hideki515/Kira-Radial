@@ -43,6 +43,7 @@ macro_rules! handlers {
 }
 
 pub fn run() {
+    perf::install_panic_hook();
     let cfg = config::load();
 
     tauri::Builder::default()
@@ -58,6 +59,10 @@ pub fn run() {
         .manage(AppState::new(cfg.clone()))
         .setup(move |app| {
             let handle = app.handle().clone();
+            perf::log(
+                "rust",
+                &format!("Kira {} iniciada{}", handle.package_info().version, if qa::ENABLED { " (Kira de teste)" } else { "" }),
+            );
 
             // Kira de teste: não disputa o atalho global com a instância do usuário.
             if qa::ENABLED {
@@ -140,6 +145,11 @@ pub fn run() {
             commands::read_backup,
             commands::orb_context_menu,
             perf::perf_log,
+            perf::read_log,
+            perf::clear_log,
+            perf::open_data_dir,
+            perf::diagnostics,
+            perf::write_report,
             keycapture::start_key_capture,
             keycapture::stop_key_capture,
         ))

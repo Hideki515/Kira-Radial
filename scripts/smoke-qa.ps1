@@ -50,9 +50,11 @@ try {
     if ($fgPid -eq $p.Id) { $fails += "a Kira de teste pegou o foco do Windows" }
   }
   if (-not (Test-Path (Join-Path $qaDir "config.json"))) { $fails += "config da pasta QA nao foi criada" }
+  if (-not (Select-String -Path (Join-Path $qaDir "kira.log") -Pattern "iniciada" -SimpleMatch -Quiet -ErrorAction SilentlyContinue)) { $fails += "kira.log da pasta QA sem a linha de inicio" }
   if ((& $hash $userCfg) -ne $userBefore) { $fails += "config do USUARIO mudou (nao deveria)" }
-  $log = Join-Path $qaDir "perf.log"
-  if ((Test-Path $log) -and (Select-String -Path $log -Pattern "panic" -SimpleMatch -Quiet)) { $fails += "panic no perf.log da pasta QA" }
+  $log = Join-Path $qaDir "kira.log"
+  if ((Test-Path $log) -and (Select-String -Path $log -Pattern "[panic]" -SimpleMatch -Quiet)) { $fails += "panic no kira.log da pasta QA" }
+  if ((Test-Path $log) -and (Select-String -Path $log -Pattern " ERROR " -SimpleMatch -Quiet)) { $fails += "linha ERROR no kira.log da pasta QA: " + ((Select-String -Path $log -Pattern " ERROR " -SimpleMatch | Select-Object -First 1).Line) }
 } finally {
   if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
 }

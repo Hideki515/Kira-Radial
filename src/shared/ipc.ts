@@ -297,6 +297,46 @@ export async function readOrbImage(path: string): Promise<string> {
   return invoke<string>("read_orb_image", { path });
 }
 
+export interface Diagnostics {
+  version: string;
+  webview: string;
+  windows: string;
+  monitors: string[];
+  launcherMode: string;
+  theme: string;
+  hotkey: string;
+  hotkeyRegistered: boolean;
+  hotkeyError: string | null;
+  memoryMb: number;
+  recentErrors: number;
+  dataDir: string;
+  qa: boolean;
+}
+
+/** Últimas linhas do log (kira.log), mais antigas primeiro. */
+export async function readLog(lines = 500): Promise<string[]> {
+  if (isTauri()) return invoke<string[]>("read_log", { lines });
+  return ["2026-11-10 15:30:05.123 INFO [rust] abrir menu (modo navegador)", "2026-11-10 15:30:06.001 WARN [front] exemplo de aviso"];
+}
+
+export async function clearLog(): Promise<void> {
+  if (isTauri()) await invoke("clear_log");
+}
+
+export async function openDataDir(): Promise<void> {
+  if (isTauri()) await invoke("open_data_dir");
+}
+
+export async function getDiagnostics(): Promise<Diagnostics | null> {
+  return isTauri() ? invoke<Diagnostics>("diagnostics") : null;
+}
+
+/** Gera o relatório na pasta de dados e devolve o caminho. */
+export async function writeReport(): Promise<string> {
+  if (isTauri()) return invoke<string>("write_report");
+  throw new Error("relatório só existe no app");
+}
+
 export interface BackupInfo {
   name: string;
   /** ms desde 1970 */

@@ -2,14 +2,26 @@
 // (via comando "perf_log"); no navegador, para o console.
 import { isTauri } from "./ipc";
 
-export function perfLog(msg: string): void {
+export type LogLevel = "info" | "warn" | "error";
+
+/** Grava no log do app (kira.log). `source` identifica a janela (radial, settings, orb). */
+export function perfLog(msg: string, level: LogLevel = "info", source?: string): void {
   if (!isTauri()) {
-    console.debug(`[perf] ${msg}`);
+    (level === "error" ? console.error : console.debug)(`[${source ?? "front"}] ${msg}`);
     return;
   }
   import("@tauri-apps/api/core")
-    .then((c) => c.invoke("perf_log", { msg }))
+    .then((c) => c.invoke("perf_log", { msg, level, source: source ?? null }))
     .catch(() => {});
+}
+
+let installed = false;
+/** Erros não tratados da página (exceções e promises rejeitadas) vão para o log. */
+export function installErrorLogging(source: string): void {
+  if (installed || typeof window === "undefined") return;
+  installed = true;
+  window.addEventListener("error", (e) => perfLog(`erro: ${e.message} (${e.filename?.split("/").pop() ?? "?"}:${e.lineno})`, "error", source));
+  window.addEventListener("unhandledrejection", (e) => perfLog(`promise rejeitada: ${String(e.reason)}`, "error", source));
 }
 
 let observing = false;

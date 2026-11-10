@@ -1,9 +1,10 @@
-import { CircleDot, Orbit, Keyboard, LayoutGrid, Palette, Save, Settings2, Undo2, Users, Archive, AlertTriangle } from "lucide-react";
+import { CircleDot, Orbit, Stethoscope, Keyboard, LayoutGrid, Palette, Save, Settings2, Undo2, Users, Archive, AlertTriangle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useSystemStats } from "../hooks/useSystemStats";
 import { getConfig, getHotkeyError, saveConfig } from "../shared/ipc";
 import { wantsOrb, type Config, type Profile } from "../shared/types";
 import { IconPage } from "./pages/IconPage";
+import { DiagnosticsPage } from "./pages/DiagnosticsPage";
 import { validateConfig } from "../shared/validate";
 import { RadialCanvas } from "../radial/RadialCanvas";
 import { resolveItems } from "../radial/dynamic";
@@ -12,7 +13,7 @@ import { ItemsPage, type Selection } from "./pages/ItemsPage";
 import { ProfilesPage } from "./pages/ProfilesPage";
 import { AppearancePage, BackupPage, GeneralPage, HotkeyPage } from "./pages/SimplePages";
 
-type Page = "items" | "hotkey" | "icon" | "profiles" | "general" | "appearance" | "backup";
+type Page = "items" | "hotkey" | "icon" | "profiles" | "general" | "appearance" | "backup" | "diagnostics";
 
 const NAV: { id: Page; label: string; icon: typeof CircleDot }[] = [
   { id: "items", label: "Itens do menu", icon: LayoutGrid },
@@ -22,6 +23,7 @@ const NAV: { id: Page; label: string; icon: typeof CircleDot }[] = [
   { id: "general", label: "Geral", icon: Settings2 },
   { id: "appearance", label: "Aparência", icon: Palette },
   { id: "backup", label: "Backup", icon: Archive },
+  { id: "diagnostics", label: "Diagnóstico", icon: Stethoscope },
 ];
 
 export function SettingsApp() {
@@ -143,6 +145,7 @@ export function SettingsApp() {
           <ProfilesPage config={draft} selected={pIdx} onSelect={(i) => { setProfileIdx(i); setSelection({ main: 0, child: null }); }} update={update} />
         )}
         {page === "general" && <GeneralPage config={draft} update={update} />}
+        {page === "diagnostics" && <DiagnosticsPage />}
         {page === "appearance" && <AppearancePage config={draft} update={update} />}
         {page === "backup" && <BackupPage config={draft} replace={(c) => { setDraft(c); setProfileIdx(0); setSelection({ main: 0, child: null }); }} />}
       </main>

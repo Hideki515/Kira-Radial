@@ -38,3 +38,14 @@
     --dur-slow: 1ms;
   }
 }
+
+/* "Algo deu errado" (ErrorBoundary) — usado em todas as janelas. */
+.error-fallback {
+  display: flex; flex-direction: column; gap: 8px; align-items: flex-start;
+  margin: 24px; padding: 16px 18px; max-width: 520px;
+  border-radius: 12px; border: 1px solid var(--danger);
+  background: #160c10; color: var(--text-primary); font-family: var(--font-ui); font-size: 13px;
+}
+.error-fallback.is-compact { margin: 8px; padding: 10px 12px; font-size: 12px; }
+.error-detail { color: var(--danger); font-family: Consolas, monospace; font-size: 12px; }
+.error-hint { color: var(--text-secondary); }

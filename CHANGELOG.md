@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.11.0
+
+- **Configurações → Diagnóstico** (página nova):
+  - Resumo: versão, Windows, WebView2, monitores, modo de abertura, tema, atalho (registrado ou não), memória e erros recentes.
+  - Visualizador do log com filtro por nível e texto, atualização automática a cada 2 s e botões Copiar, Limpar e Abrir pasta.
+  - **Gerar relatório**: cria um `.txt` com o resumo e o log para anexar em issue. Não leva a configuração, a área de transferência nem os arquivos recentes, e oculta o nome do usuário do Windows.
+- **Log novo (`kira.log`)**:
+  - Cada linha tem data/hora legível, nível (INFO/WARN/ERROR) e origem.
+  - Rotação em 3 arquivos de 1 MB.
+  - O `perf.log` antigo é migrado.
+- **Falhas registradas**: pânicos do Rust e erros não tratados das três janelas vão para o log.
+- **Sem tela branca**: se uma tela quebrar, aparece "Algo deu errado" com um botão Recarregar, e o erro fica registrado.
+
 ## 0.10.0
 
 - **Backup automático da configuração**: sempre que você salva uma mudança, a versão anterior é guardada. As 10 mais recentes ficam guardadas, só neste PC.
