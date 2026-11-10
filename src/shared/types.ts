@@ -65,11 +65,21 @@ export interface MenuItem {
 export type DynamicKind = "audioOutputs" | "windows" | "powerPlans" | "brightness" | "radios" | "recentFiles" | "clipboard";
 export const DYNAMIC_KINDS: readonly DynamicKind[] = ["audioOutputs", "windows", "powerPlans", "brightness", "radios", "recentFiles", "clipboard"];
 
+export interface ProfileWhen {
+  days?: number[];
+  from?: string;
+  to?: string;
+  /** Nomes de dispositivo do Windows (\\.\DISPLAY2). */
+  monitors?: string[];
+}
+
 export interface Profile {
   id: string;
   name: string;
   /** Executáveis que ativam este perfil, ex.: ["code.exe"]. Vazio = perfil padrão. */
   matchExe?: string[];
+  /** "Quando usar": dias (0=dom), horário (HH:MM, pode cruzar a meia-noite) e monitores. */
+  when?: ProfileWhen;
   items: MenuItem[];
 }
 

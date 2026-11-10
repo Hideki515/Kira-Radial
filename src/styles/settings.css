@@ -303,3 +303,11 @@ input[type="number"]:focus-visible { border-color: var(--active); }
 /* --- ícone próprio --- */
 .icon-own { margin-bottom: 8px; align-items: center; }
 .icon-own .path-chip img { border-radius: 3px; }
+
+/* --- perfis: quando usar --- */
+.when-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 4px 0; }
+.when-label { width: 80px; font-size: 12.5px; color: var(--text-secondary); }
+.day-chips, .monitor-picks { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.chip.is-pick.is-on { border-color: var(--active); color: var(--active); background: color-mix(in srgb, var(--active) 12%, transparent); }
+.monitor-pick { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line-soft); }
+.when-row input[type="time"] { width: 110px; }

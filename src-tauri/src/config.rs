@@ -124,6 +124,9 @@ pub struct Profile {
     pub name: String,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub match_exe: Vec<String>,
+    /// "Quando usar": dias, horário e monitores (ausente = só por app/padrão).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub when: Option<crate::schedule::When>,
     pub items: Vec<Value>,
 }
 
@@ -141,18 +144,26 @@ impl Config {
             .clamp(0.5, 1.6)
     }
 
-    /// Perfil do executável em primeiro plano; o primeiro perfil é o padrão.
-    pub fn profile_for(&self, exe: Option<&str>) -> &Profile {
+    /// Perfil a usar. Prioridade:
+    /// 1. app em primeiro plano (se o perfil também tiver "quando usar", precisa bater);
+    /// 2. perfil sem app, mas com "quando usar" (horário/dias/monitor) que bate;
+    /// 3. o primeiro perfil (padrão).
+    pub fn profile_for(&self, exe: Option<&str>, ctx: &crate::schedule::Context) -> &Profile {
+        let when_ok = |p: &Profile| p.when.as_ref().is_none_or(|w| !w.has_criteria() || w.matches(ctx));
         if let Some(exe) = exe {
-            let exe = exe.to_ascii_lowercase();
             if let Some(p) = self
                 .profiles
                 .iter()
                 .skip(1)
-                .find(|p| p.match_exe.iter().any(|m| m.eq_ignore_ascii_case(&exe)))
+                .find(|p| p.match_exe.iter().any(|m| m.eq_ignore_ascii_case(exe)) && when_ok(p))
             {
                 return p;
             }
+        }
+        if let Some(p) = self.profiles.iter().skip(1).find(|p| {
+            p.match_exe.is_empty() && p.when.as_ref().is_some_and(|w| w.has_criteria() && w.matches(ctx))
+        }) {
+            return p;
         }
         &self.profiles[0]
     }
@@ -258,9 +269,10 @@ mod tests {
         vs.id = "vs".into();
         vs.match_exe = vec!["code.exe".into()];
         c.profiles.push(vs);
-        assert_eq!(c.profile_for(Some("Code.EXE")).id, "vs");
-        assert_eq!(c.profile_for(Some("notepad.exe")).id, "default");
-        assert_eq!(c.profile_for(None).id, "default");
+        let ctx = crate::schedule::Context { weekday: 1, minutes: 600, monitor: "D1".into() };
+        assert_eq!(c.profile_for(Some("Code.EXE"), &ctx).id, "vs");
+        assert_eq!(c.profile_for(Some("notepad.exe"), &ctx).id, "default");
+        assert_eq!(c.profile_for(None, &ctx).id, "default");
     }
 
     #[test]
@@ -284,6 +296,34 @@ mod tests {
         assert!(c.launcher.orb.hide_on_fullscreen);
         assert!(!c.launcher.orb.hidden);
         assert!(LauncherMode::Orb.wants_orb() && !LauncherMode::Orb.wants_hotkey());
+    }
+
+    #[test]
+    fn perfil_por_horario_e_monitor_com_prioridade_do_app() {
+        use crate::schedule::{Context, When};
+        let mut c = Config::default_config();
+        let mut trabalho = c.profiles[0].clone();
+        trabalho.id = "trabalho".into();
+        trabalho.when = Some(When { days: vec![1, 2, 3, 4, 5], from: Some("09:00".into()), to: Some("18:00".into()), monitors: vec![] });
+        let mut tela2 = c.profiles[0].clone();
+        tela2.id = "tela2".into();
+        tela2.when = Some(When { monitors: vec!["D2".into()], ..Default::default() });
+        let mut code = c.profiles[0].clone();
+        code.id = "code".into();
+        code.match_exe = vec!["code.exe".into()];
+        c.profiles.extend([trabalho, tela2, code]);
+        let seg10_d1 = Context { weekday: 1, minutes: 600, monitor: "D1".into() };
+        let sab10_d1 = Context { weekday: 6, minutes: 600, monitor: "D1".into() };
+        let sab10_d2 = Context { weekday: 6, minutes: 600, monitor: "d2".into() };
+        assert_eq!(c.profile_for(None, &seg10_d1).id, "trabalho");
+        assert_eq!(c.profile_for(None, &sab10_d1).id, "default");
+        assert_eq!(c.profile_for(None, &sab10_d2).id, "tela2");
+        // App em primeiro plano vence horário/monitor.
+        assert_eq!(c.profile_for(Some("code.exe"), &seg10_d1).id, "code");
+        // Config antiga (sem "when") continua carregando.
+        let text = serde_json::to_string(&Config::default_config()).unwrap();
+        assert!(!text.contains("\"when\""));
+        assert!(parse(&text).unwrap().profiles[0].when.is_none());
     }
 
     #[test]

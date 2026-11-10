@@ -81,6 +81,25 @@ describe("Kira de teste — ponta a ponta", () => {
     await expect($('[data-testid="backup-diff"]')).toBeExisting();
   });
 
+  it("5b. perfil por monitor: vale no monitor marcado e o menu abre com ele", async () => {
+    await nav("Perfis");
+    await $("button*=Novo perfil").click();
+    // Marca todos os monitores: o perfil vale em qualquer tela onde o menu abrir.
+    await browser.waitUntil(async () => (await $$(".monitor-pick input")).length > 0, { timeoutMsg: "monitores não listados" });
+    for (const box of await $$(".monitor-pick input")) await box.click();
+    await save();
+    expect(qaConfig().profiles[1].when.monitors.length).toBeGreaterThan(0);
+    await nav("Itens do menu");
+    await $(".profile-picker select").selectByIndex(1);
+    await $$(".tree-row:not(.is-child)")[2].click(); // só fatias principais (a lista também tem subitens)
+    await $(".item-editor input").setValue("PERFIL2");
+    await save();
+    await invoke("qa_show_menu", { fromOrb: false });
+    await toWindow("");
+    await expect($('[data-testid="main-slice"][aria-label="PERFIL2"]')).toBeExisting();
+    await pressKey("Escape");
+  });
+
   it("6. modo Ícone: ícone ativo e o menu nasce dele", async () => {
     await nav("Atalho");
     await pickRadio("Ícone");

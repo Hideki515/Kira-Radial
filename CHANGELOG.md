@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.14.0
+
+- **Perfis por horário e por monitor** (Configurações → Perfis → "Quando usar"):
+  - **Dias da semana**, com os atalhos "Dias úteis" e "Qualquer dia".
+  - **Horário**, inclusive faixas que passam da meia-noite (ex.: 22:00–02:00, com "sexta à noite" valendo até a madrugada de sábado).
+  - **Monitores**: lista com o nome de cada tela e o botão **Identificar**, que mostra o número em cada monitor por 2 s.
+  - Ordem da escolha do perfil: primeiro o **app em primeiro plano**, depois o perfil cujo horário, dias ou monitor bate, e por fim o Padrão.
+  - O cartão de cada perfil mostra o resumo (ex.: "Seg–Sex 09:00–18:00 · 2. LG").
+- A página "Perfis por app" agora se chama **Perfis**.
+- Correção: ícones extraídos em uso não são mais apagados se o caminho salvo tiver maiúsculas e minúsculas diferentes.
+- Testes E2E: novo cenário "perfil por monitor" (9 cenários no total).
+
 ## 0.13.0
 
 - **Ícones próprios nas fatias** (Itens → Ícone):

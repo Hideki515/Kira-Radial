@@ -1,4 +1,5 @@
 import { parseCombo } from "./keys";
+import { hasCriteria, whenErrors } from "./schedule";
 import { DYNAMIC_KINDS, LAUNCHER_MODES, LIMITS, ORB_LIMITS, SCALE_LIMITS, THEMES, wantsHotkey, type Action, type Config, type MenuItem } from "./types";
 
 /** Valida a configuração inteira. Retorna mensagens legíveis; lista vazia = válida. */
@@ -33,7 +34,9 @@ export function validateConfig(c: Config): string[] {
     if (!p.name.trim()) errors.push(`${where}: nome vazio.`);
     if (ids.has(p.id)) errors.push(`${where}: id duplicado.`);
     ids.add(p.id);
-    if (pi > 0 && !(p.matchExe ?? []).length) errors.push(`${where}: associe ao menos um executável.`);
+    if (pi > 0 && !(p.matchExe ?? []).length && !hasCriteria(p.when))
+      errors.push(`${where}: associe um executável ou defina "Quando usar".`);
+    whenErrors(p.when).forEach((e) => errors.push(`${where}: ${e}`));
     if (p.items.length < LIMITS.minSlices || p.items.length > LIMITS.maxSlices)
       errors.push(`${where}: use de ${LIMITS.minSlices} a ${LIMITS.maxSlices} fatias (tem ${p.items.length}).`);
     p.items.forEach((it) => validateItem(it, `${where} › ${it.label || "(sem nome)"}`, true, errors));

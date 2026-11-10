@@ -1,6 +1,8 @@
 import { Copy, Plus, RefreshCw, Trash2, X } from "lucide-react";
-import { useState } from "react";
-import { listProcesses } from "../../shared/ipc";
+import { useEffect, useState } from "react";
+import { listMonitors, listProcesses, type MonitorInfo } from "../../shared/ipc";
+import { describeWhen } from "../../shared/schedule";
+import { WhenEditor } from "./WhenEditor";
 import type { Config } from "../../shared/types";
 import { Field, Section } from "../controls";
 
@@ -14,6 +16,14 @@ interface Props {
 export function ProfilesPage({ config, selected, onSelect, update }: Props) {
   const [procs, setProcs] = useState<string[] | null>(null);
   const [exeInput, setExeInput] = useState("");
+  const [monitors, setMonitors] = useState<MonitorInfo[] | null>(null);
+  useEffect(() => {
+    listMonitors().then(setMonitors, () => setMonitors([]));
+  }, []);
+  const monitorName = (dev: string) => {
+    const m = monitors?.find((x) => x.device.toLowerCase() === dev.toLowerCase());
+    return m ? `${m.number}. ${m.name}` : dev;
+  };
   const profile = config.profiles[selected];
   const isDefault = selected === 0;
 
@@ -31,7 +41,7 @@ export function ProfilesPage({ config, selected, onSelect, update }: Props) {
   const duplicate = () => {
     const base = config.profiles[selected];
     update((c) =>
-      c.profiles.push({ ...structuredClone(base), id: `perfil-${Date.now().toString(36)}`, name: `${base.name} (cópia)`, matchExe: [] }),
+      c.profiles.push({ ...structuredClone(base), id: `perfil-${Date.now().toString(36)}`, name: `${base.name} (cópia)`, matchExe: [], when: undefined }),
     );
     onSelect(config.profiles.length);
   };
@@ -39,14 +49,18 @@ export function ProfilesPage({ config, selected, onSelect, update }: Props) {
   return (
     <>
       <Section
-        title="Perfis por aplicativo"
-        description="Cada perfil tem suas próprias fatias. Ao abrir o menu, o Kira Radial verifica o app em primeiro plano e usa o perfil associado a ele; se nenhum combinar, usa o Padrão."
+        title="Perfis"
+        description="Cada perfil tem suas próprias fatias. Ao abrir o menu, a Kira escolhe: 1) o perfil do app em primeiro plano; 2) um perfil cujo horário/dias/monitor bate; 3) o Padrão."
       >
         <div className="profile-list">
           {config.profiles.map((p, i) => (
             <button key={p.id} type="button" className={`profile-card${i === selected ? " is-on" : ""}`} onClick={() => onSelect(i)}>
               <strong>{p.name}</strong>
-              <span>{i === 0 ? "Usado quando nenhum outro combina" : (p.matchExe ?? []).join(", ") || "sem executável"}</span>
+              <span>
+                {i === 0
+                  ? "Usado quando nenhum outro combina"
+                  : [(p.matchExe ?? []).join(", "), describeWhen(p.when, monitorName)].filter(Boolean).join(" · ") || "sem critério"}
+              </span>
             </button>
           ))}
           <button type="button" className="profile-card is-add" onClick={duplicate}>
@@ -94,6 +108,17 @@ export function ProfilesPage({ config, selected, onSelect, update }: Props) {
                 ))}
               </div>
             )}
+            <WhenEditor
+              when={profile.when}
+              monitors={monitors}
+              onChange={(w) =>
+                update((c) => {
+                  const p = c.profiles[selected];
+                  if (w) p.when = w;
+                  else delete p.when;
+                })
+              }
+            />
           </>
         )}
 

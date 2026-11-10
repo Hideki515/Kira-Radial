@@ -11,12 +11,14 @@ mod foreground;
 mod icons;
 mod keycapture;
 mod menu;
+mod monitors;
 mod nowplaying;
 mod orb;
 mod perf;
 mod positioning;
 mod qa;
 mod radios;
+mod schedule;
 mod recent;
 mod power;
 mod stats;
@@ -145,6 +147,8 @@ pub fn run() {
             commands::read_icon,
             commands::extract_icon,
             commands::list_backups,
+            commands::list_monitors,
+            commands::identify_monitors,
             commands::read_backup,
             commands::orb_context_menu,
             perf::perf_log,

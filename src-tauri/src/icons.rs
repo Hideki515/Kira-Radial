@@ -112,7 +112,10 @@ fn referenced(cfg: &crate::config::Config) -> HashSet<String> {
     fn walk(v: &serde_json::Value, dir: &Path, out: &mut HashSet<String>) {
         if let Some(p) = v.get("iconFile").and_then(|x| x.as_str()) {
             let path = Path::new(p);
-            if path.parent().is_some_and(|d| d.eq(dir)) {
+            // Windows não diferencia maiúsculas em caminhos: compara sem caixa para nunca
+            // apagar um ícone em uso por causa de "AppData" × "appdata".
+            let same_dir = path.parent().is_some_and(|d| d.to_string_lossy().eq_ignore_ascii_case(&dir.to_string_lossy()));
+            if same_dir {
                 if let Some(n) = path.file_name() {
                     out.insert(n.to_string_lossy().to_ascii_lowercase());
                 }
@@ -199,6 +202,14 @@ mod tests {
         // imagem do usuário fora de icons\ nunca entra na lista de apagar (prune só lista icons\)
         let files = vec!["app-aaaa.png".into(), "app-bbbb.png".into(), "app-dddd.png".into(), "foto.png".into()];
         assert_eq!(unused(&files, &r), vec!["app-dddd.png".to_string()]);
+    }
+
+    #[test]
+    fn pasta_com_caixa_diferente_continua_referenciada() {
+        let dir = icons_dir().to_string_lossy().to_uppercase();
+        let mut cfg = crate::config::Config::default_config();
+        cfg.profiles[0].items = vec![serde_json::json!({ "id": "a", "iconFile": format!("{dir}\\app-eeee.png") })];
+        assert!(referenced(&cfg).contains("app-eeee.png"));
     }
 
     #[test]

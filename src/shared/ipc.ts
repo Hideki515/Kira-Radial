@@ -337,6 +337,31 @@ export async function writeReport(): Promise<string> {
   throw new Error("relatório só existe no app");
 }
 
+export interface MonitorInfo {
+  device: string;
+  name: string;
+  number: number;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  primary: boolean;
+}
+
+/** Monitores conectados (numerados da esquerda para a direita). */
+export async function listMonitors(): Promise<MonitorInfo[]> {
+  if (isTauri()) return invoke<MonitorInfo[]>("list_monitors");
+  return [
+    { device: "\\\\.\\DISPLAY1", name: "Monitor 1", number: 1, left: 0, top: 0, width: 1920, height: 1080, primary: true },
+    { device: "\\\\.\\DISPLAY2", name: "LG ULTRAGEAR", number: 2, left: 1920, top: 0, width: 2560, height: 1440, primary: false },
+  ];
+}
+
+/** Mostra o número de cada monitor por 2 s. */
+export async function identifyMonitors(): Promise<void> {
+  if (isTauri()) await invoke("identify_monitors");
+}
+
 export interface BackupInfo {
   name: string;
   /** ms desde 1970 */

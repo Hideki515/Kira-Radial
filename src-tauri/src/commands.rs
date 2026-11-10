@@ -55,6 +55,18 @@ pub async fn read_orb_image(path: String) -> Result<String, String> {
         .map_err(|e| e.to_string())?
 }
 
+/// Monitores conectados (para "Quando usar → monitores" dos perfis).
+#[tauri::command]
+pub fn list_monitors() -> Vec<crate::monitors::MonitorInfo> {
+    crate::monitors::list()
+}
+
+/// Mostra o número de cada monitor por 2 s.
+#[tauri::command]
+pub fn identify_monitors() {
+    crate::monitors::identify();
+}
+
 /// Backups automáticos da configuração (mais recente primeiro).
 #[tauri::command]
 pub fn list_backups() -> Vec<crate::backup::BackupInfo> {

@@ -26,7 +26,7 @@ const NAV: { id: Page; label: string; icon: typeof CircleDot }[] = [
   { id: "items", label: "Itens do menu", icon: LayoutGrid },
   { id: "hotkey", label: "Atalho", icon: Keyboard },
   { id: "icon", label: "Ícone", icon: Orbit },
-  { id: "profiles", label: "Perfis por app", icon: Users },
+  { id: "profiles", label: "Perfis", icon: Users },
   { id: "general", label: "Geral", icon: Settings2 },
   { id: "appearance", label: "Aparência", icon: Palette },
   { id: "backup", label: "Backup", icon: Archive },

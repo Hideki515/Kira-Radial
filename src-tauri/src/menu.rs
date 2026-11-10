@@ -89,7 +89,13 @@ pub fn show_from(app: &AppHandle, origin: Origin) -> Result<(), String> {
     if fg.hwnd != 0 {
         state.prev_hwnd.store(fg.hwnd, Ordering::SeqCst);
     }
-    let profile_id = cfg.profile_for(fg.exe.as_deref()).id.clone();
+    // Monitor onde o menu vai abrir (do ícone ou do cursor) + hora local → perfil.
+    let at_pt = match origin {
+        Origin::Point(x, y) => (x, y),
+        Origin::Cursor => crate::monitors::cursor(),
+    };
+    let ctx = crate::schedule::now(crate::monitors::device_at(at_pt));
+    let profile_id = cfg.profile_for(fg.exe.as_deref(), &ctx).id.clone();
     mark("foco");
 
     let (at, centered) = match origin {
