@@ -34,6 +34,7 @@ pub fn save_config(app: AppHandle, state: State<'_, AppState>, mut config: Confi
         apply_autostart(&app, config.behavior.autostart)?;
     }
     config::save(&config)?;
+    crate::icons::prune(&config);
     *state.config.lock().unwrap() = config.clone();
     crate::orb::apply(&app, &config);
     let _ = app.emit("config:changed", config);
@@ -64,6 +65,18 @@ pub fn list_backups() -> Vec<crate::backup::BackupInfo> {
 #[tauri::command]
 pub fn read_backup(name: String) -> Result<String, String> {
     crate::backup::read(&name)
+}
+
+/// Ícone próprio de fatia (PNG/SVG/ICO/WebP) como data URL.
+#[tauri::command]
+pub async fn read_icon(path: String) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || crate::icons::read(&path)).await.map_err(|e| e.to_string())?
+}
+
+/// Extrai o ícone de um programa/atalho e devolve o caminho do PNG salvo.
+#[tauri::command]
+pub async fn extract_icon(path: String) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || crate::icons::extract(&path)).await.map_err(|e| e.to_string())?
 }
 
 /// Som próprio (WAV/MP3/OGG) como data URL.

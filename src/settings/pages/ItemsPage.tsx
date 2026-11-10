@@ -1,4 +1,6 @@
-import { ChevronDown, ChevronUp, CornerDownRight, GripVertical, Plus, Sparkles, Trash2 } from "lucide-react";
+import { AppWindow, ChevronDown, ChevronUp, CornerDownRight, GripVertical, ImagePlus, Plus, Sparkles, Trash2 } from "lucide-react";
+import { forgetIconFile, loadIconFile } from "../../shared/iconFiles";
+import { extractIcon, pickIconImage } from "../../shared/ipc";
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { getIcon, ICONS } from "../../shared/icons";
 import { DYNAMIC_HINT, DYNAMIC_LABEL } from "../../radial/dynamic";
@@ -30,11 +32,26 @@ function move<T>(arr: T[], from: number, to: number) {
   arr.splice(to, 0, x);
 }
 
+const fileName = (p: string) => p.split(/[\\/]/).pop() ?? p;
+
 export function ItemsPage({ profile, selection, onSelect, edit }: Props) {
   const items = profile.items;
   const main = items[selection.main];
   const selected: MenuItem | undefined =
     selection.child !== null ? main?.children?.[selection.child] : main;
+
+  // Ícone próprio da fatia selecionada: miniatura no editor + mensagens de erro.
+  const [iconPreview, setIconPreview] = useState<string | null>(null);
+  const [iconMsg, setIconMsg] = useState<string | null>(null);
+  useEffect(() => {
+    setIconPreview(null);
+    if (!selected?.iconFile) return;
+    let alive = true;
+    void loadIconFile(selected.iconFile).then((src) => alive && setIconPreview(src));
+    return () => {
+      alive = false;
+    };
+  }, [selected?.iconFile]);
 
   const editSelected = (fn: (it: MenuItem) => void) =>
     edit((p) => {
@@ -42,6 +59,25 @@ export function ItemsPage({ profile, selection, onSelect, edit }: Props) {
       const target = selection.child !== null ? m.children![selection.child] : m;
       fn(target);
     });
+
+  const setIconFile = (path: string) => {
+    forgetIconFile(path);
+    setIconMsg(null);
+    editSelected((it) => void (it.iconFile = path));
+  };
+  const chooseImage = async () => {
+    const path = await pickIconImage();
+    if (path) setIconFile(path);
+  };
+  const applyProgramIcon = async () => {
+    const a = selected?.action;
+    if (a?.type !== "launch") return;
+    try {
+      setIconFile(await extractIcon(a.path));
+    } catch (e) {
+      setIconMsg(String(e));
+    }
+  };
 
   const addMain = () => {
     if (items.length >= LIMITS.maxSlices) return;
@@ -194,7 +230,28 @@ export function ItemsPage({ profile, selection, onSelect, edit }: Props) {
             <input value={selected.label} maxLength={14} onChange={(e) => editSelected((it) => void (it.label = e.target.value))} />
           </Field>
 
-          <Field label="Ícone">
+          <Field label="Ícone" group hint={selected.iconFile ? "Usando ícone próprio. Se o arquivo sumir, volta para o ícone marcado abaixo." : undefined}>
+            <div className="row-actions icon-own">
+              <button type="button" className="btn" onClick={() => void chooseImage()}>
+                <ImagePlus size={14} /> Imagem própria…
+              </button>
+              {selected.action?.type === "launch" && selected.action.path.trim() && (
+                <button type="button" className="btn" onClick={() => void applyProgramIcon()}>
+                  <AppWindow size={14} /> Usar ícone do programa
+                </button>
+              )}
+              {selected.iconFile && (
+                <>
+                  <span className="path-chip" title={selected.iconFile} data-testid="icon-file">
+                    {iconPreview && <img src={iconPreview} alt="" width={16} height={16} />} {fileName(selected.iconFile)}
+                  </span>
+                  <button type="button" className="btn btn-ghost" onClick={() => editSelected((it) => void delete it.iconFile)}>
+                    Remover
+                  </button>
+                </>
+              )}
+            </div>
+            {iconMsg && <span className="inline-error" role="alert">{iconMsg}</span>}
             <div className="icon-grid">
               {Object.entries(ICONS).map(([name, Icon]) => (
                 <button

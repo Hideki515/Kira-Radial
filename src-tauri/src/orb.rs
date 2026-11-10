@@ -252,7 +252,7 @@ pub fn read_sound(path: &str) -> Result<String, String> {
     read_data_url(path, mime, MAX_SOUND_BYTES, "som")
 }
 
-fn read_data_url(path: &str, mime: &str, max: u64, what: &str) -> Result<String, String> {
+pub fn read_data_url(path: &str, mime: &str, max: u64, what: &str) -> Result<String, String> {
     let meta = std::fs::metadata(path).map_err(|e| format!("não foi possível abrir o arquivo de {what}: {e}"))?;
     if !meta.is_file() {
         return Err("o caminho não é um arquivo".into());

@@ -358,6 +358,26 @@ export async function readBackup(name: string): Promise<string> {
   throw new Error("backups só existem no app");
 }
 
+/** Ícone próprio de fatia como data URL. No navegador, usa o caminho direto. */
+export async function readIcon(path: string): Promise<string> {
+  if (!isTauri()) return path;
+  return invoke<string>("read_icon", { path });
+}
+
+/** Extrai o ícone de um programa/atalho; devolve o caminho do PNG salvo pela Kira. */
+export async function extractIcon(path: string): Promise<string> {
+  if (!isTauri()) throw new Error("só no app");
+  return invoke<string>("extract_icon", { path });
+}
+
+/** Escolhe uma imagem para o ícone de uma fatia. */
+export async function pickIconImage(): Promise<string | null> {
+  if (!isTauri()) return window.prompt("Caminho da imagem (PNG/SVG/ICO/WebP)");
+  const { open } = await import("@tauri-apps/plugin-dialog");
+  const r = await open({ multiple: false, filters: [{ name: "Ícone", extensions: ["png", "svg", "ico", "webp"] }] });
+  return typeof r === "string" ? r : null;
+}
+
 /** Som próprio (WAV/MP3/OGG) como data URL. No navegador, usa o caminho direto. */
 export async function readSound(path: string): Promise<string> {
   if (!isTauri()) return path;

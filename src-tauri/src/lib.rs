@@ -8,6 +8,7 @@ mod brightness;
 mod commands;
 mod config;
 mod foreground;
+mod icons;
 mod keycapture;
 mod menu;
 mod nowplaying;
@@ -141,6 +142,8 @@ pub fn run() {
             commands::get_volume,
             commands::read_orb_image,
             commands::read_sound,
+            commands::read_icon,
+            commands::extract_icon,
             commands::list_backups,
             commands::read_backup,
             commands::orb_context_menu,

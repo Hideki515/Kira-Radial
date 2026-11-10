@@ -6,6 +6,7 @@ import { observeLongTasks, perfLog, startFrameMonitor } from "../shared/perf";
 import type { Config, MenuItem } from "../shared/types";
 import { clearSoundCache, playSound } from "../shared/sound";
 import { resolveItems } from "./dynamic";
+import { useIconFiles } from "../shared/iconFiles";
 import { useDynamicSources } from "./useDynamicSources";
 import { LAYOUT, hitTest, sliceAngle, type Hit } from "./geometry";
 import { RadialCanvas } from "./RadialCanvas";
@@ -69,7 +70,9 @@ function RadialMenu({ config }: { config: Config }) {
   const [openKey, setOpenKey] = useState(0);
   // Submenus automáticos (áudio, janelas, energia...): relidos a cada abertura.
   const sources = useDynamicSources(profile.items, open, openKey);
-  const items = useMemo(() => resolveItems(profile.items, sources), [profile.items, sources]);
+  const resolved = useMemo(() => resolveItems(profile.items, sources), [profile.items, sources]);
+  // Ícones próprios (iconFile) viram imagem assim que carregam.
+  const items = useIconFiles(resolved);
   /** Aberto pelo ícone: ponto (px da janela) de onde o menu nasce e para onde se recolhe. */
   const [origin, setOrigin] = useState<Point | null>(null);
   /** Animação de recolher em andamento (o menu já não aceita entrada). */

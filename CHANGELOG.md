@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.13.0
+
+- **Ícones próprios nas fatias** (Itens → Ícone):
+  - **Imagem própria…**: PNG, SVG, ICO ou WebP, até 512 KB.
+  - **Usar ícone do programa**: para fatias "Abrir programa", extrai o mesmo ícone que o Explorador mostra. Funciona também com nomes soltos como `wt.exe` ou `notepad`, procurados no PATH.
+  - O ícone aparece no menu e na pré-visualização. Se o arquivo sumir, volta para o ícone escolhido na lista.
+  - Ícones extraídos que nenhuma fatia usa são apagados ao salvar.
+- Testes E2E: novo cenário "Usar ícone do programa" (8 cenários no total).
+
 ## 0.12.0
 
 - **Testes de ponta a ponta** (WebDriver + tauri-driver) rodando na Kira de teste. Clicam e digitam dentro das páginas, sem mexer no mouse ou teclado do Windows. São 7 cenários:

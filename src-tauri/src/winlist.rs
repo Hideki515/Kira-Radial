@@ -68,7 +68,8 @@ pub fn bgra_to_rgba(bgra: &[u8]) -> Vec<u8> {
         .collect()
 }
 
-pub fn png_data_url(rgba: &[u8], side: u32) -> Option<String> {
+/// RGBA → bytes PNG.
+pub fn png_bytes(rgba: &[u8], side: u32) -> Option<Vec<u8>> {
     let mut out = Vec::new();
     {
         let mut enc = png::Encoder::new(&mut out, side, side);
@@ -77,11 +78,15 @@ pub fn png_data_url(rgba: &[u8], side: u32) -> Option<String> {
         let mut w = enc.write_header().ok()?;
         w.write_image_data(rgba).ok()?;
     }
-    Some(format!("data:image/png;base64,{}", crate::orb::base64(&out)))
+    Some(out)
+}
+
+pub fn png_data_url(rgba: &[u8], side: u32) -> Option<String> {
+    Some(format!("data:image/png;base64,{}", crate::orb::base64(&png_bytes(rgba, side)?)))
 }
 
 /// Desenha o ícone num DIB 32 bpp e devolve os pixels BGRA.
-fn render_icon(icon: HICON) -> Option<Vec<u8>> {
+pub fn render_icon(icon: HICON) -> Option<Vec<u8>> {
     use windows::Win32::Graphics::Gdi::{
         CreateCompatibleDC, CreateDIBSection, DeleteDC, DeleteObject, SelectObject, BITMAPINFO, BITMAPINFOHEADER,
         BI_RGB, DIB_RGB_COLORS,

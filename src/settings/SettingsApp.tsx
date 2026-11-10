@@ -6,7 +6,14 @@ import { wantsOrb, type Config, type Profile } from "../shared/types";
 import { IconPage } from "./pages/IconPage";
 import { DiagnosticsPage } from "./pages/DiagnosticsPage";
 import { validateConfig } from "../shared/validate";
-import { RadialCanvas } from "../radial/RadialCanvas";
+import { RadialCanvas, type RadialCanvasProps } from "../radial/RadialCanvas";
+import { useIconFiles } from "../shared/iconFiles";
+
+/** Pré-visualização com os ícones próprios (iconFile) já carregados. */
+function PreviewCanvas(props: RadialCanvasProps) {
+  const items = useIconFiles(props.items);
+  return <RadialCanvas {...props} items={items} />;
+}
 import { resolveItems } from "../radial/dynamic";
 import { useDynamicSources } from "../radial/useDynamicSources";
 import { ItemsPage, type Selection } from "./pages/ItemsPage";
@@ -153,7 +160,7 @@ export function SettingsApp() {
       <aside className="preview">
         <div className="preview-title">Pré-visualização · {profile.name}</div>
         <div className="preview-canvas">
-          <RadialCanvas
+          <PreviewCanvas
             items={previewItems}
             activeMain={previewMain}
             activeSub={previewSub}

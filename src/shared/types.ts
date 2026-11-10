@@ -56,6 +56,8 @@ export interface MenuItem {
   children?: MenuItem[];
   /** Imagem no lugar do ícone (data URL; ex.: ícone do app nas "Janelas abertas"). */
   iconSrc?: string;
+  /** Ícone próprio salvo (PNG/SVG/ICO/WebP ou o ícone extraído de um programa). Falha → usa `icon`. */
+  iconFile?: string;
   /** Submenu gerado na hora (ignora children/action): saídas de áudio ou janelas abertas. */
   dynamic?: DynamicKind;
 }

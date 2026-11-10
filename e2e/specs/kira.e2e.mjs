@@ -34,6 +34,23 @@ describe("Kira de teste — ponta a ponta", () => {
     await pressKey("Escape");
   });
 
+  it("3b. 'Usar ícone do programa' extrai o ícone e ele aparece no menu", async () => {
+    await nav("Itens do menu");
+    await $$(".tree-row")[0].click(); // Terminal (Abrir programa)
+    await $("button*=Usar ícone do programa").click();
+    await expect($('[data-testid="icon-file"]')).toBeExisting();
+    await save();
+    const file = qaConfig().profiles[0].items[0].iconFile;
+    expect(file).toContain("Kira-Radial-QA");
+    expect(qaFiles("icons").some((f) => file.endsWith(f))).toBe(true);
+    await invoke("qa_show_menu", { fromOrb: false });
+    await toWindow("");
+    await browser.waitUntil(async () => (await $$('[data-testid="main-slice"] [data-testid="slice-img"]')).length > 0, {
+      timeoutMsg: "ícone do programa não apareceu no menu",
+    });
+    await pressKey("Escape");
+  });
+
   it("4. submenu automático 'Planos de energia' lista os planos (só leitura)", async () => {
     await nav("Itens do menu");
     await $$(".tree-row")[0].click();
