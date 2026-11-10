@@ -1,3 +1,4 @@
+import type { CustomTheme } from "./customTheme";
 // Schema da configuração. Espelhado em src-tauri/src/config/schema.rs (serde).
 // Ao mudar algo aqui, incremente `version` e adicione migração nos dois lados.
 
@@ -98,8 +99,10 @@ export interface Config {
   appearance: {
     scale: number;
     accent: string;
-    /** Visual do menu. Ausente = "glass". "holo" = HUD holográfico em wireframe. */
-    theme?: Theme;
+    /** Visual do menu: um tema embutido ou "custom:<id>" (tema personalizado). Ausente = "glass". */
+    theme?: ThemeRef;
+    /** Temas personalizados (cores sobre as decorações de um tema embutido). */
+    customThemes?: CustomTheme[];
     showCpu: boolean;
     showClock: boolean;
     /** Mostra o número (atalho 1–9) em cada fatia. */
@@ -162,6 +165,9 @@ export interface SoundsConfig {
   volume: number;
   events: Record<SoundEvent, SoundSource>;
 }
+
+/** Tema embutido ou personalizado ("custom:<id>"). */
+export type ThemeRef = Theme | `custom:${string}`;
 
 export type Theme = "glass" | "holo" | "reactor" | "terminal" | "neon" | "cyber" | "steam" | "fluent" | "minimal";
 export const THEMES: readonly Theme[] = ["glass", "holo", "reactor", "terminal", "neon", "cyber", "steam", "fluent", "minimal"];

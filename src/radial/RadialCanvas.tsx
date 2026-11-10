@@ -4,7 +4,9 @@ import { CenterHub } from "./CenterHub";
 import { HoloBack, HoloFront, HoloScan } from "./HoloLayer";
 import { ReactorBack, ReactorFront, TerminalBack, TerminalFront } from "./ThemeLayers";
 import { CyberBack, NeonBack, SteamBack, SteamFront } from "./ThemeLayers2";
-import { THEMES } from "../shared/types";
+import { THEMES, type Theme } from "../shared/types";
+import { findCustom, themeVars } from "../shared/customTheme";
+import type { CSSProperties } from "react";
 import { LAYOUT, polar, sliceAngle } from "./geometry";
 import { MainSlice } from "./MainSlice";
 import { SubmenuRing } from "./SubmenuRing";
@@ -47,10 +49,13 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
   const subOpen = subParent !== null && children.length > 0;
   // Pré-visualização: escurece só com um subitem escolhido (como antes). Menu real: sempre que o sub-anel está aberto.
   const dimOthers = openMain === undefined ? activeSub !== null : subOpen;
-  const theme = THEMES.includes(appearance.theme ?? "glass") ? appearance.theme ?? "glass" : "glass";
+  // Tema personalizado: decorações do tema base + cores próprias (variáveis CSS no <svg>).
+  const custom = findCustom(appearance.theme, appearance.customThemes);
+  const wanted = custom ? custom.base : appearance.theme ?? "glass";
+  const theme: Theme = THEMES.includes(wanted as Theme) ? (wanted as Theme) : "glass";
   const holo = theme === "holo";
   return (
-    <svg className={`radial-canvas theme-${theme}`} viewBox={`0 0 ${LAYOUT.size} ${LAYOUT.size}`} role="menu" aria-label="Menu radial">
+    <svg className={`radial-canvas theme-${theme}${custom ? " theme-custom" : ""}`} style={custom ? (themeVars(custom) as CSSProperties) : undefined} viewBox={`0 0 ${LAYOUT.size} ${LAYOUT.size}`} role="menu" aria-label="Menu radial">
       <defs>
         <radialGradient id="slice-glass" cx={C} cy={C} r={LAYOUT.subOuter} gradientUnits="userSpaceOnUse">
           <stop offset="0.35" stopColor="#0a0f17" />

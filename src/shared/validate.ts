@@ -1,6 +1,7 @@
+import { MAX_CUSTOM_THEMES, customThemeErrors, findCustom } from "./customTheme";
 import { parseCombo } from "./keys";
 import { hasCriteria, whenErrors } from "./schedule";
-import { DYNAMIC_KINDS, LAUNCHER_MODES, LIMITS, ORB_LIMITS, SCALE_LIMITS, THEMES, wantsHotkey, type Action, type Config, type MenuItem } from "./types";
+import { DYNAMIC_KINDS, LAUNCHER_MODES, LIMITS, ORB_LIMITS, SCALE_LIMITS, THEMES, wantsHotkey, type Action, type Theme, type Config, type MenuItem } from "./types";
 
 /** Valida a configuração inteira. Retorna mensagens legíveis; lista vazia = válida. */
 export function validateConfig(c: Config): string[] {
@@ -22,8 +23,12 @@ export function validateConfig(c: Config): string[] {
   }
   if (!(c.appearance.scale >= SCALE_LIMITS.min && c.appearance.scale <= SCALE_LIMITS.max))
     errors.push(`Tamanho do menu deve estar entre ${SCALE_LIMITS.min * 100}% e ${SCALE_LIMITS.max * 100}%.`);
-  if (c.appearance.theme !== undefined && !THEMES.includes(c.appearance.theme))
-    errors.push(`Tema desconhecido: "${c.appearance.theme}".`);
+  const theme = c.appearance.theme;
+  if (theme !== undefined && !THEMES.includes(theme as Theme) && !findCustom(theme, c.appearance.customThemes))
+    errors.push(`Tema desconhecido: "${theme}".`);
+  const customs = c.appearance.customThemes ?? [];
+  if (customs.length > MAX_CUSTOM_THEMES) errors.push(`No máximo ${MAX_CUSTOM_THEMES} temas personalizados.`);
+  customs.forEach((ct) => customThemeErrors(ct).forEach((e) => errors.push(`Tema "${ct.name || ct.id}": ${e}`)));
   const snd = c.appearance.sounds;
   if (snd && !(snd.volume >= 0 && snd.volume <= 1)) errors.push("Volume dos sons deve estar entre 0% e 100%.");
   if (!c.profiles.length) errors.push("É necessário ao menos um perfil.");

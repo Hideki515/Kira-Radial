@@ -111,6 +111,28 @@ describe("Kira de teste — ponta a ponta", () => {
     await pressKey("Escape");
   });
 
+  it("6b. editor de tema: criar, trocar a cor do texto, salvar e ver no menu", async () => {
+    await nav("Aparência");
+    await $("button*=Criar tema").click();
+    await expect($('[data-testid="theme-editor"]')).toBeExisting();
+    // <input type=color>: define o valor pelo setter nativo e dispara "input" (como o React espera).
+    await browser.execute(() => {
+      const el = document.querySelector('input[type="color"][aria-label="Texto"]');
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(el, "#ff3366");
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await save();
+    const cfg = qaConfig();
+    expect(cfg.appearance.theme.startsWith("custom:")).toBe(true);
+    expect(cfg.appearance.customThemes[0].colors.label).toBe("#ff3366");
+    await invoke("qa_show_menu", { fromOrb: false });
+    await toWindow("");
+    const svg = await $("svg.radial-canvas");
+    await expect(svg).toHaveElementClass("theme-custom");
+    expect(await browser.execute(() => document.querySelector("svg.radial-canvas").style.getPropertyValue("--k-label"))).toBe("#ff3366");
+    await pressKey("Escape");
+  });
+
   it("7. Diagnóstico mostra o resumo e gera o relatório", async () => {
     await nav("Diagnóstico");
     await expect($('[data-testid="diag-summary"]')).toHaveText(expect.stringContaining("Kira de teste"));

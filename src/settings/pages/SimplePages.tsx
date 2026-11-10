@@ -1,11 +1,13 @@
 import { Check, Clipboard, RotateCcw, Upload } from "lucide-react";
 import { useState, type CSSProperties } from "react";
 import { cloneConfig, defaultConfig, withDefaults } from "../../shared/defaults";
-import { HOLO_ACCENT, SCALE_LIMITS, THEMES, THEME_ACCENT, wantsHotkey, wantsOrb, type Config, type LauncherMode, type Theme } from "../../shared/types";
+import { HOLO_ACCENT, SCALE_LIMITS, THEMES, THEME_ACCENT, wantsHotkey, wantsOrb, type Config, type LauncherMode, type Theme, type ThemeRef } from "../../shared/types";
 import { Field, Section, Segmented, Toggle } from "../controls";
 import { HotkeyRecorder } from "../HotkeyRecorder";
 import { RadialCanvas } from "../../radial/RadialCanvas";
 import { SoundsSection } from "./SoundsSection";
+import { ThemeEditor, addCustomTheme } from "./ThemeEditor";
+import { MAX_CUSTOM_THEMES, customRef, isCustomRef } from "../../shared/customTheme";
 import { BackupHistory } from "./BackupHistory";
 import { clipboardClear } from "../../shared/ipc";
 
@@ -109,14 +111,16 @@ export function HotkeyPage({ config, update }: PageProps) {
 const ACCENTS = ["#4ade9b", "#43c7d9", "#5ad1ff", "#0067c0", "#39ff6a", "#a78bfa", "#e879d8", "#ff4fd8", "#fcee0a", "#f2c46d", "#d4a24c", HOLO_ACCENT, "#ff5c7a", "#f2f2f2"];
 
 /** Troca o tema e sugere a cor que combina com ele (sem sobrescrever uma cor personalizada). */
-export function applyTheme(c: Config, theme: Theme) {
+export function applyTheme(c: Config, theme: ThemeRef) {
   const prev = c.appearance.theme ?? "glass";
   if (prev === theme) return;
   c.appearance.theme = theme;
+  // Tema personalizado tem a própria cor de destaque: não mexe na cor global.
+  if (isCustomRef(theme)) return;
   // Troca a cor só se ela for a sugerida do tema anterior (cor personalizada fica).
-  // Tema anterior desconhecido (config editada/de outra versão): não há cor sugerida para comparar.
+  // Tema anterior desconhecido/personalizado: não há cor sugerida para comparar.
   const prevAccent = THEME_ACCENT[prev as Theme] as string | undefined;
-  if (prevAccent && c.appearance.accent.toLowerCase() === prevAccent.toLowerCase()) c.appearance.accent = THEME_ACCENT[theme];
+  if (prevAccent && c.appearance.accent.toLowerCase() === prevAccent.toLowerCase()) c.appearance.accent = THEME_ACCENT[theme as Theme];
 }
 
 const THEME_INFO: Record<Theme, { label: string; hint: string }> = {
@@ -161,6 +165,42 @@ function ThemePicker({ config, update }: PageProps) {
           <span className="theme-hint">{THEME_INFO[t].hint}</span>
         </button>
       ))}
+      {(config.appearance.customThemes ?? []).map((ct) => {
+        const ref = customRef(ct.id);
+        return (
+          <button
+            key={ct.id}
+            type="button"
+            role="radio"
+            aria-checked={current === ref}
+            aria-label={ct.name}
+            className={`theme-card is-custom${current === ref ? " is-on" : ""}`}
+            onClick={() => update((c) => applyTheme(c, ref))}
+          >
+            <span className="theme-thumb is-thumb">
+              <RadialCanvas
+                items={items}
+                activeMain={0}
+                activeSub={null}
+                hubHovered={false}
+                stats={{ cpu: 42, ram: 50 }}
+                appearance={{ ...config.appearance, theme: ref, showMedia: false }}
+              />
+            </span>
+            <span className="theme-name">{ct.name}</span>
+            <span className="theme-hint">Personalizado · decorações de {THEME_INFO[ct.base]?.label ?? ct.base}</span>
+          </button>
+        );
+      })}
+      <button
+        type="button"
+        className="theme-card is-add"
+        disabled={(config.appearance.customThemes?.length ?? 0) >= MAX_CUSTOM_THEMES}
+        onClick={() => update((c) => addCustomTheme(c))}
+      >
+        <span className="theme-name">+ Criar tema</span>
+        <span className="theme-hint">Escolha as cores por cima de um tema embutido.</span>
+      </button>
     </div>
   );
 }
@@ -173,6 +213,9 @@ export function AppearancePage({ config, update }: PageProps) {
       <Field label="Tema" group hint="Cada tema sugere uma cor; a cor de destaque abaixo continua valendo (uma cor personalizada não é trocada).">
         <ThemePicker config={config} update={update} />
       </Field>
+    </Section>
+    <ThemeEditor config={config} update={update} themeLabel={(t) => THEME_INFO[t].label} />
+    <Section title="Mais opções de aparência">
       <Field label={`Tamanho: ${Math.round(a.scale * 100)}%`}>
         <input type="range" min={SCALE_LIMITS.min} max={SCALE_LIMITS.max} step={0.05} value={a.scale} onChange={(e) => update((c) => void (c.appearance.scale = Number(e.target.value)))} />
       </Field>

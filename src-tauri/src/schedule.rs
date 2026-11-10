@@ -57,19 +57,16 @@ impl When {
     }
 
     pub fn matches(&self, ctx: &Context) -> bool {
-        let day_ok = self.days.is_empty() || self.days.contains(&ctx.weekday);
-        // Faixa que cruza a meia-noite: depois da meia-noite vale o dia ANTERIOR
-        // (ex.: "sexta 22:00–02:00" ainda vale às 01:00 de sábado).
-        let day_ok = day_ok || self.crosses_midnight_into(ctx);
+        // Faixa que cruza a meia-noite: a parte DEPOIS da meia-noite pertence ao dia
+        // ANTERIOR ("sexta 22:00–02:00" vale às 01:00 de sábado, não às 01:00 de sexta).
+        let after_midnight_part = match (self.from.as_deref().and_then(parse_hhmm), self.to.as_deref().and_then(parse_hhmm)) {
+            (Some(f), Some(t)) => f > t && ctx.minutes < t,
+            _ => false,
+        };
+        let day = if after_midnight_part { (ctx.weekday + 6) % 7 } else { ctx.weekday };
+        let day_ok = self.days.is_empty() || self.days.contains(&day);
         let mon_ok = self.monitors.is_empty() || self.monitors.iter().any(|m| m.eq_ignore_ascii_case(&ctx.monitor));
         day_ok && self.time_ok(ctx.minutes) && mon_ok
-    }
-
-    fn crosses_midnight_into(&self, ctx: &Context) -> bool {
-        let (Some(f), Some(t)) = (self.from.as_deref().and_then(parse_hhmm), self.to.as_deref().and_then(parse_hhmm)) else {
-            return false;
-        };
-        f > t && ctx.minutes < t && self.days.contains(&((ctx.weekday + 6) % 7))
     }
 }
 
@@ -126,6 +123,13 @@ mod tests {
         let sexta = when(&[5], Some("22:00"), Some("02:00"), &[]);
         assert!(sexta.matches(&ctx(6, "01:00", "x")));
         assert!(!sexta.matches(&ctx(6, "23:00", "x")));
+        assert!(sexta.matches(&ctx(5, "23:00", "x")));
+        // 01:00 de sexta é a madrugada de QUINTA: não vale.
+        assert!(!sexta.matches(&ctx(5, "01:00", "x")));
+        // Domingo 22–02 vale na madrugada de segunda (dia 0 → 1).
+        let domingo = when(&[0], Some("22:00"), Some("02:00"), &[]);
+        assert!(domingo.matches(&ctx(1, "00:30", "x")));
+        assert!(!domingo.matches(&ctx(0, "00:30", "x")));
     }
 
     #[test]

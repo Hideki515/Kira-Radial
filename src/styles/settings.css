@@ -311,3 +311,11 @@ input[type="number"]:focus-visible { border-color: var(--active); }
 .chip.is-pick.is-on { border-color: var(--active); color: var(--active); background: color-mix(in srgb, var(--active) 12%, transparent); }
 .monitor-pick { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line-soft); }
 .when-row input[type="time"] { width: 110px; }
+
+/* --- editor de tema --- */
+.theme-card.is-add { justify-content: center; min-height: 160px; border-style: dashed; }
+.theme-card.is-add:disabled { opacity: 0.5; cursor: not-allowed; }
+.theme-card.is-custom .theme-hint { color: var(--active); }
+.color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 8px 0 12px; }
+.color-cell { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-secondary); }
+.color-cell input[type="color"] { width: 34px; height: 26px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: none; }

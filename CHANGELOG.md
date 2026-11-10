@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.15.0
+
+- **Editor de tema** (Configurações → Aparência):
+  - **+ Criar tema**: escolha de qual tema embutido vêm as decorações (anéis, esfera, engrenagens…) e ajuste 10 cores: destaque, fundo, fatias, borda, texto, fatia ativa, texto ativo, centro, texto do centro e medidor.
+  - Pré-visualização ao vivo, e o tema vira um cartão ao lado dos 9 embutidos.
+  - **Duplicar**, **Excluir** e **Exportar/Importar** em JSON (`.kira-theme.json`) para compartilhar. A importação valida o formato, as cores e o tamanho.
+  - Os temas personalizados são só cores (variáveis CSS), sem CSS livre.
+- Correção ("Quando usar" dos perfis): numa faixa que passa da meia-noite, a madrugada agora conta como o dia anterior. "Sexta 22:00–02:00" vale às 01:00 de sábado e não às 01:00 de sexta.
+- Testes E2E: novo cenário "editor de tema" (10 cenários no total).
+
 ## 0.14.0
 
 - **Perfis por horário e por monitor** (Configurações → Perfis → "Quando usar"):

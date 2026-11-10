@@ -150,3 +150,22 @@
 @media (prefers-reduced-motion: reduce) {
   .neon-ring--pink, .cyber-bar, .cyber-spin, .steam-spin, .theme-cyber .main-slice.is-active .slice-label { animation: none; }
 }
+
+/* ======================================================================
+   Tema personalizado: as cores vêm de variáveis (--k-*) aplicadas no <svg>.
+   Seletores com ".radial-canvas.theme-custom" para vencer os do tema base.
+   ====================================================================== */
+.radial-canvas.theme-custom .ring-backing { fill: var(--k-backing); fill-opacity: 0.94; }
+.radial-canvas.theme-custom .main-slice .slice-shape { fill: var(--k-slice); stroke: var(--k-sliceBorder); }
+.radial-canvas.theme-custom .main-slice .slice-icon { color: var(--k-label); }
+.radial-canvas.theme-custom .slice-label { fill: var(--k-label); }
+.radial-canvas.theme-custom .main-slice.is-active .slice-shape { fill: var(--k-activeSlice); stroke: var(--k-accent); }
+.radial-canvas.theme-custom .main-slice.is-active .slice-icon { color: var(--k-activeLabel); }
+.radial-canvas.theme-custom .main-slice.is-active .slice-label { fill: var(--k-activeLabel); }
+.radial-canvas.theme-custom .sub-slice .slice-shape { fill: var(--k-slice); }
+.radial-canvas.theme-custom .sub-slice .slice-label { fill: var(--k-label); }
+.radial-canvas.theme-custom .sub-slice.is-active .slice-shape { fill: var(--k-activeSlice); }
+.radial-canvas.theme-custom .hub-disc, .radial-canvas.theme-custom .hub-well { fill: var(--k-hub); }
+.radial-canvas.theme-custom .hub-time, .radial-canvas.theme-custom .hub-cpu, .radial-canvas.theme-custom .hub-np-title { fill: var(--k-hubText); }
+.radial-canvas.theme-custom .hub-gauge { stroke: var(--k-gauge); }
+.radial-canvas.theme-custom .slice-marker { fill: var(--k-accent); }
