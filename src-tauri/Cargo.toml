@@ -1,6 +1,6 @@
 [package]
 name = "kira-radial"
-version = "0.9.0"
+version = "0.10.0"
 description = "Menu radial para controle do Windows"
 license = "MIT"
 edition = "2021"

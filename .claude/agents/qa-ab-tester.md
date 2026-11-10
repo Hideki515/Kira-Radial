@@ -33,7 +33,7 @@ Quem chamou você vai dizer **o que mudou** (arquivos/feature). Se não disser, 
 4. **Build release:** `npx tauri build --no-bundle` na raiz. Meça o tamanho de `src-tauri\target\release\kira-radial.exe` e de `dist/`.
 5. **Smoke do app com a Kira de teste (sem input simulado):**
    - `npm run build:qa` → `src-tauri\target-qa\release\kira-radial.exe` (identifier e pasta de dados próprios: `%APPDATA%\Kira-Radial-QA`; janelas fora da tela, sem foco, sem atalho/bandeja).
-   - `pwsh -File scripts/smoke-qa.ps1` → abre, espera, confere (processo vivo, nenhuma janela na área visível, não pegou o foco, pasta QA criada, config do USUÁRIO intacta, sem panic) e **encerra só o processo que abriu**. Saída 0 = ok; falha = REPROVADO (cole a saída).
+   - `pwsh -NoProfile -File scripts/smoke-qa.ps1` → abre, espera, confere (processo vivo, nenhuma janela na área visível, não pegou o foco, pasta QA criada, config do USUÁRIO intacta, sem panic) e **encerra só o processo que abriu**. Saída 0 = ok; falha = REPROVADO (cole a saída).
    - Funciona mesmo com a Kira instalada do usuário aberta. Confira ainda que `%APPDATA%\Kira-Radial\config.json` continua válido (parse + `validateConfig`, só leitura).
 6. **Checklist funcional (A/B por cobertura de teste/código):** para cada item, verifique que existe teste cobrindo ou que o código está ligado ponta a ponta (tipo TS ↔ enum Rust ↔ `execute` ↔ ActionEditor ↔ validação ↔ comando registrado em `lib.rs`):
    - Geometria do radial (fatias, submenu, hit-test) e renderização do canvas.

@@ -30,6 +30,22 @@ pub fn keep_offscreen(w: &WebviewWindow) {
     }
 }
 
+/// Kira de teste: mostra/esconde direto pelo Win32 — mostrar fora da tela e SEM ativar
+/// (SW_SHOWNOACTIVATE); esconder também pelo Win32, porque o Tauri (tao) não sabe que a
+/// janela apareceu e ignoraria o hide() (mesmo caso do ícone flutuante).
+pub fn set_visible_quiet(w: &WebviewWindow, visible: bool) {
+    use windows::Win32::Foundation::HWND;
+    use windows::Win32::UI::WindowsAndMessaging::{ShowWindow, SW_HIDE, SW_SHOWNOACTIVATE};
+    if visible {
+        keep_offscreen(w);
+    }
+    if let Ok(h) = w.hwnd() {
+        unsafe {
+            let _ = ShowWindow(HWND(h.0 as *mut _), if visible { SW_SHOWNOACTIVATE } else { SW_HIDE });
+        }
+    }
+}
+
 #[cfg(feature = "qa")]
 pub mod commands {
     use crate::menu::{self, AppState};

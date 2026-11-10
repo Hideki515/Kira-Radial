@@ -113,18 +113,20 @@ pub fn show_from(app: &AppHandle, origin: Origin) -> Result<(), String> {
     mark("posição");
 
     place(&win);
+    // Kira de teste: já vai para fora da tela ANTES de aparecer (não pisca no cursor).
+    crate::qa::keep_offscreen(&win);
     mark("mover");
     app.emit_to(RADIAL, "menu:show", MenuShow { cx: p.center, cy: p.center, profile_id, sent_at: crate::perf::now_ms(), origin_x, origin_y })
         .map_err(|e| e.to_string())?;
     mark("emit");
-    win.show().map_err(|e| e.to_string())?;
-    mark("show");
-    // Reaplica: ao trocar de monitor com DPI diferente o Windows pode redimensionar a janela.
-    place(&win);
     if crate::qa::ENABLED {
-        // Kira de teste: janela existe e é "mostrada", mas fora da tela e sem foco.
-        crate::qa::keep_offscreen(&win);
+        // Kira de teste: "mostrada" fora da tela e sem ativar (não rouba o foco).
+        crate::qa::set_visible_quiet(&win, true);
     } else {
+        win.show().map_err(|e| e.to_string())?;
+        mark("show");
+        // Reaplica: ao trocar de monitor com DPI diferente o Windows pode redimensionar a janela.
+        place(&win);
         let _ = win.set_focus();
     }
     mark("focar");
@@ -139,7 +141,11 @@ pub fn show_from(app: &AppHandle, origin: Origin) -> Result<(), String> {
 pub fn hide(app: &AppHandle) {
     let state = app.state::<AppState>();
     if let Ok(win) = radial(app) {
-        let _ = win.hide();
+        if crate::qa::ENABLED {
+            crate::qa::set_visible_quiet(&win, false);
+        } else {
+            let _ = win.hide();
+        }
     }
     state.visible.store(false, Ordering::SeqCst);
     let _ = app.emit_to(RADIAL, "menu:hide", ());
@@ -150,8 +156,7 @@ pub fn open_settings(app: &AppHandle) {
     if let Some(w) = app.get_webview_window(SETTINGS) {
         let _ = w.unminimize();
         if crate::qa::ENABLED {
-            crate::qa::keep_offscreen(&w);
-            let _ = w.show();
+            crate::qa::set_visible_quiet(&w, true);
             return;
         }
         let _ = w.show();

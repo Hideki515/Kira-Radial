@@ -13,6 +13,8 @@ $userCfg = Join-Path $env:APPDATA "Kira-Radial\config.json"
 $qaDir = Join-Path $env:APPDATA "Kira-Radial-QA"
 $hash = { param($p) if (Test-Path $p) { (Get-FileHash $p -Algorithm MD5).Hash } else { "-" } }
 $userBefore = & $hash $userCfg
+# Pasta de dados da Kira de TESTE (nunca a do usuario): comeca limpa, para conferir que o app a cria.
+if ((Test-Path $qaDir) -and ($qaDir -like "*Kira-Radial-QA")) { Remove-Item -Recurse -Force $qaDir }
 
 Add-Type @"
 using System; using System.Collections.Generic; using System.Runtime.InteropServices; using System.Text;

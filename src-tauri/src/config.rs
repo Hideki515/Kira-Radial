@@ -218,6 +218,14 @@ pub fn save(c: &Config) -> Result<(), String> {
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let tmp = dir.join("config.json.tmp");
     let text = serde_json::to_string_pretty(c).map_err(|e| e.to_string())?;
+    // Backup automático da versão anterior, só quando o conteúdo realmente muda.
+    if let Ok(previous) = fs::read_to_string(config_path()) {
+        if crate::backup::significant_change(&previous, &text) {
+            if let Err(e) = crate::backup::store(&previous) {
+                eprintln!("[kira-radial] falha ao guardar backup da config: {e}");
+            }
+        }
+    }
     fs::write(&tmp, text).map_err(|e| e.to_string())?;
     fs::rename(&tmp, config_path()).map_err(|e| e.to_string())
 }

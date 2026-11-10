@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.10.0
+
+- **Backup automático da configuração**: sempre que você salva uma mudança, a versão anterior é guardada. As 10 mais recentes ficam guardadas, só neste PC.
+- **Configurações → Backup → "Versões anteriores"**: mostra cada versão com a data ("há 5 min", "ontem 14:30") e o resumo dos perfis.
+  - **Ver diferenças** compara a versão com a atual (atalho, aparência, fatias adicionadas, removidas ou alteradas).
+  - **Restaurar no rascunho** carrega a versão para revisão; ela só vale depois de clicar em Salvar.
+  - Uma config que não carregou também aparece na lista.
+- Kira de teste:
+  - Menu e configurações aparecem fora da tela desde o primeiro instante e sem ativar a janela; esconder também funciona.
+  - O smoke começa com a pasta de dados de teste limpa.
+
 ## 0.9.0
 
 - **"Kira de teste" para desenvolvimento e QA**: `npm run build:qa` gera uma variante isolada que roda ao lado da Kira instalada, sem interferir nela.

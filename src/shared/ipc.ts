@@ -297,6 +297,27 @@ export async function readOrbImage(path: string): Promise<string> {
   return invoke<string>("read_orb_image", { path });
 }
 
+export interface BackupInfo {
+  name: string;
+  /** ms desde 1970 */
+  modified: number;
+  size: number;
+  valid: boolean;
+  profiles: { name: string; items: number }[];
+}
+
+/** Versões anteriores da configuração (mais recente primeiro). */
+export async function listBackups(): Promise<BackupInfo[]> {
+  if (isTauri()) return invoke<BackupInfo[]>("list_backups");
+  return [];
+}
+
+/** Conteúdo (JSON) de um backup. */
+export async function readBackup(name: string): Promise<string> {
+  if (isTauri()) return invoke<string>("read_backup", { name });
+  throw new Error("backups só existem no app");
+}
+
 /** Som próprio (WAV/MP3/OGG) como data URL. No navegador, usa o caminho direto. */
 export async function readSound(path: string): Promise<string> {
   if (!isTauri()) return path;

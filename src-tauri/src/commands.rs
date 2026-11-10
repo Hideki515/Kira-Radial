@@ -54,6 +54,18 @@ pub async fn read_orb_image(path: String) -> Result<String, String> {
         .map_err(|e| e.to_string())?
 }
 
+/// Backups automáticos da configuração (mais recente primeiro).
+#[tauri::command]
+pub fn list_backups() -> Vec<crate::backup::BackupInfo> {
+    crate::backup::list()
+}
+
+/// Conteúdo de um backup (só nomes gerados pela Kira).
+#[tauri::command]
+pub fn read_backup(name: String) -> Result<String, String> {
+    crate::backup::read(&name)
+}
+
 /// Som próprio (WAV/MP3/OGG) como data URL.
 #[tauri::command]
 pub async fn read_sound(path: String) -> Result<String, String> {

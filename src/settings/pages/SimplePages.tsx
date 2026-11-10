@@ -6,6 +6,7 @@ import { Field, Section, Segmented, Toggle } from "../controls";
 import { HotkeyRecorder } from "../HotkeyRecorder";
 import { RadialCanvas } from "../../radial/RadialCanvas";
 import { SoundsSection } from "./SoundsSection";
+import { BackupHistory } from "./BackupHistory";
 import { clipboardClear } from "../../shared/ipc";
 
 interface PageProps {
@@ -247,6 +248,7 @@ export function BackupPage({ config, replace }: { config: Config; replace: (c: C
         </div>
         {msg && <p className={msg.ok ? "inline-ok" : "inline-error"}>{msg.ok && <Check size={13} />} {msg.text}</p>}
       </Section>
+      <BackupHistory config={config} replace={replace} />
     </>
   );
 }

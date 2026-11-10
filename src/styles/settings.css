@@ -279,3 +279,11 @@ input[type="number"]:focus-visible { border-color: var(--active); }
 .sound-row { display: grid; grid-template-columns: 170px 170px 1fr auto; align-items: center; gap: 8px; }
 .sound-label { font-size: 13px; color: var(--text-secondary); }
 .sound-row .path-chip { cursor: pointer; background: transparent; }
+
+/* --- versões anteriores (backups) --- */
+.backup-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.backup-row { display: grid; grid-template-columns: auto 130px 1fr auto auto; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line-soft); }
+.backup-when { font-weight: 600; font-size: 13px; }
+.backup-sum { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.backup-diff { grid-column: 1 / -1; font-size: 12px; background: var(--bg-surface); border-radius: 6px; padding: 6px 10px; max-height: 220px; overflow: auto; }
+.backup-diff ul { margin: 0; padding-left: 18px; }

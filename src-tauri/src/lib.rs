@@ -2,6 +2,7 @@
 
 mod actions;
 mod audio;
+mod backup;
 mod clipboard;
 mod brightness;
 mod commands;
@@ -135,6 +136,8 @@ pub fn run() {
             commands::get_volume,
             commands::read_orb_image,
             commands::read_sound,
+            commands::list_backups,
+            commands::read_backup,
             commands::orb_context_menu,
             perf::perf_log,
             keycapture::start_key_capture,
