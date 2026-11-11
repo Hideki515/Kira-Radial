@@ -28,6 +28,23 @@ fn wide(buf: &[u16]) -> String {
     String::from_utf16_lossy(&buf[..n])
 }
 
+/// Nome de dispositivo ("\\.\DISPLAY2") de um HMONITOR.
+pub fn device_of(h: HMONITOR) -> String {
+    info_ex(h).map(|mi| wide(&mi.szDevice)).unwrap_or_default()
+}
+
+/// Identificação permanente do `index`-ésimo monitor ligado a `device`
+/// (`\\?\DISPLAY#GSM5B09#...`): não muda quando os monitores trocam de ordem.
+pub fn interface_id(device: &str, index: u32) -> Option<String> {
+    const EDD_GET_DEVICE_INTERFACE_NAME: u32 = 1;
+    let mut dd = DISPLAY_DEVICEW { cb: std::mem::size_of::<DISPLAY_DEVICEW>() as u32, ..Default::default() };
+    let dev = windows::core::HSTRING::from(device);
+    unsafe { EnumDisplayDevicesW(&dev, index, &mut dd, EDD_GET_DEVICE_INTERFACE_NAME) }
+        .as_bool()
+        .then(|| wide(&dd.DeviceID))
+        .filter(|s| !s.trim().is_empty())
+}
+
 fn info_ex(h: HMONITOR) -> Option<MONITORINFOEXW> {
     let mut mi = MONITORINFOEXW::default();
     mi.monitorInfo.cbSize = std::mem::size_of::<MONITORINFOEXW>() as u32;

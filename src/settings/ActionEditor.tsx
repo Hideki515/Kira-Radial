@@ -6,6 +6,7 @@ import { validateAction } from "../shared/validate";
 import { Field, Segmented, Toggle } from "./controls";
 import { HotkeyRecorder } from "./HotkeyRecorder";
 import { BrowserFields, type BrowserChoice } from "./BrowserFields";
+import { BrightnessTargetField } from "./BrightnessTarget";
 
 /** Sem chaves `undefined` (a config salva fica limpa). */
 function stripUndefined(b: BrowserChoice): BrowserChoice {
@@ -276,9 +277,24 @@ export function ActionEditor({ action, onChange }: { action: Action; onChange: (
             <Segmented
               value={action.mode}
               options={[{ value: "up", label: "Aumentar 10%" }, { value: "down", label: "Diminuir 10%" }, { value: "set", label: "Definir valor" }]}
-              onChange={(m) => onChange(m === "set" ? { type: "brightness", mode: m, value: action.value ?? 50, target: "all" } : { type: "brightness", mode: m })}
+              onChange={(m) => {
+                // A tela escolhida continua ao trocar o tipo de ajuste.
+                const where = action.target && action.target !== "all" ? { target: action.target, ...(action.targetName ? { targetName: action.targetName } : {}) } : {};
+                onChange(m === "set" ? { type: "brightness", mode: m, value: action.value ?? 50, target: "all", ...where } : { type: "brightness", mode: m, ...where });
+              }}
             />
           </Field>
+          <BrightnessTargetField
+            target={action.target}
+            targetName={action.targetName}
+            defaultTarget="all"
+            onChange={(target, targetName) => {
+              const next: Action = { ...action, target };
+              if (targetName && target !== "all" && target !== "cursor") next.targetName = targetName;
+              else delete next.targetName;
+              onChange(next);
+            }}
+          />
           {action.mode === "set" && (
             <Field label={`Brilho: ${action.value ?? 50}%`}>
               <input type="range" min={0} max={100} step={5} value={action.value ?? 50} onChange={(e) => onChange({ ...action, value: Number(e.target.value) })} />

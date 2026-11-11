@@ -6,6 +6,7 @@ import { getIcon, ICONS } from "../../shared/icons";
 import { DYNAMIC_HINT, DYNAMIC_LABEL } from "../../radial/dynamic";
 import { DYNAMIC_KINDS, LIMITS, type DynamicKind, type MenuItem, type Profile } from "../../shared/types";
 import { ActionEditor, defaultAction } from "../ActionEditor";
+import { BrightnessTargetField } from "../BrightnessTarget";
 import { Field, Segmented } from "../controls";
 
 export interface Selection {
@@ -302,6 +303,8 @@ export function ItemsPage({ profile, selection, onSelect, edit }: Props) {
                     delete it.children;
                     delete it.action;
                     delete it.dynamic;
+                    delete it.dynamicTarget;
+                    delete it.dynamicTargetName;
                     if (v === "submenu") it.children = [];
                     else if (v === "auto") it.dynamic = "audioOutputs";
                     else it.action = defaultAction("launch");
@@ -314,10 +317,37 @@ export function ItemsPage({ profile, selection, onSelect, edit }: Props) {
           {selected.dynamic ? (
             <>
               <Field label="Conteúdo do submenu">
-                <select value={selected.dynamic} onChange={(e) => editSelected((it) => void (it.dynamic = e.target.value as DynamicKind))}>
+                <select
+                  value={selected.dynamic}
+                  onChange={(e) =>
+                    editSelected((it) => {
+                      it.dynamic = e.target.value as DynamicKind;
+                      if (it.dynamic !== "brightness") {
+                        delete it.dynamicTarget;
+                        delete it.dynamicTargetName;
+                      }
+                    })
+                  }
+                >
                   {DYNAMIC_KINDS.map((k) => <option key={k} value={k}>{DYNAMIC_LABEL[k]}</option>)}
                 </select>
               </Field>
+              {selected.dynamic === "brightness" && (
+                <BrightnessTargetField
+                  target={selected.dynamicTarget}
+                  targetName={selected.dynamicTargetName}
+                  defaultTarget="cursor"
+                  onChange={(target, name) =>
+                    editSelected((it) => {
+                      // "Onde o menu abriu" é o padrão: não precisa gravar.
+                      if (target === "cursor") delete it.dynamicTarget;
+                      else it.dynamicTarget = target;
+                      if (name && target !== "all" && target !== "cursor") it.dynamicTargetName = name;
+                      else delete it.dynamicTargetName;
+                    })
+                  }
+                />
+              )}
               <p className="muted">
                 O sub-anel mostra automaticamente {DYNAMIC_HINT[selected.dynamic]} Até {LIMITS.maxChildren} itens; as informações são
                 atualizadas a cada abertura do menu.

@@ -93,17 +93,28 @@ export function powerChildren(parentId: string, list: PowerPlan[] | null): MenuI
 /** Níveis oferecidos no submenu "Brilho" (aplicados a todas as telas). */
 export const BRIGHTNESS_LEVELS = [10, 25, 50, 75, 100] as const;
 
-export function brightnessChildren(parentId: string, displays: DisplayInfo[] | null): MenuItem[] {
+/** Telas que o alvo escolhe, para destacar o nível atual ("cursor"/desconhecido = todas). */
+export function targetDisplays(displays: DisplayInfo[], target = "all", targetName?: string): DisplayInfo[] {
+  if (target === "all" || target === "cursor") return displays;
+  const low = (s: string) => s.trim().toLowerCase();
+  const hit = displays.filter((d) => low(d.id) === low(target));
+  if (hit.length) return hit;
+  const byName = targetName ? displays.filter((d) => low(d.name) === low(targetName)) : [];
+  return byName.length ? byName : displays;
+}
+
+export function brightnessChildren(parentId: string, displays: DisplayInfo[] | null, target = "all", targetName?: string): MenuItem[] {
   if (displays === null) return [{ id: `${parentId}:loading`, label: "Carregando…", icon: "sun" }];
   if (!displays.length) return [{ id: `${parentId}:none`, label: "Sem suporte", icon: "sun-dim" }];
-  const avg = displays.reduce((s, d) => s + d.level, 0) / displays.length;
+  const shown = targetDisplays(displays, target, targetName);
+  const avg = shown.reduce((s, d) => s + d.level, 0) / shown.length;
   const nearest = BRIGHTNESS_LEVELS.reduce((a, b) => (Math.abs(b - avg) < Math.abs(a - avg) ? b : a));
   return BRIGHTNESS_LEVELS.map((v) => ({
     id: `${parentId}:${v}`,
     label: `${v}%`,
     icon: v < 50 ? "sun-dim" : "sun",
     color: v === nearest ? AUDIO_CURRENT_COLOR : AUDIO_OTHER_COLOR,
-    action: { type: "brightness", mode: "set", value: v, target: "all" },
+    action: { type: "brightness", mode: "set", value: v, target, ...(targetName && target !== "all" && target !== "cursor" ? { targetName } : {}) },
   }));
 }
 
@@ -178,7 +189,7 @@ export const DYNAMIC_HINT: Record<DynamicKind, string> = {
   audioOutputs: "as saídas de áudio reconhecidas pelo Windows. A saída em uso aparece em verde; clique em outra para trocar.",
   windows: "as janelas abertas mais recentes, com o ícone de cada app. Clique numa para trazê-la para a frente.",
   powerPlans: "os planos de energia do Windows. O plano ativo aparece em verde; clique em outro para trocar.",
-  brightness: "níveis de brilho (10% a 100%) aplicados a todas as telas que aceitam ajuste — tela do notebook e monitores com DDC/CI. O nível mais próximo do atual aparece em verde.",
+  brightness: "níveis de brilho (10% a 100%) aplicados à tela escolhida abaixo — tela do notebook e monitores com DDC/CI. O nível mais próximo do atual aparece em verde.",
   radios: "o Wi-Fi e o Bluetooth do PC. Ligado aparece em verde; clique para ligar/desligar.",
   recentFiles: "os arquivos abertos recentemente no Windows (os mesmos de \"Recentes\" no Explorador). Clique para abrir.",
   clipboard: "os últimos textos copiados. Clique para colar no app que estava em uso. Precisa ligar o histórico em Configurações → Geral (fica só na memória).",
@@ -189,7 +200,8 @@ function childrenFor(it: MenuItem, src: DynamicSources): MenuItem[] {
     case "audioOutputs": return audioChildren(it.id, src.audio ?? null);
     case "windows": return windowChildren(it.id, src.windows ?? null);
     case "powerPlans": return powerChildren(it.id, src.power ?? null);
-    case "brightness": return brightnessChildren(it.id, src.displays ?? null);
+    // Sem tela escolhida: a tela onde o menu abriu.
+    case "brightness": return brightnessChildren(it.id, src.displays ?? null, it.dynamicTarget ?? "cursor", it.dynamicTargetName);
     case "radios": return radioChildren(it.id, src.radios ?? null);
     case "recentFiles": return recentChildren(it.id, src.recent ?? null);
     case "clipboard": return clipboardChildren(it.id, src.clipboard ?? null);

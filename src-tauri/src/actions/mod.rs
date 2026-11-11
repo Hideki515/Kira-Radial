@@ -80,8 +80,12 @@ pub enum Action {
         mode: BrightnessMode,
         #[serde(default)]
         value: Option<u32>,
+        /// "all" (padrão), "cursor", "lcd", "mon:..." ou "ddc:N" (antigo).
         #[serde(default)]
         target: Option<String>,
+        /// Nome da tela; usado se o id não for encontrado.
+        #[serde(default, rename = "targetName")]
+        target_name: Option<String>,
     },
     /// Liga/desliga Wi-Fi ou Bluetooth.
     Radio { kind: crate::radios::Kind, mode: crate::radios::Mode },
@@ -231,11 +235,15 @@ pub fn execute(action: &Action) -> Result<(), String> {
             keys::send_combo("Ctrl+V")
         }
         Action::Radio { kind, mode } => crate::radios::set(*kind, *mode).map(|_| ()),
-        Action::Brightness { mode, value, target } => match mode {
-            BrightnessMode::Set => crate::brightness::set(target.as_deref().unwrap_or("all"), value.unwrap_or(100)),
-            BrightnessMode::Up => crate::brightness::step_all(10),
-            BrightnessMode::Down => crate::brightness::step_all(-10),
-        },
+        Action::Brightness { mode, value, target, target_name } => {
+            let t = target.as_deref().unwrap_or("all");
+            let n = target_name.as_deref();
+            match mode {
+                BrightnessMode::Set => crate::brightness::set(t, n, value.unwrap_or(100)),
+                BrightnessMode::Up => crate::brightness::step_target(t, n, 10),
+                BrightnessMode::Down => crate::brightness::step_target(t, n, -10),
+            }
+        }
         // Precisa da janela anterior: executado por run_action (commands.rs).
         Action::Window { .. } => Err("ação de janela sem janela-alvo".into()),
     }
@@ -521,5 +529,24 @@ mod url_browser_tests {
     fn url_invalida_falha_antes_de_abrir_qualquer_navegador() {
         let a: Action = serde_json::from_str(r#"{"type":"url","url":"javascript:alert(1)","browser":"Google Chrome"}"#).unwrap();
         assert!(super::execute(&a).is_err());
+    }
+}
+
+#[cfg(test)]
+mod brightness_target_tests {
+    use super::Action;
+
+    #[test]
+    fn brilho_com_tela_desserializa_e_antigo_continua_valido() {
+        let a: Action = serde_json::from_str(r#"{"type":"brightness","mode":"up","target":"mon:\\\\?\\DISPLAY#AOC2402#x","targetName":"Monitor 2"}"#).unwrap();
+        match a {
+            Action::Brightness { target, target_name, .. } => {
+                assert_eq!(target.as_deref(), Some(r"mon:\\?\DISPLAY#AOC2402#x"));
+                assert_eq!(target_name.as_deref(), Some("Monitor 2"));
+            }
+            _ => panic!(),
+        }
+        let a: Action = serde_json::from_str(r#"{"type":"brightness","mode":"set","value":40,"target":"ddc:0"}"#).unwrap();
+        assert!(matches!(a, Action::Brightness { target_name: None, .. }));
     }
 }

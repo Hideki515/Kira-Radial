@@ -69,7 +69,11 @@ export function describeAction(a: Action): string {
       return a.mode === "on" ? `Ligar ${what}` : a.mode === "off" ? `Desligar ${what}` : `Ligar/desligar ${what}`;
     }
     case "brightness":
-      return a.mode === "up" ? "Aumentar brilho" : a.mode === "down" ? "Diminuir brilho" : `Brilho ${a.value ?? 100}%`;
+    {
+      const what = a.mode === "up" ? "Aumentar brilho" : a.mode === "down" ? "Diminuir brilho" : `Brilho ${a.value ?? 100}%`;
+      const where = a.target === "cursor" ? " (tela do menu)" : a.target && a.target !== "all" ? ` (${a.targetName ?? (a.target === "lcd" ? "notebook" : "monitor")})` : "";
+      return what + where;
+    }
     case "powerPlan":
       return `Plano de energia: ${a.name ?? a.guid}`;
     case "focusWindow":
@@ -226,9 +230,13 @@ export async function listRadios(): Promise<RadioInfo[]> {
 }
 
 export interface DisplayInfo {
-  /** "lcd" (notebook) ou "ddc:N" (monitor externo com DDC/CI). */
+  /** "lcd" (notebook), "mon:<id permanente>" ou "ddc:N" (monitor externo com DDC/CI). */
   id: string;
   name: string;
+  /** "\\.\DISPLAY2" (vazio = desconhecido). */
+  device?: string;
+  /** Número do monitor (como em "Identificar"); 0 = desconhecido. */
+  number?: number;
   /** 0–100 */
   level: number;
 }
@@ -275,7 +283,10 @@ export async function listBrowserProfiles(id: string): Promise<BrowserProfile[]>
 /** Telas com brilho ajustável (vazio = nenhuma aceita controle). */
 export async function listDisplays(): Promise<DisplayInfo[]> {
   if (isTauri()) return invoke<DisplayInfo[]>("list_displays");
-  return [{ id: "lcd", name: "Tela do notebook", level: 60 }];
+  return [
+    { id: "lcd", name: "Tela do notebook", level: 60, device: "\\\\.\\DISPLAY1", number: 1 },
+    { id: "mon:AOC", name: "Monitor 2 (AOC2402)", level: 40, device: "\\\\.\\DISPLAY2", number: 2 },
+  ];
 }
 
 export interface PowerPlan {

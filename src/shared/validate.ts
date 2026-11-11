@@ -54,6 +54,7 @@ function validateItem(it: MenuItem, where: string, allowChildren: boolean, error
   if (it.dynamic) {
     if (!allowChildren) errors.push(`${where}: submenu automático só em fatias principais.`);
     if (!DYNAMIC_KINDS.includes(it.dynamic)) errors.push(`${where}: submenu automático desconhecido ("${it.dynamic}").`);
+    if (it.dynamicTarget !== undefined && !validBrightnessTarget(it.dynamicTarget)) errors.push(`${where}: tela do brilho inválida.`);
     return;
   }
   const kids = it.children ?? [];
@@ -69,6 +70,11 @@ function validateItem(it: MenuItem, where: string, allowChildren: boolean, error
   }
 }
 
+/** Alvo do brilho: all, cursor, lcd, ddc:N ou mon:<id>. */
+export function validBrightnessTarget(t: unknown): boolean {
+  return typeof t === "string" && (["all", "cursor", "lcd"].includes(t) || /^ddc:\d{1,3}$/.test(t) || /^mon:.{1,300}$/.test(t));
+}
+
 export function validateAction(a: Action): string | null {
   switch (a.type) {
     case "launch": return a.path.trim() ? null : "informe o programa/arquivo.";
@@ -79,7 +85,8 @@ export function validateAction(a: Action): string | null {
       const inBrowser = (!!a.browser && a.browser !== "system") || !!a.private;
       // Num navegador escolhido o endereço vai como um único argumento: sem espaços nem aspas.
       if (inBrowser && /^https?:/i.test(u) && /[\s"]/.test(u)) return 'endereço com espaço ou aspas (troque o espaço por %20).';
-      if (inBrowser && u.length > 2048) return "endereço longo demais para abrir num navegador escolhido (máx. 2048 caracteres).";
+      // Mesmo limite do Rust, que conta bytes UTF-8 (acentos ocupam mais de um).
+      if (inBrowser && new TextEncoder().encode(u).length > 2048) return "endereço longo demais para abrir num navegador escolhido (máx. 2048 caracteres).";
       if (a.profile !== undefined && !/^[A-Za-z0-9 _-]{1,64}$/.test(a.profile)) return "perfil do navegador inválido.";
       return null;
     }
@@ -91,6 +98,7 @@ export function validateAction(a: Action): string | null {
     case "script": return a.command.trim() ? null : "comando vazio.";
     case "brightness":
       if (a.mode === "set" && !(Number.isInteger(a.value) && a.value! >= 0 && a.value! <= 100)) return "o brilho deve ser um inteiro de 0 a 100.";
+      if (a.target !== undefined && !validBrightnessTarget(a.target)) return "tela do brilho inválida.";
       return null;
     case "audioOutput":
       if (a.mode === "set" && !a.deviceId?.trim() && !a.deviceName?.trim()) return "escolha o dispositivo de saída.";

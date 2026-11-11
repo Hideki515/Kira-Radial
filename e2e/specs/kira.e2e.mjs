@@ -172,6 +172,40 @@ describe("Kira de teste — ponta a ponta", () => {
     expect(qaConfig().behavior.browser).toBeUndefined();
   });
 
+  it("6d. submenu 'Brilho' com tela escolhida: grava o alvo e o sub-anel abre (só leitura, nenhum nível é clicado)", async () => {
+    await nav("Itens do menu");
+    await $(".profile-picker select").selectByIndex(0);
+    await $$(".tree-row:not(.is-child)")[0].click();
+    await pickRadio("Submenu automático");
+    await $('.item-editor select:has(option[value="brightness"])').selectByAttribute("value", "brightness");
+    const sel = await $('select[aria-label="Tela do brilho"]');
+    expect(await sel.getValue()).toBe("cursor");
+    // Espera a lista de telas (leitura DDC/CI leva ~100 ms por monitor); sem nenhuma tela ajustável fica em "Todas".
+    await browser.waitUntil(async () => (await sel.$$("option")).length > 2, { timeout: 8000 }).catch(() => {});
+    let chosen = "all";
+    for (const o of await sel.$$("option")) {
+      const v = await o.getAttribute("value");
+      if (v !== "cursor" && v !== "all" && v !== "__missing__") {
+        chosen = v;
+        break;
+      }
+    }
+    await sel.selectByAttribute("value", chosen);
+    await save();
+    const item = qaConfig().profiles[0].items[0];
+    expect(item.dynamic).toBe("brightness");
+    expect(item.dynamicTarget).toBe(chosen);
+    await invoke("qa_show_menu", { fromOrb: false });
+    await toWindow("");
+    await pressKey("1", "Digit1"); // só abre o sub-anel
+    await browser.waitUntil(async () => {
+      const subs = await $$(".sub-slice");
+      return subs.length > 0 && (await subs[0].getAttribute("aria-label")) !== "Carregando…";
+    }, { timeoutMsg: "sub-anel do brilho não carregou" });
+    await pressKey("Escape");
+    await pressKey("Escape");
+  });
+
   it("7. Diagnóstico mostra o resumo e gera o relatório", async () => {
     await nav("Diagnóstico");
     await expect($('[data-testid="diag-summary"]')).toHaveText(expect.stringContaining("Kira de teste"));

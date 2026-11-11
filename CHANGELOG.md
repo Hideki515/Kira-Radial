@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.17.0
+
+- **Brilho por monitor:**
+  - A ação **Brilho da tela** ganhou o campo **Tela**, com estas opções:
+    - **Todas as telas** (padrão da ação, como antes);
+    - **Onde o menu abriu**;
+    - um monitor específico, mostrado com número, nome e brilho atual (ex.: "2. Monitor 2 (AOC2402) — 50%").
+  - O campo tem o botão **Identificar**. Aumentar e diminuir 10% também respeitam a tela escolhida.
+  - O **submenu automático "Brilho"** tem a mesma escolha. O padrão agora é **Onde o menu abriu**, e o nível em destaque é o da tela escolhida.
+  - Cada monitor é guardado pela identificação permanente do Windows, então a escolha não se perde quando os monitores mudam de ordem. Se o monitor não for encontrado, a Kira procura pelo nome. Configs antigas ("ddc:N") continuam valendo.
+  - A tela do notebook agora é reconhecida pelo tipo de saída que o Windows informa.
+- Correção: o limite de 2048 caracteres do endereço num navegador escolhido agora conta bytes, como no Rust, porque letras acentuadas ocupam mais de um byte.
+- Testes E2E: novo cenário "submenu Brilho com tela escolhida" (12 cenários no total). Ele só abre o sub-anel e nunca muda o brilho.
+
 ## 0.16.0
 
 - **Escolher o navegador** ao abrir sites:

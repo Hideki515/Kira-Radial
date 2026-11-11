@@ -26,7 +26,7 @@ Feito com **Tauri 2 (Rust) + React 18 + TypeScript + Vite**.
 - **Teclas 1–9** escolhem a fatia direto.
 - **Submenu automático de áudio:** lista sozinho as saídas reconhecidas pelo Windows e destaca a que está em uso.
 - **"Tocando agora" no centro do menu:** capa, título e artista do que estiver tocando (Spotify, YouTube…). Girar a roda do mouse sobre o centro ajusta o volume.
-- **Mais submenus automáticos:** planos de energia, brilho (tela do notebook e monitores com DDC/CI), Wi-Fi/Bluetooth, arquivos recentes e área de transferência.
+- **Mais submenus automáticos:** planos de energia, brilho (tela do notebook e monitores com DDC/CI; todas, a tela onde o menu abriu ou um monitor escolhido), Wi-Fi/Bluetooth, arquivos recentes e área de transferência.
 - **Privacidade do histórico da área de transferência:** vem desligado. Quando ligado, guarda só os 8 últimos textos e só na memória: nada vai para disco e tudo some ao fechar a Kira. Também ignora o que gerenciadores de senha marcam para não guardar.
 - **9 temas:** Vidro, Holográfico, Arc Reactor, Terminal, Neon Synthwave, Cyberpunk, Steampunk, Fluent Claro e Minimalista, além de **temas personalizados** com editor de cores (exportar/importar). Há também **sons estilo HUD**, opcionais, com a opção de usar arquivos próprios.
 - **Perfis por aplicativo:** fatias diferentes conforme o app em primeiro plano (ex.: `code.exe`).

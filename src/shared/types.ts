@@ -51,7 +51,15 @@ export type Action =
   /** Ativa um plano de energia (gerada pelo submenu "Planos de energia"). */
   | { type: "powerPlan"; guid: string; name?: string }
   /** Brilho: "set" aplica `value` (0–100) em `target` ("all" = todas as telas); "up"/"down" = ±10%. */
-  | { type: "brightness"; mode: "set" | "up" | "down"; value?: number; target?: string }
+  | {
+      type: "brightness";
+      mode: "set" | "up" | "down";
+      value?: number;
+      /** "all" (padrão) = todas; "cursor" = onde o menu abriu; "lcd"; "mon:<id>" (ou o antigo "ddc:N"). */
+      target?: string;
+      /** Nome da tela; usado se o id não for encontrado. */
+      targetName?: string;
+    }
   /** Liga/desliga Wi-Fi ou Bluetooth. */
   | { type: "radio"; kind: "wifi" | "bluetooth"; mode: "toggle" | "on" | "off" }
   /** Cola um item do histórico da área de transferência (gerada pelo submenu; não aparece no editor). */
@@ -72,6 +80,9 @@ export interface MenuItem {
   iconFile?: string;
   /** Submenu gerado na hora (ignora children/action): saídas de áudio ou janelas abertas. */
   dynamic?: DynamicKind;
+  /** Submenu "Brilho": tela alvo (como `target` da ação). Ausente = onde o menu abriu. */
+  dynamicTarget?: string;
+  dynamicTargetName?: string;
 }
 
 export type DynamicKind = "audioOutputs" | "windows" | "powerPlans" | "brightness" | "radios" | "recentFiles" | "clipboard";
