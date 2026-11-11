@@ -19,10 +19,14 @@ describe("Kira de teste — ponta a ponta", () => {
     await expect($(".sidebar-foot")).toHaveText(`v${version}`);
     // Aberta logo após iniciar: o WebView2 precisa estar desenhando (não ficou "escondida").
     expect(await browser.execute(() => document.visibilityState)).toBe("visible");
-    const rafRan = await browser.executeAsync((done) => {
-      const t = setTimeout(() => done(false), 2000);
-      requestAnimationFrame(() => { clearTimeout(t); done(true); });
-    });
+    // wdio 10: execute aceita função que devolve Promise (executeAsync foi removido).
+    const rafRan = await browser.execute(
+      () =>
+        new Promise((done) => {
+          const t = setTimeout(() => done(false), 2000);
+          requestAnimationFrame(() => { clearTimeout(t); done(true); });
+        }),
+    );
     expect(rafRan).toBe(true);
   });
 

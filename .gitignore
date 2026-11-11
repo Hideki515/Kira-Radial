@@ -22,3 +22,4 @@ Desktop.ini
 .env
 .env.*
 tools/
+coverage/

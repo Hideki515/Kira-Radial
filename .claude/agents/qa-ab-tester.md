@@ -28,7 +28,7 @@ Quem chamou você vai dizer **o que mudou** (arquivos/feature). Se não disser, 
 
 ## Passos
 1. **Tipos:** `npx tsc --noEmit`.
-2. **Front:** `npx vitest run --reporter=verbose` (guarde nomes e contagem).
+2. **Front:** `npm test -- --reporter=verbose` (guarde nomes e contagem). Não chame `npx vitest` direto: no Git Bash a pasta vem como `d:` e o Vitest 5 falha com "failed to find the current suite" — `npm test` passa por `scripts/vitest.mjs`, que corrige isso. Cobertura: `npm run coverage` (resumo no fim; compare o total de Lines com a linha de base, sem queda de mais de 1 ponto).
 3. **Rust:** em `src-tauri`: `cargo test` e `cargo clippy --all-targets -- -D warnings` (se clippy não estiver instalado, registre e siga; avisos de clippy pré-existentes = alerta, novos = reprovação só se indicarem bug).
 4. **Build release:** `npx tauri build --no-bundle` na raiz. Meça o tamanho de `src-tauri\target\release\kira-radial.exe` e de `dist/`.
 5. **Smoke do app com a Kira de teste (sem input simulado):**

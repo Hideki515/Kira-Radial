@@ -3,7 +3,7 @@
 Menu radial para Windows — Tauri 2 + Rust (`src-tauri/`) + React 18/TS + Vite (`src/`). UI em pt-BR.
 
 ## Comandos
-- `npm run typecheck` · `npm test` (Vitest) · `cd src-tauri && cargo test`
+- `npm run typecheck` · `npm test` (Vitest, via `scripts/vitest.mjs`) · `npm run coverage` (relatório em `coverage/`) · `cd src-tauri && cargo test`
 - Release: `npx tauri build --no-bundle` → `src-tauri/target/release/kira-radial.exe`
 - **Kira de teste** (QA, roda ao lado da instalada, janelas fora da tela, dados em `%APPDATA%\Kira-Radial-QA`): `npm run build:qa` → `src-tauri/target-qa/release/kira-radial.exe`; smoke: `pwsh -NoProfile -File scripts/smoke-qa.ps1`
 - **Consumo parado**: `npm run perf:idle` (Kira de teste com tudo escondido por 15 s; falha acima de 5% de um núcleo). `-Mode orb` mede só o ícone visível.

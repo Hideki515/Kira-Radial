@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.19.2
+
+Versão de manutenção, sem mudanças visíveis no app.
+
+- **Ferramentas de desenvolvimento atualizadas:** vite 8, vitest 5, @vitejs/plugin-react 6, jsdom 31 e WebdriverIO 10.
+  - O `npm audit` caiu de 28 alertas (2 críticos) para 14 moderados, todos no `glob`/`minimatch` usados pelo mocha dos testes E2E.
+  - As dependências que vão no app continuam sem nenhum alerta.
+- **Cobertura de testes:** `npm run coverage` mostra o resumo no terminal e grava o relatório em `coverage/index.html`.
+  - Ponto de partida: ~81% das linhas do front.
+  - Limite por teste subiu para 20 s: com cobertura e a CPU disputada, os testes de página inteira passavam de 5 s.
+  - O relatório sai mesmo quando algum teste falha.
+- Testes novos para a página **Perfis**: lista, executáveis associados, apps abertos, duplicar, excluir e renomear.
+- `npm test` passa por `scripts/vitest.mjs`, que corrige a letra da unidade da pasta atual. No Git Bash ela vem como `d:\` e o Vitest 5 não acha nenhum teste.
+- Código reorganizado, sem mudar o comportamento:
+  - as ações de sistema foram para `actions/system.rs` e os testes para `actions/tests.rs`;
+  - os textos das ações e do tempo de abertura foram para `shared/describe.ts`, ainda exportados por `ipc.ts`.
+
 ## 0.19.1
 
 - **Submenu de brilho:** fechar o menu antes de os monitores responderem não deixa mais um nível antigo destacado na próxima abertura.
