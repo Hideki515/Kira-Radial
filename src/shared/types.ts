@@ -106,6 +106,9 @@ export interface Profile {
   items: MenuItem[];
 }
 
+export type OrbAnimation = "full" | "hover" | "off";
+export const ORB_ANIMATIONS: readonly OrbAnimation[] = ["full", "hover", "off"];
+
 export interface Config {
   version: 1;
   hotkey: { accelerator: string; mode: "toggle" | "hold" };
@@ -164,6 +167,8 @@ export interface OrbConfig {
   docked?: OrbEdge | null;
   /** Núcleo avermelhado e pulsando mais rápido com CPU alta. */
   cpuAlert?: boolean;
+  /** Animação do orbe: "full" (padrão), "hover" (só com o mouse em cima) ou "off" (parado). */
+  animation?: OrbAnimation;
 }
 
 export type OrbEdge = "left" | "right" | "top" | "bottom";

@@ -152,6 +152,8 @@ pub fn hide(app: &AppHandle) {
         } else {
             let _ = win.hide();
         }
+        // O menu não usa webvis: fechado, a página não monta nada (custo ~0), e mexer na
+        // visibilidade do WebView2 a cada abertura gerava perda de foco falsa e atraso.
     }
     state.visible.store(false, Ordering::SeqCst);
     let _ = app.emit_to(RADIAL, "menu:hide", ());
@@ -163,10 +165,33 @@ pub fn open_settings(app: &AppHandle) {
         let _ = w.unminimize();
         if crate::qa::ENABLED {
             crate::qa::set_visible_quiet(&w, true);
-            return;
+        } else {
+            let _ = w.show();
+            let _ = w.set_focus();
         }
-        let _ = w.show();
-        let _ = w.set_focus();
+        // Depois de a janela aparecer: retoma a página (suspensa ao fechar) e volta a desenhar.
+        crate::webvis::set(&w, true, false);
+    }
+}
+
+/// A página das Configurações terminou de carregar: se a janela ainda está escondida, o
+/// WebView2 para de desenhar. Se já foi aberta (ex.: atalho falhou ao iniciar), fica como está.
+pub fn settings_ready(app: &AppHandle) {
+    if let Some(w) = app.get_webview_window(SETTINGS) {
+        crate::webvis::hide_if_hidden(&w);
+    }
+}
+
+/// Fechar as Configurações: esconde e, como abre pouco, além de parar de desenhar
+/// suspende a página (devolve memória). Abrir de novo retoma (`open_settings`).
+pub fn close_settings(app: &AppHandle) {
+    if let Some(w) = app.get_webview_window(SETTINGS) {
+        if crate::qa::ENABLED {
+            crate::qa::set_visible_quiet(&w, false);
+        } else {
+            let _ = w.hide();
+        }
+        crate::webvis::set(&w, false, true);
     }
 }
 

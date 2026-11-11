@@ -108,6 +108,22 @@ export function IconPage({ config, update, goToLauncher }: Props) {
           />
         </Field>
 
+        <Field
+          group
+          label="Animação"
+          hint="O orbe animado é bonito, mas desenha o tempo todo (~15% de um núcleo de CPU). “Só ao passar o mouse” e “Parado” não gastam quase nada."
+        >
+          <Segmented
+            value={orb.animation ?? "full"}
+            options={[
+              { value: "full", label: "Sempre" },
+              { value: "hover", label: "Só ao passar o mouse" },
+              { value: "off", label: "Parado" },
+            ]}
+            onChange={(v) => update((c) => void (c.launcher.orb.animation = v))}
+          />
+        </Field>
+
         <Toggle
           label="Alerta de CPU alta"
           hint="O núcleo fica avermelhado e pulsa mais rápido quando o uso de CPU passa de 85%."

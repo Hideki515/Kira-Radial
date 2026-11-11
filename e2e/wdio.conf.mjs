@@ -38,6 +38,43 @@ export const config = {
     driver = spawn("tauri-driver", ["--native-driver", native], { stdio: [null, process.stdout, process.stderr] });
   },
 
+  /**
+   * As Configurações nascem escondidas para o WebView2 (não desenham até alguém abrir). Abre
+   * pelo mesmo caminho do usuário — comando do backend, chamado da janela do menu — e só segue
+   * quando a página está de fato visível. Na partida "fria" do WebView2 as janelas ainda podem
+   * estar carregando: tenta de novo até dar certo.
+   */
+  async before() {
+    const pathOf = async () => {
+      try {
+        return new URL(await browser.getUrl()).pathname.replace(/^\//, "");
+      } catch {
+        return null; // ainda sem página
+      }
+    };
+    await browser.waitUntil(
+      async () => {
+        let radial = null;
+        let settings = null;
+        for (const h of await browser.getWindowHandles()) {
+          await browser.switchToWindow(h);
+          const path = await pathOf();
+          if (path === "settings.html") settings = h;
+          else if (path === "" || path === "index.html") radial = h;
+        }
+        if (!radial || !settings) return false;
+        await browser.switchToWindow(radial);
+        if (!(await browser.execute(() => !!window.__TAURI_INTERNALS__))) return false;
+        await browser.execute(() => window.__TAURI_INTERNALS__.invoke("qa_open_settings"));
+        await browser.switchToWindow(settings);
+        return browser
+          .waitUntil(async () => (await browser.execute(() => document.visibilityState)) === "visible", { timeout: 3000 })
+          .catch(() => false);
+      },
+      { timeout: 45000, interval: 500, timeoutMsg: "não foi possível abrir as Configurações (página continua escondida)" },
+    );
+  },
+
   afterSession() {
     driver?.kill();
   },

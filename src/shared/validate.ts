@@ -1,7 +1,7 @@
 import { MAX_CUSTOM_THEMES, customThemeErrors, findCustom } from "./customTheme";
 import { parseCombo } from "./keys";
 import { hasCriteria, whenErrors } from "./schedule";
-import { DYNAMIC_KINDS, LAUNCHER_MODES, LIMITS, ORB_LIMITS, SCALE_LIMITS, THEMES, wantsHotkey, type Action, type Theme, type Config, type MenuItem } from "./types";
+import { DYNAMIC_KINDS, LAUNCHER_MODES, LIMITS, ORB_ANIMATIONS, ORB_LIMITS, SCALE_LIMITS, THEMES, wantsHotkey, type Action, type Theme, type Config, type MenuItem } from "./types";
 
 /** Valida a configuração inteira. Retorna mensagens legíveis; lista vazia = válida. */
 export function validateConfig(c: Config): string[] {
@@ -20,6 +20,7 @@ export function validateConfig(c: Config): string[] {
       errors.push(`Tamanho do ícone deve estar entre ${ORB_LIMITS.minSize} e ${ORB_LIMITS.maxSize} px.`);
     if (!(orb.opacityIdle >= ORB_LIMITS.minOpacity && orb.opacityIdle <= ORB_LIMITS.maxOpacity))
       errors.push("Opacidade do ícone deve estar entre 40% e 100%.");
+    if (orb.animation !== undefined && !ORB_ANIMATIONS.includes(orb.animation)) errors.push(`Animação do ícone desconhecida ("${orb.animation}").`);
   }
   if (!(c.appearance.scale >= SCALE_LIMITS.min && c.appearance.scale <= SCALE_LIMITS.max))
     errors.push(`Tamanho do menu deve estar entre ${SCALE_LIMITS.min * 100}% e ${SCALE_LIMITS.max * 100}%.`);

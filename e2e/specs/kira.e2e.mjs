@@ -17,6 +17,13 @@ describe("Kira de teste — ponta a ponta", () => {
     const { version, qa } = await qaState();
     expect(qa).toBe(true);
     await expect($(".sidebar-foot")).toHaveText(`v${version}`);
+    // Aberta logo após iniciar: o WebView2 precisa estar desenhando (não ficou "escondida").
+    expect(await browser.execute(() => document.visibilityState)).toBe("visible");
+    const rafRan = await browser.executeAsync((done) => {
+      const t = setTimeout(() => done(false), 2000);
+      requestAnimationFrame(() => { clearTimeout(t); done(true); });
+    });
+    expect(rafRan).toBe(true);
   });
 
   it("2. trocar o tema para Terminal e salvar grava a config e muda o menu", async () => {
@@ -215,5 +222,27 @@ describe("Kira de teste — ponta a ponta", () => {
     const log = (await invoke("read_log", { lines: 200 })).join("\n");
     expect(log).toContain("iniciada (Kira de teste)");
     expect(log).not.toMatch(/ ERROR | \[panic\]/);
+  });
+
+  it("8. fechar as Configurações suspende a página; abrir de novo retoma (responde e salva)", async () => {
+    // Comandos chamados da janela do menu: a página suspensa não roda script nem recebe resposta
+    // (no uso real o fechamento vem do X da janela, não da própria página).
+    for (const handle of await browser.getWindowHandles()) {
+      await browser.switchToWindow(handle);
+      const path = new URL(await browser.getUrl()).pathname.replace(/^\//, "");
+      if (path === "" || path === "index.html") break;
+    }
+    await browser.execute(() => window.__TAURI_INTERNALS__.invoke("qa_close_settings"));
+    await browser.pause(800); // dá tempo de a suspensão acontecer
+    await browser.execute(() => window.__TAURI_INTERNALS__.invoke("qa_open_settings"));
+    await toWindow("settings.html");
+    const { qa } = await qaState(); // a página voltou a responder
+    expect(qa).toBe(true);
+    expect(await browser.execute(() => document.visibilityState)).toBe("visible");
+    await nav("Geral");
+    await nav("Aparência");
+    await $('button.theme-card[aria-label="Vidro"]').click();
+    await save();
+    expect(qaConfig().appearance.theme).toBe("glass");
   });
 });

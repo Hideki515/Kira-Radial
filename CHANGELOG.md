@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.18.0
+
+- **Desempenho: a Kira parada quase não gasta mais nada.** Antes, mesmo com tudo escondido, o WebView2 continuava desenhando as animações da janela de configurações, que ninguém via.
+  - Medido na Kira de teste com todas as janelas escondidas: de **~57% de um núcleo para ~0,4%**.
+  - Na Kira instalada, a medida de antes foi de ~1,4 núcleo.
+  - **Configurações:** escondidas, não desenham. Ao fechar, a página é suspensa e devolve memória (o renderer caiu de ~170 para ~80 MB). Abrir de novo retoma de onde estava.
+  - **Ícone flutuante:** quando escondido, também para de desenhar.
+- **Ícone flutuante mais leve e com a opção "Animação"** (Configurações → Ícone):
+  - **Sempre**: o orbe animado de sempre, agora limitado a ~30 quadros/s. O custo caiu de ~33% para ~17% de um núcleo.
+  - **Só ao passar o mouse**: fica parado e anima quando o mouse passa por cima (~0,6%).
+  - **Parado**: sem animação.
+  - Nos três casos, com CPU alta o núcleo continua pulsando como alerta.
+- As **miniaturas dos temas** (Aparência) só animam com o mouse em cima.
+- As Configurações só deixam de desenhar depois de terminar de carregar e se ainda estiverem escondidas. Abrir logo após iniciar (ex.: atalho em conflito) continua normal.
+- QA: nova medição `npm run perf:idle`, que reprova se a Kira de teste parada passar de 5% de um núcleo. Novo cenário E2E "fechar e reabrir as Configurações" (13 no total).
+
 ## 0.17.0
 
 - **Brilho por monitor:**

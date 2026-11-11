@@ -52,6 +52,7 @@ export function OrbApp() {
       imageSrc={image.src}
       docked={orb.docked ?? null}
       hot={orb.cpuAlert !== false && cpu !== null && cpu >= CPU_HOT}
+      animation={orb.animation ?? "full"}
       volume={volume}
       onWheel={(up) => void wheel(up)}
       onActivate={() => void orbClicked().catch(logError)}

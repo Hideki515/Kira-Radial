@@ -6,6 +6,7 @@ mod backup;
 mod clipboard;
 mod brightness;
 mod browsers;
+mod webvis;
 mod commands;
 mod config;
 mod foreground;
@@ -42,7 +43,7 @@ macro_rules! handlers {
 #[cfg(feature = "qa")]
 macro_rules! handlers {
     ($($cmd:path),* $(,)?) => {
-        tauri::generate_handler![$($cmd,)* qa::commands::qa_show_menu, qa::commands::qa_open_settings, qa::commands::qa_state]
+        tauri::generate_handler![$($cmd,)* qa::commands::qa_show_menu, qa::commands::qa_open_settings, qa::commands::qa_close_settings, qa::commands::qa_state]
     };
 }
 
@@ -67,6 +68,10 @@ pub fn run() {
                 "rust",
                 &format!("Kira {} iniciada{}", handle.package_info().version, if qa::ENABLED { " (Kira de teste)" } else { "" }),
             );
+
+            // As Configurações param de desenhar quando a página avisa que carregou
+            // (comando settings_ready) — mexer no WebView2 durante o carregamento é ignorado
+            // ou trava a página. O menu fica de fora: fechado ele não monta nada.
 
             // Kira de teste: não disputa o atalho global com a instância do usuário.
             if qa::ENABLED {
@@ -115,9 +120,7 @@ pub fn run() {
                 api.prevent_close();
                 match window.label() {
                     RADIAL => menu::hide(window.app_handle()),
-                    SETTINGS => {
-                        let _ = window.hide();
-                    }
+                    SETTINGS => menu::close_settings(window.app_handle()),
                     _ => {}
                 }
             }
@@ -139,6 +142,7 @@ pub fn run() {
             commands::list_power_plans,
             commands::list_displays,
             commands::list_browsers,
+            commands::settings_ready,
             commands::list_browser_profiles,
             commands::list_radios,
             commands::list_recent_files,

@@ -56,6 +56,8 @@ fn set_visible(win: &WebviewWindow, visible: bool) {
             let _ = ShowWindow(windows::Win32::Foundation::HWND(h.0 as *mut _), if visible { SW_SHOWNOACTIVATE } else { SW_HIDE });
         }
     }
+    // Depois do ShowWindow (com a janela escondida o WebView2 pode continuar "hidden").
+    crate::webvis::set(win, visible, false);
 }
 
 /// Aplica a configuração: mostra/esconde o ícone, ajusta tamanho e posição.

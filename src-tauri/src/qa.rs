@@ -78,6 +78,12 @@ pub mod commands {
         menu::open_settings(&app);
     }
 
+    /// Mesmo caminho do "X" das Configurações (esconde e suspende a página).
+    #[tauri::command]
+    pub fn qa_close_settings(app: AppHandle) {
+        menu::close_settings(&app);
+    }
+
     #[tauri::command]
     pub fn qa_state(app: AppHandle) -> QaState {
         let state = app.state::<AppState>();

@@ -1,5 +1,5 @@
 import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
-import type { OrbEdge } from "../shared/types";
+import type { OrbAnimation, OrbEdge } from "../shared/types";
 
 /** Distância (px) que o mouse precisa andar com o botão pressionado para virar arrasto. */
 export const DRAG_THRESHOLD = 4;
@@ -18,6 +18,8 @@ interface Props {
   docked?: OrbEdge | null;
   /** CPU alta: núcleo avermelhado e pulso mais rápido. */
   hot?: boolean;
+  /** "full" anima sempre; "hover" só com o mouse em cima; "off" parado (CPU alta ainda pulsa). */
+  animation?: OrbAnimation;
   /** Volume (0–1) mostrado como arco por um instante após girar a roda. */
   volume?: number | null;
   /** Roda do mouse sobre o ícone (true = para cima). */
@@ -78,7 +80,7 @@ function Ring({ variant }: { variant: 1 | 2 | 3 | 4 }) {
  * Ícone flutuante: núcleo pulsante com anéis girando em eixos diferentes (efeito 3D).
  * Clique (sem mover) abre o menu; arrastar move a janela.
  */
-export function Orb({ size, accent, opacityIdle, imageSrc, onActivate, onDragStart, onContextMenu, docked, hot, volume, onWheel }: Props) {
+export function Orb({ size, accent, opacityIdle, imageSrc, onActivate, onDragStart, onContextMenu, docked, hot, volume, onWheel, animation = "full" }: Props) {
   const down = useRef<{ x: number; y: number; dragging: boolean } | null>(null);
   const [firing, setFiring] = useState(0);
 
@@ -109,7 +111,7 @@ export function Orb({ size, accent, opacityIdle, imageSrc, onActivate, onDragSta
   } as CSSProperties;
 
   return (
-    <div className={`orb-stage${docked ? ` dock-${docked}` : ""}`} style={style} data-testid="orb-stage">
+    <div className={`orb-stage anim-${animation}${docked ? ` dock-${docked}` : ""}`} style={style} data-testid="orb-stage">
       <button
         type="button"
         className={`orb${imageSrc ? " has-image" : ""}${hot ? " is-hot" : ""}`}

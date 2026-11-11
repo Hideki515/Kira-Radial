@@ -1,7 +1,7 @@
 {
   "name": "kira-radial",
   "private": true,
-  "version": "0.17.0",
+  "version": "0.18.0",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -12,7 +12,8 @@
     "tauri": "tauri",
     "build:qa": "node scripts/build-qa.mjs",
     "e2e": "node scripts/build-qa.mjs && wdio run e2e/wdio.conf.mjs",
-    "e2e:run": "wdio run e2e/wdio.conf.mjs"
+    "e2e:run": "wdio run e2e/wdio.conf.mjs",
+    "perf:idle": "pwsh -NoProfile -File scripts/idle-cpu-qa.ps1"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.1.1",

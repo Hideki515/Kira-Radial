@@ -148,6 +148,12 @@ pub async fn list_radios() -> Result<Vec<crate::radios::RadioInfo>, String> {
     tauri::async_runtime::spawn_blocking(crate::radios::list).await.map_err(|e| e.to_string())
 }
 
+/// A página das Configurações carregou (veja `menu::settings_ready`).
+#[tauri::command]
+pub fn settings_ready(app: AppHandle) {
+    menu::settings_ready(&app);
+}
+
 /// Navegadores instalados, com ícone (editor da ação "Abrir site").
 #[tauri::command]
 pub async fn list_browsers() -> Result<Vec<crate::browsers::Browser>, String> {

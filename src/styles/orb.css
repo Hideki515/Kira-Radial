@@ -36,10 +36,10 @@
   border-radius: 50%;
   background: radial-gradient(circle, color-mix(in srgb, var(--orb-accent) 38%, transparent) 0%,
     color-mix(in srgb, var(--orb-accent) 12%, transparent) 42%, transparent 70%);
-  animation: orb-breathe 3.2s ease-in-out infinite;
+  animation: orb-breathe 3.2s steps(96) infinite;
   pointer-events: none;
 }
-.orb:hover .orb-glow { animation-duration: 1.4s; }
+.orb:hover .orb-glow { animation-duration: 1.4s; animation-timing-function: steps(42); }
 
 .orb-scene {
   position: absolute;
@@ -56,13 +56,17 @@
 .orb-tilt--3 { transform: rotateX(-52deg) rotateY(34deg); inset: 9%; }
 .orb-tilt--4 { inset: -6%; }
 
-.orb-spin { animation: orb-spin 7s linear infinite; }
-.orb-spin--2 { animation-duration: 5.2s; animation-direction: reverse; }
-.orb-spin--3 { animation-duration: 3.8s; }
-.orb-spin--4 { animation-duration: 26s; animation-direction: reverse; opacity: 0.55; }
-.orb:hover .orb-spin--1 { animation-duration: 2.6s; }
-.orb:hover .orb-spin--2 { animation-duration: 2s; }
-.orb:hover .orb-spin--3 { animation-duration: 1.5s; }
+/* will-change: cada anel vira uma camada desenhada uma vez; o giro só move a camada. */
+/* steps(): ~30 quadros/s em vez de 60 — o compositor só redesenha quando algo muda. */
+.orb-spin { animation: orb-spin 7s steps(210) infinite; will-change: transform; }
+.orb-core { will-change: transform; }
+.orb-glow { will-change: opacity; }
+.orb-spin--2 { animation-duration: 5.2s; animation-timing-function: steps(156); animation-direction: reverse; }
+.orb-spin--3 { animation-duration: 3.8s; animation-timing-function: steps(114); }
+.orb-spin--4 { animation-duration: 26s; animation-timing-function: steps(780); animation-direction: reverse; opacity: 0.55; }
+.orb:hover .orb-spin--1 { animation-duration: 2.6s; animation-timing-function: steps(78); }
+.orb:hover .orb-spin--2 { animation-duration: 2s; animation-timing-function: steps(60); }
+.orb:hover .orb-spin--3 { animation-duration: 1.5s; animation-timing-function: steps(45); }
 
 .orb-ring-svg {
   width: 100%;
@@ -82,7 +86,7 @@
   background: radial-gradient(circle at 45% 40%, #fffdf6 0%, var(--orb-hi) 22%, var(--orb-accent) 48%,
     color-mix(in srgb, var(--orb-accent) 30%, transparent) 72%, transparent 100%);
   box-shadow: 0 0 calc(var(--orb-size) * 0.18) color-mix(in srgb, var(--orb-accent) 70%, transparent);
-  animation: orb-pulse 2.4s ease-in-out infinite;
+  animation: orb-pulse 2.4s steps(72) infinite;
 }
 
 /* imagem própria (GIF/WebP/PNG) */
@@ -114,6 +118,11 @@
   to   { transform: scale(2.1); opacity: 0; }
 }
 
+/* "Só ao passar o mouse" / "Parado": animações pausadas = nenhum quadro novo (quase zero de CPU/GPU).
+   Com CPU alta o núcleo continua pulsando (é um alerta). */
+.orb-stage.anim-hover .orb:not(:hover):not(.is-hot) :is(.orb-spin, .orb-glow, .orb-core),
+.orb-stage.anim-off .orb:not(.is-hot) :is(.orb-spin, .orb-glow, .orb-core) { animation-play-state: paused; }
+
 @media (prefers-reduced-motion: reduce) {
   .orb-spin, .orb-glow, .orb-core { animation: none; }
 }
@@ -127,8 +136,8 @@
 
 /* --- CPU alta: núcleo avermelhado, pulso rápido --- */
 .orb.is-hot { --orb-accent: #ff5c7a; }
-.orb.is-hot .orb-core { animation-duration: 0.7s; }
-.orb.is-hot .orb-glow { animation-duration: 0.9s; }
+.orb.is-hot .orb-core { animation-duration: 0.7s; animation-timing-function: steps(21); }
+.orb.is-hot .orb-glow { animation-duration: 0.9s; animation-timing-function: steps(27); }
 
 /* --- arco de volume (roda do mouse sobre o ícone) --- */
 .orb-volume { position: absolute; inset: -4%; width: 108%; height: 108%; overflow: visible; pointer-events: none; }

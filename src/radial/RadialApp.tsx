@@ -27,7 +27,6 @@ export const TOAST_MS = 2200;
 
 /** Duração da animação de recolher para o ícone (igual a .is-closing em radial.css). */
 export const CLOSE_TO_ORB_MS = 170;
-
 const prefersReducedMotion = () =>
   typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 

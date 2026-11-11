@@ -323,3 +323,7 @@ input[type="number"]:focus-visible { border-color: var(--active); }
 /* --- navegador --- */
 .browser-icon { flex: none; align-self: center; border-radius: 4px; }
 
+
+/* Miniaturas dos temas: animam só com o mouse em cima (nove menus animados ao mesmo tempo pesam). */
+.theme-thumb * { animation-play-state: paused !important; }
+.theme-card:hover .theme-thumb *, .theme-card:focus-visible .theme-thumb * { animation-play-state: running !important; }

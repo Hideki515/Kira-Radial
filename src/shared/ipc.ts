@@ -92,6 +92,11 @@ export async function runAction(action: Action): Promise<void> {
   await invoke("run_action", { action });
 }
 
+/** Avisa o backend que a página das Configurações carregou (ela para de desenhar se estiver escondida). */
+export async function settingsReady(): Promise<void> {
+  if (isTauri()) await invoke("settings_ready").catch(() => {});
+}
+
 export async function hideMenu(): Promise<void> {
   if (isTauri()) await invoke("hide_menu");
 }

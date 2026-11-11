@@ -67,11 +67,30 @@ pub struct OrbConfig {
     pub docked: Option<crate::positioning::Edge>,
     /// Núcleo fica avermelhado e pulsa mais rápido com CPU alta.
     pub cpu_alert: bool,
+    /// Animação do orbe: sempre, só com o mouse em cima, ou parado (gasta quase nada).
+    #[serde(deserialize_with = "lenient_animation")]
+    pub animation: OrbAnimation,
+}
+
+/// Valor desconhecido (config editada à mão / de versão nova) vira o padrão em vez de
+/// invalidar a config inteira.
+fn lenient_animation<'de, D: serde::Deserializer<'de>>(d: D) -> Result<OrbAnimation, D::Error> {
+    let v = Value::deserialize(d)?;
+    Ok(serde_json::from_value(v).unwrap_or_default())
+}
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum OrbAnimation {
+    #[default]
+    Full,
+    Hover,
+    Off,
 }
 
 impl Default for OrbConfig {
     fn default() -> Self {
-        Self { x: None, y: None, size: 96.0, image: None, opacity_idle: 0.85, hide_on_fullscreen: true, hidden: false, docked: None, cpu_alert: true }
+        Self { x: None, y: None, size: 96.0, image: None, opacity_idle: 0.85, hide_on_fullscreen: true, hidden: false, docked: None, cpu_alert: true, animation: OrbAnimation::Full }
     }
 }
 
@@ -388,5 +407,28 @@ mod dock_qa_tests {
             assert_eq!(c.launcher.orb.docked, Some(e));
             assert_eq!(serde_json::to_value(c).unwrap()["launcher"]["orb"]["docked"], s);
         }
+    }
+}
+
+#[cfg(test)]
+mod orb_animation_tests {
+    use super::*;
+
+    #[test]
+    fn animacao_do_orbe_padrao_antiga_e_desconhecida() {
+        assert_eq!(Config::default_config().launcher.orb.animation, OrbAnimation::Full);
+        let mut v: Value = serde_json::to_value(Config::default_config()).unwrap();
+        assert_eq!(v["launcher"]["orb"]["animation"], "full");
+        // Config antiga (sem o campo) → Sempre.
+        v["launcher"]["orb"].as_object_mut().unwrap().remove("animation");
+        let c: Config = serde_json::from_value(v.clone()).unwrap();
+        assert_eq!(c.launcher.orb.animation, OrbAnimation::Full);
+        for (s, want) in [("hover", OrbAnimation::Hover), ("off", OrbAnimation::Off), ("rapida", OrbAnimation::Full), ("", OrbAnimation::Full)] {
+            v["launcher"]["orb"]["animation"] = Value::from(s);
+            let c: Config = serde_json::from_value(v.clone()).unwrap();
+            assert_eq!(c.launcher.orb.animation, want, "{s}");
+        }
+        v["launcher"]["orb"]["animation"] = Value::from(7);
+        assert_eq!(serde_json::from_value::<Config>(v).unwrap().launcher.orb.animation, OrbAnimation::Full);
     }
 }

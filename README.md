@@ -9,7 +9,7 @@ Feito com **Tauri 2 (Rust) + React 18 + TypeScript + Vite**.
 
 ## Recursos
 - **Abre no cursor**, centralizado no mouse. Perto da borda, o menu é ajustado para caber no monitor (vários monitores e DPI).
-- **Ícone flutuante opcional:** um orbe holográfico animado que abre o menu com um clique. Ele pode ser arrastado para qualquer lugar da tela. Escolha entre abrir pelo atalho, pelo ícone ou pelos dois.
+- **Ícone flutuante opcional:** um orbe holográfico animado que abre o menu com um clique. Ele pode ser arrastado para qualquer lugar da tela. A animação pode ser contínua, só ao passar o mouse ou desligada (mais leve). Escolha entre abrir pelo atalho, pelo ícone ou pelos dois.
 - **Atalho global configurável** (padrão `Ctrl+Alt+Q`). Aceita a tecla Win, teclados ABNT2 e dois modos:
   - *pressionar e clicar*;
   - *segurar e soltar*.
@@ -74,6 +74,7 @@ cd src-tauri && cargo test
 npm run tauri build    # instalador em src-tauri/target/release/bundle/nsis/
 npm run build:qa       # "Kira de teste": roda ao lado da instalada, janelas fora da tela, dados em %APPDATA%\Kira-Radial-QA
 npm run e2e            # testes de ponta a ponta (WebDriver) na Kira de teste
+npm run perf:idle      # consumo da Kira de teste parada (falha acima de 5% de um núcleo)
                        #   requer: cargo install tauri-driver (o msedgedriver é baixado sozinho)
 ```
 
