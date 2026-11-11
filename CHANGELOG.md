@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.19.0
+
+- **Tempo de abertura do menu no Diagnóstico** (Configurações → Diagnóstico → "Abertura do menu"):
+  - Mostra a média, 90% das aberturas, a pior e a última, nas últimas 50 aberturas da sessão.
+  - A medida vai do atalho ou do clique no ícone até o primeiro quadro do menu na tela.
+  - Fica só na memória e some ao fechar a Kira.
+- **Submenus automáticos mais rápidos de reabrir:** as leituras lentas são reaproveitadas por alguns segundos, em vez de serem refeitas a cada abertura.
+  - Brilho, que lê cada monitor por DDC/CI: 15 s.
+  - Planos de energia: 10 s.
+  - Wi-Fi/Bluetooth: 5 s.
+  - Depois de uma ação que muda o próprio dado (trocar o brilho, o plano ou o rádio), a próxima abertura lê de novo.
+  - Uma leitura que falha não é guardada.
+  - Leituras com mais de 250 ms vão para o log.
+- Testes E2E: o cenário "Diagnóstico" confere que as aberturas do menu foram medidas.
+- E2E mais estável em rodadas seguidas: cada rodada espera a Kira de teste anterior fechar e o tauri-driver ficar pronto.
+
 ## 0.18.0
 
 - **Desempenho: a Kira parada quase não gasta mais nada.** Antes, mesmo com tudo escondido, o WebView2 continuava desenhando as animações da janela de configurações, que ninguém via.

@@ -143,6 +143,7 @@ pub fn run() {
             commands::list_displays,
             commands::list_browsers,
             commands::settings_ready,
+            perf::perf_open_sample,
             commands::list_browser_profiles,
             commands::list_radios,
             commands::list_recent_files,

@@ -4,6 +4,7 @@
 // Uso: npm run e2e
 import { spawn, execFileSync } from "node:child_process";
 import { existsSync, rmSync } from "node:fs";
+import { connect } from "node:net";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,6 +14,40 @@ const app = join(root, "src-tauri", "target-qa", "release", "kira-radial.exe");
 export const QA_DATA = join(process.env.APPDATA ?? join(homedir(), "AppData", "Roaming"), "Kira-Radial-QA");
 
 let driver;
+
+/** Quantas Kiras de TESTE (target-qa) estão rodando. A instalada do usuário não conta. */
+function qaRunning() {
+  try {
+    const out = execFileSync(
+      "pwsh",
+      ["-NoProfile", "-Command", "@(Get-Process kira-radial -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '*\\target-qa\\*' }).Count"],
+      { encoding: "utf8" },
+    );
+    return Number(out.trim()) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function portOpen(port) {
+  return new Promise((resolve) => {
+    const s = connect({ host: "127.0.0.1", port }, () => {
+      s.end();
+      resolve(true);
+    });
+    s.on("error", () => resolve(false));
+  });
+}
+
+/** Espera `cond()` ficar verdadeira (até `ms`); devolve se conseguiu. */
+async function until(cond, ms) {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    if (await cond()) return true;
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  return false;
+}
 
 export const config = {
   runner: "local",
@@ -32,10 +67,14 @@ export const config = {
   },
 
   // Cada spec começa com a pasta de dados de TESTE limpa (nunca a do usuário).
-  beforeSession() {
-    if (QA_DATA.endsWith("Kira-Radial-QA")) rmSync(QA_DATA, { recursive: true, force: true });
+  async beforeSession() {
+    // Rodadas seguidas: espera a Kira de teste da rodada anterior terminar de fechar.
+    await until(() => qaRunning() === 0, 15000);
+    if (QA_DATA.endsWith("Kira-Radial-QA")) rmSync(QA_DATA, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 });
     const native = execFileSync("pwsh", ["-NoProfile", "-File", join(root, "scripts", "get-edgedriver.ps1")], { encoding: "utf8" }).trim().split(/\r?\n/).pop();
     driver = spawn("tauri-driver", ["--native-driver", native], { stdio: [null, process.stdout, process.stderr] });
+    // Só segue quando o tauri-driver já aceita conexões (senão a sessão falha com ECONNREFUSED).
+    if (!(await until(() => portOpen(4444), 15000))) throw new Error("tauri-driver não abriu a porta 4444");
   },
 
   /**
@@ -75,7 +114,10 @@ export const config = {
     );
   },
 
-  afterSession() {
+  async afterSession() {
     driver?.kill();
+    // Deixa a próxima rodada começar limpa: Kira de teste fechada e porta do driver livre.
+    await until(() => qaRunning() === 0, 15000);
+    await until(async () => !(await portOpen(4444)), 5000);
   },
 };

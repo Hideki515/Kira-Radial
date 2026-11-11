@@ -1,6 +1,6 @@
 import { Clipboard, FileText, FolderOpen, RefreshCw, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { clearLog, getDiagnostics, openDataDir, readLog, writeReport, type Diagnostics } from "../../shared/ipc";
+import { clearLog, describeOpenStats, getDiagnostics, openDataDir, readLog, writeReport, type Diagnostics } from "../../shared/ipc";
 import { Section, Toggle } from "../controls";
 
 export type LevelFilter = "all" | "warn" | "error";
@@ -70,6 +70,10 @@ export function DiagnosticsPage() {
             <dd>
               {diag.hotkey} — {diag.hotkeyRegistered ? "registrado" : "não registrado"}
               {diag.hotkeyError && <span className="inline-error"> ({diag.hotkeyError})</span>}
+            </dd>
+            <dt>Abertura do menu</dt>
+            <dd data-testid="diag-open-time" title="Do atalho (ou clique no ícone) até o primeiro quadro do menu na tela.">
+              {describeOpenStats(diag.menuOpen)}
             </dd>
             <dt>Memória</dt><dd>{diag.memoryMb} MB</dd>
             <dt>Erros recentes</dt><dd className={diag.recentErrors ? "inline-error" : ""}>{diag.recentErrors}</dd>

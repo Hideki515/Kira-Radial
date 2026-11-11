@@ -216,6 +216,11 @@ describe("Kira de teste — ponta a ponta", () => {
   it("7. Diagnóstico mostra o resumo e gera o relatório", async () => {
     await nav("Diagnóstico");
     await expect($('[data-testid="diag-summary"]')).toHaveText(expect.stringContaining("Kira de teste"));
+    // Os cenários anteriores abriram o menu várias vezes: o tempo de abertura foi medido.
+    const diag = await invoke("diagnostics");
+    expect(diag.menuOpen.count).toBeGreaterThan(0);
+    expect(diag.menuOpen.maxMs).toBeLessThan(5000);
+    await expect($('[data-testid="diag-open-time"]')).toHaveText(expect.stringMatching(/média \d+ ms/));
     await $("button*=Gerar relatório").click();
     await expect($('[role="status"]')).toHaveText(expect.stringContaining("relatorio-"));
     expect(qaFiles().some((f) => f.startsWith("relatorio-"))).toBe(true);

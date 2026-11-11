@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useConfig } from "../hooks/useConfig";
 import { useSystemStats } from "../hooks/useSystemStats";
-import { describeAction, getVolume, hideMenu, isTauri, nowPlaying as fetchNowPlaying, type NowPlaying, onEvent, runAction, type MenuShowPayload } from "../shared/ipc";
+import { describeAction, getVolume, hideMenu, isTauri, nowPlaying as fetchNowPlaying, type NowPlaying, onEvent, openTimeMs, reportOpenTime, runAction, type MenuShowPayload } from "../shared/ipc";
 import { observeLongTasks, perfLog, startFrameMonitor } from "../shared/perf";
 import type { Config, MenuItem } from "../shared/types";
 import { clearSoundCache, playSound } from "../shared/sound";
 import { resolveItems } from "./dynamic";
 import { useIconFiles } from "../shared/iconFiles";
-import { useDynamicSources } from "./useDynamicSources";
+import { invalidateDynamic, kindChangedBy, useDynamicSources } from "./useDynamicSources";
 import { LAYOUT, hitTest, sliceAngle, type Hit } from "./geometry";
 import { RadialCanvas } from "./RadialCanvas";
 
@@ -176,6 +176,9 @@ function RadialMenu({ config }: { config: Config }) {
       try {
         // No Tauri o backend esconde o menu antes de agir (e devolve o foco ao app anterior).
         await runAction(action);
+        // Brilho/plano/rádio mudaram: a próxima abertura relê (não usa o que estava guardado).
+        const stale = kindChangedBy(action);
+        if (stale) invalidateDynamic(stale);
         // Mídia mantém o menu aberto (backend não o esconde): mostra um retorno rápido.
         if (!isTauri() || action.type === "media") flash(`${item.label}: ${describeAction(action)}`);
       } catch (e) {
@@ -253,16 +256,22 @@ function RadialMenu({ config }: { config: Config }) {
 
   // --- Diagnóstico de desempenho (perf.log) ---
   const showReceivedAt = useRef<number | null>(null);
+  /** Dados do último menu:show para medir o tempo total de abertura (uma vez por abertura). */
+  const showTiming = useRef<Pick<MenuShowPayload, "sentAt" | "prepMs"> | null>(null);
   useEffect(() => {
     if (isTauri()) observeLongTasks();
   }, []);
   useEffect(() => {
     if (!open || !isTauri()) return;
     const t0 = showReceivedAt.current;
+    const timing = showTiming.current;
+    showTiming.current = null;
     // Dois rAF: o segundo roda depois que o primeiro quadro com o menu foi pintado.
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
         if (t0 !== null) perfLog(`primeiro quadro pintado ${(performance.now() - t0).toFixed(0)} ms após receber menu:show`);
+        const total = timing ? openTimeMs(timing) : null;
+        if (total !== null) void reportOpenTime(total);
       }),
     );
     const stop = startFrameMonitor();
@@ -280,6 +289,7 @@ function RadialMenu({ config }: { config: Config }) {
     const offs = [
       onEvent<MenuShowPayload>("menu:show", (p) => {
         showReceivedAt.current = performance.now();
+        showTiming.current = { sentAt: p.sentAt, prepMs: p.prepMs };
         if (p.sentAt) perfLog(`evento menu:show chegou ${Date.now() - p.sentAt} ms após ser emitido pelo Rust`);
         setProfileId(p.profileId);
         const from = p.originX != null && p.originY != null ? { x: p.originX, y: p.originY } : null;

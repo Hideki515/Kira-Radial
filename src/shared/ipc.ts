@@ -13,6 +13,8 @@ export interface MenuShowPayload {
   profileId: string;
   /** Instante (ms desde 1970) em que o Rust emitiu o evento — para medir atraso de entrega. */
   sentAt?: number;
+  /** Tempo (ms) gasto no Rust antes de emitir (atalho/clique → evento). */
+  prepMs?: number;
   /** Aberto pelo ícone: ponto de onde o menu "nasce" (px lógicos relativos à janela). */
   originX?: number | null;
   originY?: number | null;
@@ -90,6 +92,20 @@ export async function runAction(action: Action): Promise<void> {
     return;
   }
   await invoke("run_action", { action });
+}
+
+/** Tempo total de abertura do menu (atalho → primeiro quadro), para o Diagnóstico. */
+export async function reportOpenTime(ms: number): Promise<void> {
+  if (isTauri()) await invoke("perf_open_sample", { ms }).catch(() => {});
+}
+
+/**
+ * Tempo total de abertura: o que o Rust gastou antes de emitir (`prepMs`) + do envio do
+ * evento até agora (relógio de parede dos dois lados). `null` se faltar informação.
+ */
+export function openTimeMs(p: Pick<MenuShowPayload, "sentAt" | "prepMs">, now = Date.now()): number | null {
+  if (p.sentAt === undefined) return null;
+  return Math.max(0, now - p.sentAt) + Math.max(0, p.prepMs ?? 0);
 }
 
 /** Avisa o backend que a página das Configurações carregou (ela para de desenhar se estiver escondida). */
@@ -369,6 +385,23 @@ export interface Diagnostics {
   recentErrors: number;
   dataDir: string;
   qa: boolean;
+  /** Tempo de abertura do menu nesta sessão (ausente em versões antigas do backend). */
+  menuOpen?: OpenStats;
+}
+
+export interface OpenStats {
+  count: number;
+  avgMs: number;
+  p90Ms: number;
+  maxMs: number;
+  lastMs: number;
+}
+
+/** "média 42 ms · 90% abaixo de 60 ms · pior 120 ms (últimas 18)" ou "ainda não aberto". */
+export function describeOpenStats(s: OpenStats | undefined): string {
+  if (!s || !s.count) return "o menu ainda não foi aberto nesta sessão";
+  const ms = (v: number) => `${Math.round(v)} ms`;
+  return `média ${ms(s.avgMs)} · 90% abaixo de ${ms(s.p90Ms)} · pior ${ms(s.maxMs)} · última ${ms(s.lastMs)} (${s.count} ${s.count === 1 ? "abertura" : "aberturas"})`;
 }
 
 /** Últimas linhas do log (kira.log), mais antigas primeiro. */

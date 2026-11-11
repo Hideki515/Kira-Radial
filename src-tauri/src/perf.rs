@@ -211,6 +211,63 @@ pub fn open_data_dir() -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 
+// ---------------------------------------------------------------------------
+// Tempo de abertura do menu: do atalho/clique até o primeiro quadro pintado.
+
+/// Quantas aberturas recentes entram na estatística.
+pub const OPEN_SAMPLES: usize = 50;
+static OPEN_TIMES: Mutex<Vec<f64>> = Mutex::new(Vec::new());
+
+#[derive(Serialize, Clone, Debug, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct OpenStats {
+    pub count: usize,
+    pub avg_ms: f64,
+    /// 90% das aberturas foram mais rápidas que isto.
+    pub p90_ms: f64,
+    pub max_ms: f64,
+    pub last_ms: f64,
+}
+
+/// Guarda uma medição (descarta valores absurdos) mantendo só as últimas `OPEN_SAMPLES`.
+pub fn push_sample(list: &mut Vec<f64>, ms: f64) {
+    if !ms.is_finite() || !(0.0..60_000.0).contains(&ms) {
+        return;
+    }
+    list.push(ms);
+    if list.len() > OPEN_SAMPLES {
+        let extra = list.len() - OPEN_SAMPLES;
+        list.drain(..extra);
+    }
+}
+
+pub fn open_stats_of(list: &[f64]) -> OpenStats {
+    if list.is_empty() {
+        return OpenStats::default();
+    }
+    let mut sorted = list.to_vec();
+    sorted.sort_by(f64::total_cmp);
+    let round = |v: f64| (v * 10.0).round() / 10.0;
+    let p90 = sorted[((sorted.len() as f64 * 0.9).ceil() as usize).saturating_sub(1).min(sorted.len() - 1)];
+    OpenStats {
+        count: list.len(),
+        avg_ms: round(list.iter().sum::<f64>() / list.len() as f64),
+        p90_ms: round(p90),
+        max_ms: round(*sorted.last().unwrap()),
+        last_ms: round(*list.last().unwrap()),
+    }
+}
+
+/// O menu informa quanto levou para aparecer (só na memória; some ao fechar a Kira).
+#[tauri::command]
+pub fn perf_open_sample(ms: f64) {
+    push_sample(&mut OPEN_TIMES.lock().unwrap(), ms);
+}
+
+pub fn open_stats() -> OpenStats {
+    open_stats_of(&OPEN_TIMES.lock().unwrap())
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Diagnostics {
@@ -228,6 +285,8 @@ pub struct Diagnostics {
     pub recent_errors: usize,
     pub data_dir: String,
     pub qa: bool,
+    /// Tempo de abertura do menu nesta sessão.
+    pub menu_open: OpenStats,
 }
 
 fn memory_mb() -> f64 {
@@ -295,6 +354,7 @@ pub fn diagnostics_of(app: &tauri::AppHandle) -> Diagnostics {
         recent_errors: tail(500).iter().filter(|l| line_level(l) == Level::Error).count(),
         data_dir: crate::config::config_dir().to_string_lossy().into_owned(),
         qa: crate::qa::ENABLED,
+        menu_open: open_stats(),
     }
 }
 
@@ -383,5 +443,38 @@ mod redact_qa_tests {
         let out = redact(&text, Some(profile));
         assert!(!out.contains("joão"), "nome com acento vazou:\n{out}");
         assert!(out.contains("%USERPROFILE%\\\\AppData") && out.contains("%USERPROFILE%/b.png"), "{out}");
+    }
+}
+
+#[cfg(test)]
+mod open_time_tests {
+    use super::*;
+
+    #[test]
+    fn estatistica_da_abertura() {
+        assert_eq!(open_stats_of(&[]), OpenStats::default());
+        let mut v = Vec::new();
+        for ms in [10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 300.0] {
+            push_sample(&mut v, ms);
+        }
+        let s = open_stats_of(&v);
+        assert_eq!((s.count, s.avg_ms, s.p90_ms, s.max_ms, s.last_ms), (10, 75.0, 90.0, 300.0, 300.0));
+        let one = open_stats_of(&[12.34]);
+        assert_eq!((one.avg_ms, one.p90_ms, one.max_ms), (12.3, 12.3, 12.3));
+    }
+
+    #[test]
+    fn guarda_so_as_ultimas_e_ignora_lixo() {
+        let mut v = Vec::new();
+        for i in 0..(OPEN_SAMPLES + 7) {
+            push_sample(&mut v, i as f64);
+        }
+        assert_eq!(v.len(), OPEN_SAMPLES);
+        assert_eq!(v[0], 7.0);
+        for bad in [f64::NAN, f64::INFINITY, -1.0, 120_000.0] {
+            push_sample(&mut v, bad);
+        }
+        assert_eq!(v.len(), OPEN_SAMPLES);
+        assert_eq!(*v.last().unwrap(), (OPEN_SAMPLES + 6) as f64);
     }
 }

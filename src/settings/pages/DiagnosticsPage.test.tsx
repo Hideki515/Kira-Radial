@@ -87,3 +87,17 @@ describe("Configurações › Diagnóstico", () => {
     confirm.mockRestore();
   });
 });
+
+describe("Diagnóstico › abertura do menu (0.19.0)", () => {
+  it("mostra a estatística de abertura; sem aberturas avisa; backend antigo sem o campo não quebra", async () => {
+    ipc.getDiagnostics.mockResolvedValue({ ...DIAG, menuOpen: { count: 3, avgMs: 31.2, p90Ms: 44, maxMs: 52.6, lastMs: 28 } });
+    render(<DiagnosticsPage />);
+    await flush();
+    expect(screen.getByTestId("diag-open-time").textContent).toBe("média 31 ms · 90% abaixo de 44 ms · pior 53 ms · última 28 ms (3 aberturas)");
+    cleanup();
+    ipc.getDiagnostics.mockResolvedValue(DIAG); // sem menuOpen
+    render(<DiagnosticsPage />);
+    await flush();
+    expect(screen.getByTestId("diag-open-time").textContent).toMatch(/ainda não foi aberto/);
+  });
+});

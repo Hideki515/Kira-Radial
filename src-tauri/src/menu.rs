@@ -49,6 +49,8 @@ struct MenuShow {
     cy: f64,
     profile_id: String,
     sent_at: u64,
+    /// Tempo gasto no Rust (atalho/clique → evento), para o tempo total de abertura.
+    prep_ms: f64,
     /// Ponto de onde o menu "nasce" (centro do ícone), em px lógicos relativos à janela.
     /// `None` quando aberto pelo atalho/bandeja.
     origin_x: Option<f64>,
@@ -122,7 +124,8 @@ pub fn show_from(app: &AppHandle, origin: Origin) -> Result<(), String> {
     // Kira de teste: já vai para fora da tela ANTES de aparecer (não pisca no cursor).
     crate::qa::keep_offscreen(&win);
     mark("mover");
-    app.emit_to(RADIAL, "menu:show", MenuShow { cx: p.center, cy: p.center, profile_id, sent_at: crate::perf::now_ms(), origin_x, origin_y })
+    let prep_ms = t.elapsed().as_secs_f64() * 1000.0;
+    app.emit_to(RADIAL, "menu:show", MenuShow { cx: p.center, cy: p.center, profile_id, sent_at: crate::perf::now_ms(), prep_ms, origin_x, origin_y })
         .map_err(|e| e.to_string())?;
     mark("emit");
     if crate::qa::ENABLED {
