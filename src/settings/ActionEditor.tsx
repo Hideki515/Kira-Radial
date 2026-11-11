@@ -5,6 +5,12 @@ import type { Action, MediaCmd, SystemCmd, WindowCmd } from "../shared/types";
 import { validateAction } from "../shared/validate";
 import { Field, Segmented, Toggle } from "./controls";
 import { HotkeyRecorder } from "./HotkeyRecorder";
+import { BrowserFields, type BrowserChoice } from "./BrowserFields";
+
+/** Sem chaves `undefined` (a config salva fica limpa). */
+function stripUndefined(b: BrowserChoice): BrowserChoice {
+  return Object.fromEntries(Object.entries(b).filter(([, v]) => v !== undefined)) as BrowserChoice;
+}
 
 /** Tipos editáveis (focusWindow é gerado pelo submenu "Janelas abertas"). */
 type ActionType = Exclude<Action["type"], "focusWindow" | "powerPlan" | "paste">;
@@ -186,9 +192,16 @@ export function ActionEditor({ action, onChange }: { action: Action; onChange: (
       )}
 
       {action.type === "url" && (
-        <Field label="Endereço">
-          <input value={action.url} onChange={(e) => onChange({ ...action, url: e.target.value })} />
-        </Field>
+        <>
+          <Field label="Endereço">
+            <input value={action.url} onChange={(e) => onChange({ ...action, url: e.target.value })} />
+          </Field>
+          <BrowserFields
+            scope="item"
+            value={action}
+            onChange={(b) => onChange({ type: "url", url: action.url, ...stripUndefined(b) })}
+          />
+        </>
       )}
 
       {action.type === "keys" && (

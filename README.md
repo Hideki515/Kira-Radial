@@ -16,7 +16,7 @@ Feito com **Tauri 2 (Rust) + React 18 + TypeScript + Vite**.
 - **Até 10 fatias** com submenus de até 8 itens. O submenu abre com **clique** ou **Enter**, e **Esc** volta para o anel principal.
 - **Ações:**
   - abrir programa, arquivo ou pasta (opcionalmente como administrador);
-  - abrir site;
+  - abrir site, no navegador padrão ou num escolhido (inclusive em janela anônima e com perfil do Chrome/Edge);
   - enviar atalho de teclado (com atraso opcional, útil para apps de print como o Lightshot);
   - mídia (play/pause, faixas, volume, mudo). Essas ações **não fecham o menu**;
   - comandos do sistema (bloquear, suspender, desligar, reiniciar, sair, print, Gerenciador de Tarefas, Configurações do Windows);

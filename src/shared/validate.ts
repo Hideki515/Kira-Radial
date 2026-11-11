@@ -73,7 +73,16 @@ export function validateAction(a: Action): string | null {
   switch (a.type) {
     case "launch": return a.path.trim() ? null : "informe o programa/arquivo.";
     case "folder": return a.path.trim() ? null : "informe a pasta.";
-    case "url": return /^(https?:\/\/|mailto:)/i.test(a.url.trim()) ? null : "URL deve começar com http://, https:// ou mailto:.";
+    case "url": {
+      const u = a.url.trim();
+      if (!/^(https?:\/\/|mailto:)/i.test(u)) return "URL deve começar com http://, https:// ou mailto:.";
+      const inBrowser = (!!a.browser && a.browser !== "system") || !!a.private;
+      // Num navegador escolhido o endereço vai como um único argumento: sem espaços nem aspas.
+      if (inBrowser && /^https?:/i.test(u) && /[\s"]/.test(u)) return 'endereço com espaço ou aspas (troque o espaço por %20).';
+      if (inBrowser && u.length > 2048) return "endereço longo demais para abrir num navegador escolhido (máx. 2048 caracteres).";
+      if (a.profile !== undefined && !/^[A-Za-z0-9 _-]{1,64}$/.test(a.profile)) return "perfil do navegador inválido.";
+      return null;
+    }
     case "keys":
       if (!parseCombo(a.combo)) return `combinação inválida "${a.combo}".`;
       if (a.delayMs !== undefined && (!Number.isInteger(a.delayMs) || a.delayMs < 0 || a.delayMs > 10000))

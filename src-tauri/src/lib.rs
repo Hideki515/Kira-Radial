@@ -5,6 +5,7 @@ mod audio;
 mod backup;
 mod clipboard;
 mod brightness;
+mod browsers;
 mod commands;
 mod config;
 mod foreground;
@@ -137,6 +138,8 @@ pub fn run() {
             commands::now_playing,
             commands::list_power_plans,
             commands::list_displays,
+            commands::list_browsers,
+            commands::list_browser_profiles,
             commands::list_radios,
             commands::list_recent_files,
             commands::clipboard_list,

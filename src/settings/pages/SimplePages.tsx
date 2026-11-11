@@ -6,6 +6,7 @@ import { Field, Section, Segmented, Toggle } from "../controls";
 import { HotkeyRecorder } from "../HotkeyRecorder";
 import { RadialCanvas } from "../../radial/RadialCanvas";
 import { SoundsSection } from "./SoundsSection";
+import { BrowserFields } from "../BrowserFields";
 import { ThemeEditor, addCustomTheme } from "./ThemeEditor";
 import { MAX_CUSTOM_THEMES, customRef, isCustomRef } from "../../shared/customTheme";
 import { BackupHistory } from "./BackupHistory";
@@ -41,6 +42,21 @@ export function GeneralPage({ config, update }: PageProps) {
           <button type="button" className="btn" onClick={() => void clipboardClear()}>Limpar histórico agora</button>
         </div>
       )}
+      <BrowserFields
+        scope="global"
+        value={{ browser: b.browser, browserName: b.browserName }}
+        onChange={(v) =>
+          update((c) => {
+            if (v.browser) {
+              c.behavior.browser = v.browser;
+              c.behavior.browserName = v.browserName;
+            } else {
+              delete c.behavior.browser;
+              delete c.behavior.browserName;
+            }
+          })
+        }
+      />
       <Field label={`Zona morta central: ${b.deadZonePx}px`} hint="Dentro deste raio nenhuma fatia é selecionada.">
         <input type="range" min={60} max={140} step={5} value={b.deadZonePx} onChange={(e) => update((c) => void (c.behavior.deadZonePx = Number(e.target.value)))} />
       </Field>

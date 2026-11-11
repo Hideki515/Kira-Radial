@@ -115,6 +115,11 @@ pub struct Behavior {
     /// Histórico da área de transferência (só memória). Desligado por padrão.
     #[serde(default)]
     pub clipboard_history: bool,
+    /// Navegador geral para "Abrir site" (id em StartMenuInternet); ausente = padrão do Windows.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub browser: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub browser_name: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

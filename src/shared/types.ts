@@ -18,7 +18,18 @@ export type WindowCmd = "topmost" | "nextMonitor" | "snapLeft" | "snapRight" | "
 export type Action =
   | { type: "launch"; path: string; args?: string; cwd?: string; admin?: boolean }
   | { type: "folder"; path: string }
-  | { type: "url"; url: string }
+  | {
+      type: "url";
+      url: string;
+      /** Navegador (id do Windows, ex.: "Google Chrome"). Ausente = o geral; "system" = padrão do Windows. */
+      browser?: string;
+      /** Nome do navegador; usado se o id não for encontrado (ex.: reinstalado). */
+      browserName?: string;
+      /** Janela anônima / InPrivate. */
+      private?: boolean;
+      /** Pasta do perfil (Chrome, Edge, Brave, Vivaldi), ex.: "Profile 1". */
+      profile?: string;
+    }
   | { type: "keys"; combo: string; /** Espera (ms) após o menu sumir, antes de enviar. */ delayMs?: number }
   | { type: "media"; cmd: MediaCmd }
   | { type: "system"; cmd: SystemCmd }
@@ -95,6 +106,9 @@ export interface Config {
     autostart: boolean;
     /** Guarda os últimos textos copiados (só na memória). Padrão: desligado. */
     clipboardHistory?: boolean;
+    /** Navegador geral para "Abrir site" (id do Windows). Ausente = padrão do Windows. */
+    browser?: string;
+    browserName?: string;
   };
   appearance: {
     scale: number;

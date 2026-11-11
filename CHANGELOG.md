@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.16.0
+
+- **Escolher o navegador** ao abrir sites:
+  - Na ação **Abrir site** aparece o campo **Navegador**: "Navegador geral", "Padrão do Windows" ou um dos navegadores instalados (Chrome, Edge, Firefox, Brave, Opera, Vivaldi, Zen…), detectados sozinhos pelo registro do Windows.
+  - **Abrir em janela anônima** (InPrivate no Edge).
+  - **Perfil do navegador** (Pessoal, Trabalho…) no Chrome, Edge, Brave e Vivaldi. A Kira só lê a lista de perfis.
+  - Configurações → Geral → **Navegador para sites**: o navegador usado por todas as fatias que não escolhem um próprio.
+  - Se o navegador escolhido for desinstalado, o site abre no padrão do Windows e o log registra um aviso.
+  - Segurança: o endereço vai como um único argumento para o navegador. Só são aceitos http(s) sem espaços nem aspas, então não dá para injetar opções.
+- Testes E2E: novo cenário "navegador" (11 cenários no total), sem abrir nenhum navegador.
+
 ## 0.15.0
 
 - **Editor de tema** (Configurações → Aparência):

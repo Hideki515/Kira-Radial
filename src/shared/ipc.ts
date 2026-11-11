@@ -51,7 +51,10 @@ export function describeAction(a: Action): string {
   switch (a.type) {
     case "launch": return `Executar ${a.path}`;
     case "folder": return `Abrir pasta ${a.path}`;
-    case "url": return `Abrir ${a.url}`;
+    case "url": {
+      const where = [a.browser && a.browser !== "system" ? `no ${a.browserName ?? a.browser}` : "", a.private ? "(anônima)" : ""].filter(Boolean).join(" ");
+      return `Abrir ${a.url}${where ? ` ${where}` : ""}`;
+    }
     case "keys": return `Enviar ${a.combo}`;
     case "media": return MEDIA_LABEL[a.cmd] ?? `Mídia: ${a.cmd}`;
     case "system": return `Sistema: ${a.cmd}`;
@@ -228,6 +231,45 @@ export interface DisplayInfo {
   name: string;
   /** 0–100 */
   level: number;
+}
+
+export type BrowserFamily = "chrome" | "edge" | "brave" | "vivaldi" | "opera" | "firefox" | "other";
+
+export interface BrowserInfo {
+  /** Nome da chave do Windows (ex.: "Google Chrome"). */
+  id: string;
+  name: string;
+  exe: string;
+  family: BrowserFamily;
+  isDefault: boolean;
+  /** Ícone do programa (data URL). */
+  icon?: string;
+}
+
+export interface BrowserProfile {
+  dir: string;
+  name: string;
+}
+
+/** Navegadores com janela anônima conhecida. */
+export const PRIVATE_FAMILIES: readonly BrowserFamily[] = ["chrome", "edge", "brave", "vivaldi", "opera", "firefox"];
+/** Navegadores com perfis (Chromium). */
+export const PROFILE_FAMILIES: readonly BrowserFamily[] = ["chrome", "edge", "brave", "vivaldi"];
+
+/** Navegadores instalados (o padrão do Windows primeiro). */
+export async function listBrowsers(): Promise<BrowserInfo[]> {
+  if (isTauri()) return invoke<BrowserInfo[]>("list_browsers");
+  return [
+    { id: "Google Chrome", name: "Google Chrome", exe: "chrome.exe", family: "chrome", isDefault: true },
+    { id: "Microsoft Edge", name: "Microsoft Edge", exe: "msedge.exe", family: "edge", isDefault: false },
+    { id: "Firefox-1", name: "Mozilla Firefox", exe: "firefox.exe", family: "firefox", isDefault: false },
+  ];
+}
+
+/** Perfis de um navegador Chromium. */
+export async function listBrowserProfiles(id: string): Promise<BrowserProfile[]> {
+  if (isTauri()) return invoke<BrowserProfile[]>("list_browser_profiles", { id });
+  return id === "Google Chrome" ? [{ dir: "Default", name: "Pessoal" }, { dir: "Profile 1", name: "Trabalho" }] : [];
 }
 
 /** Telas com brilho ajustável (vazio = nenhuma aceita controle). */

@@ -43,12 +43,28 @@ pub fn cache_name(source: &str) -> String {
 /// Extrai o ícone de um programa, atalho ou arquivo (o mesmo que o Explorador mostra),
 /// salva como PNG em `icons\` e devolve o caminho do PNG.
 pub fn extract(source: &str) -> Result<String, String> {
+    let raw = source.trim().trim_matches('"');
+    let png = render_png(raw)?;
+    let dir = icons_dir();
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let out = dir.join(cache_name(raw));
+    fs::write(&out, png).map_err(|e| e.to_string())?;
+    Ok(out.to_string_lossy().into_owned())
+}
+
+/// Ícone de um programa como data URL PNG, só na memória (ex.: lista de navegadores).
+pub fn data_url_of(source: &str) -> Result<String, String> {
+    let png = render_png(source.trim().trim_matches('"'))?;
+    Ok(format!("data:image/png;base64,{}", crate::orb::base64(&png)))
+}
+
+/// Desenha o ícone (o mesmo do Explorador) de `raw` como PNG.
+fn render_png(raw: &str) -> Result<Vec<u8>, String> {
     use windows::core::HSTRING;
     use windows::Win32::Storage::FileSystem::FILE_FLAGS_AND_ATTRIBUTES;
     use windows::Win32::UI::Shell::{SHGetFileInfoW, SHFILEINFOW, SHGFI_ICON, SHGFI_LARGEICON};
     use windows::Win32::UI::WindowsAndMessaging::DestroyIcon;
 
-    let raw = source.trim().trim_matches('"');
     if raw.is_empty() {
         return Err("informe o programa primeiro".into());
     }
@@ -73,13 +89,7 @@ pub fn extract(source: &str) -> Result<String, String> {
         let _ = DestroyIcon(info.hIcon);
     }
     let bgra = pixels.ok_or("não foi possível desenhar o ícone")?;
-    let png = crate::winlist::png_bytes(&crate::winlist::bgra_to_rgba(&bgra), crate::winlist::ICON_SIZE)
-        .ok_or("falha ao gerar o PNG")?;
-    let dir = icons_dir();
-    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let out = dir.join(cache_name(raw));
-    fs::write(&out, png).map_err(|e| e.to_string())?;
-    Ok(out.to_string_lossy().into_owned())
+    crate::winlist::png_bytes(&crate::winlist::bgra_to_rgba(&bgra), crate::winlist::ICON_SIZE).ok_or_else(|| "falha ao gerar o PNG".into())
 }
 
 /// Nome solto de programa ("wt.exe", "notepad") → caminho completo pelo PATH do Windows

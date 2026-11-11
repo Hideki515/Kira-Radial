@@ -148,6 +148,18 @@ pub async fn list_radios() -> Result<Vec<crate::radios::RadioInfo>, String> {
     tauri::async_runtime::spawn_blocking(crate::radios::list).await.map_err(|e| e.to_string())
 }
 
+/// Navegadores instalados, com ícone (editor da ação "Abrir site").
+#[tauri::command]
+pub async fn list_browsers() -> Result<Vec<crate::browsers::Browser>, String> {
+    tauri::async_runtime::spawn_blocking(|| crate::browsers::list(true)).await.map_err(|e| e.to_string())
+}
+
+/// Perfis de um navegador Chromium (só leitura do "Local State").
+#[tauri::command]
+pub async fn list_browser_profiles(id: String) -> Result<Vec<crate::browsers::BrowserProfile>, String> {
+    tauri::async_runtime::spawn_blocking(move || crate::browsers::profiles(&id)).await.map_err(|e| e.to_string())
+}
+
 /// Telas com brilho ajustável (submenu automático "Brilho").
 #[tauri::command]
 pub async fn list_displays() -> Result<Vec<crate::brightness::Display>, String> {
@@ -185,7 +197,7 @@ pub fn apply_autostart(app: &AppHandle, enabled: bool) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn run_action(app: AppHandle, action: Action) -> Result<(), String> {
+pub async fn run_action(app: AppHandle, mut action: Action) -> Result<(), String> {
     if matches!(action, Action::OpenSettings) {
         menu::open_settings(&app);
         return Ok(());
@@ -193,6 +205,15 @@ pub async fn run_action(app: AppHandle, action: Action) -> Result<(), String> {
     let (close, prev) = {
         let state = tauri::Manager::state::<AppState>(&app);
         let cfg = state.config.lock().unwrap();
+        // Site sem navegador próprio: usa o navegador geral (Configurações → Geral).
+        // Endereço que o navegador não aceitaria como argumento único (espaço, aspas, muito longo)
+        // continua indo pelo padrão do Windows, como antes do navegador geral existir.
+        if let Action::Url { url, browser: b @ None, browser_name, .. } = &mut action {
+            if crate::browsers::url_ok(url.trim()) {
+                *b = cfg.behavior.browser.clone();
+                *browser_name = cfg.behavior.browser_name.clone();
+            }
+        }
         (
             !action.keeps_menu_open() && (cfg.behavior.close_on_action || action.needs_previous_focus()),
             state.prev_hwnd.load(Ordering::SeqCst),

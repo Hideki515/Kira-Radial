@@ -1,6 +1,16 @@
 // Cenários de ponta a ponta na Kira de teste (pasta de dados de teste limpa no início).
 import { invoke, nav, pickRadio, pressKey, qaConfig, qaFiles, qaState, save, toWindow } from "../helpers.mjs";
 
+/** Espera a lista real de navegadores (o select fica desabilitado enquanto carrega) e devolve o 1º instalado. */
+async function firstInstalled(sel) {
+  await browser.waitUntil(async () => sel.isEnabled(), { timeoutMsg: "navegadores não carregaram" });
+  for (const o of await sel.$$("option")) {
+    const v = await o.getAttribute("value");
+    if (v && v !== "system" && v !== "__missing__") return v;
+  }
+  throw new Error("nenhum navegador instalado listado");
+}
+
 describe("Kira de teste — ponta a ponta", () => {
   it("1. Configurações abrem e mostram a versão certa", async () => {
     await toWindow("settings.html");
@@ -131,6 +141,35 @@ describe("Kira de teste — ponta a ponta", () => {
     await expect(svg).toHaveElementClass("theme-custom");
     expect(await browser.execute(() => document.querySelector("svg.radial-canvas").style.getPropertyValue("--k-label"))).toBe("#ff3366");
     await pressKey("Escape");
+  });
+
+  it("6c. navegador: fatia 'Abrir site' com navegador próprio e anônima; navegador geral (sem abrir nada)", async () => {
+    await nav("Itens do menu");
+    await $(".profile-picker select").selectByIndex(0);
+    await $$(".tree-row:not(.is-child)")[0].click(); // virou submenu automático no cenário 4
+    await pickRadio("Executar ação");
+    await $('.item-editor select:has(option[value="url"])').selectByAttribute("value", "url");
+    const browserSel = await $('select[aria-label="Navegador"]');
+    const firstId = await firstInstalled(browserSel);
+    await browserSel.selectByAttribute("value", firstId);
+    const anon = await $("label.toggle-row*=janela anônima");
+    const hasAnon = await anon.isExisting();
+    if (hasAnon) await anon.$("input").click();
+    await save();
+    const item = qaConfig().profiles[0].items[0];
+    expect(item.action).toMatchObject({ type: "url", browser: firstId });
+    if (hasAnon) expect(item.action.private).toBe(true);
+    expect(typeof item.action.browserName).toBe("string");
+
+    await nav("Geral");
+    const globalSel = await $('select[aria-label="Navegador para sites"]');
+    expect(await firstInstalled(globalSel)).toBe(firstId);
+    await globalSel.selectByAttribute("value", firstId);
+    await save();
+    expect(qaConfig().behavior.browser).toBe(firstId);
+    await globalSel.selectByIndex(0); // volta ao padrão do Windows
+    await save();
+    expect(qaConfig().behavior.browser).toBeUndefined();
   });
 
   it("7. Diagnóstico mostra o resumo e gera o relatório", async () => {

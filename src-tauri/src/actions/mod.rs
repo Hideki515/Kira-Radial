@@ -32,7 +32,21 @@ pub enum Action {
         admin: bool,
     },
     Folder { path: String },
-    Url { url: String },
+    Url {
+        url: String,
+        /// Navegador (id em StartMenuInternet); ausente = o geral; "system" = padrão do Windows.
+        #[serde(default)]
+        browser: Option<String>,
+        /// Nome do navegador, usado se o id não for encontrado.
+        #[serde(default, rename = "browserName")]
+        browser_name: Option<String>,
+        /// Janela anônima/InPrivate.
+        #[serde(default)]
+        private: bool,
+        /// Pasta do perfil (Chrome/Edge/Brave/Vivaldi).
+        #[serde(default)]
+        profile: Option<String>,
+    },
     Keys {
         combo: String,
         /// Espera extra (ms) depois que o menu sumiu, antes de enviar as teclas.
@@ -156,11 +170,23 @@ pub fn execute(action: &Action) -> Result<(), String> {
             if *admin { "runas" } else { "open" },
         ),
         Action::Folder { path } => shell_execute(&expand_env(path), None, None, "open"),
-        Action::Url { url } => {
+        Action::Url { url, browser, browser_name, private, profile } => {
             let u = url.trim();
             let lower = u.to_ascii_lowercase();
             if !(lower.starts_with("http://") || lower.starts_with("https://") || lower.starts_with("mailto:")) {
                 return Err("só são aceitas URLs http(s) ou mailto".into());
+            }
+            // mailto sempre vai para o app de e-mail; "system"/ausente = navegador padrão.
+            // Janela anônima sem navegador escolhido: usa o padrão do Windows pelo exe dele.
+            let chosen = browser
+                .clone()
+                .filter(|b| !b.is_empty() && b != crate::browsers::SYSTEM)
+                .or_else(|| if *private { crate::browsers::default_id() } else { None });
+            if let (Some(id), false) = (chosen, lower.starts_with("mailto:")) {
+                if crate::browsers::open(&id, browser_name.as_deref(), u, *private, profile.as_deref())? {
+                    return Ok(());
+                }
+                crate::perf::log_level(crate::perf::Level::Warn, "rust", &format!("navegador \"{id}\" não encontrado; abrindo no padrão do Windows"));
             }
             shell_execute(u, None, None, "open")
         }
@@ -465,5 +491,35 @@ mod fase2_qa_tests {
                 assert!(matches!(a, Action::Radio { .. }), "{k}/{m}");
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod url_browser_tests {
+    use super::Action;
+
+    #[test]
+    fn site_com_navegador_desserializa_e_antigo_continua_valido() {
+        let a: Action = serde_json::from_str(r#"{"type":"url","url":"https://a.b"}"#).unwrap();
+        assert!(matches!(a, Action::Url { browser: None, private: false, profile: None, .. }));
+        let a: Action = serde_json::from_str(
+            r#"{"type":"url","url":"https://a.b","browser":"Google Chrome","browserName":"Google Chrome","private":true,"profile":"Profile 1"}"#,
+        )
+        .unwrap();
+        match a {
+            Action::Url { browser, browser_name, private, profile, .. } => {
+                assert_eq!(browser.as_deref(), Some("Google Chrome"));
+                assert_eq!(browser_name.as_deref(), Some("Google Chrome"));
+                assert!(private);
+                assert_eq!(profile.as_deref(), Some("Profile 1"));
+            }
+            _ => panic!(),
+        }
+    }
+
+    #[test]
+    fn url_invalida_falha_antes_de_abrir_qualquer_navegador() {
+        let a: Action = serde_json::from_str(r#"{"type":"url","url":"javascript:alert(1)","browser":"Google Chrome"}"#).unwrap();
+        assert!(super::execute(&a).is_err());
     }
 }
