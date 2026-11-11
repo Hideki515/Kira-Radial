@@ -79,6 +79,11 @@ fn lenient_animation<'de, D: serde::Deserializer<'de>>(d: D) -> Result<OrbAnimat
     Ok(serde_json::from_value(v).unwrap_or_default())
 }
 
+fn lenient_when<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Option<crate::schedule::When>, D::Error> {
+    let v = Value::deserialize(d)?;
+    Ok(serde_json::from_value(v).ok())
+}
+
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum OrbAnimation {
@@ -149,7 +154,8 @@ pub struct Profile {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub match_exe: Vec<String>,
     /// "Quando usar": dias, horário e monitores (ausente = só por app/padrão).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Mal formado (config editada à mão) = ignorado, em vez de derrubar a config inteira.
+    #[serde(default, skip_serializing_if = "Option::is_none", deserialize_with = "lenient_when")]
     pub when: Option<crate::schedule::When>,
     pub items: Vec<Value>,
 }
@@ -430,5 +436,21 @@ mod orb_animation_tests {
         }
         v["launcher"]["orb"]["animation"] = Value::from(7);
         assert_eq!(serde_json::from_value::<Config>(v).unwrap().launcher.orb.animation, OrbAnimation::Full);
+    }
+}
+
+#[cfg(test)]
+mod lenient_when_tests {
+    use super::*;
+
+    #[test]
+    fn when_mal_formado_e_ignorado_sem_derrubar_a_config() {
+        let mut v: Value = serde_json::to_value(Config::default_config()).unwrap();
+        v["profiles"][0]["when"] = serde_json::json!({ "days": "seg", "from": 8 });
+        let c: Config = serde_json::from_value(v.clone()).expect("config com when quebrado ainda carrega");
+        assert_eq!(c.profiles[0].when, None);
+        v["profiles"][0]["when"] = serde_json::json!({ "days": [1, 2], "from": "08:00", "to": "12:00" });
+        let c: Config = serde_json::from_value(v).unwrap();
+        assert_eq!(c.profiles[0].when.as_ref().unwrap().days, vec![1, 2]);
     }
 }

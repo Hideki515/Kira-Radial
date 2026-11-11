@@ -27,9 +27,11 @@ export function validateConfig(c: Config): string[] {
   const theme = c.appearance.theme;
   if (theme !== undefined && !THEMES.includes(theme as Theme) && !findCustom(theme, c.appearance.customThemes))
     errors.push(`Tema desconhecido: "${theme}".`);
-  const customs = c.appearance.customThemes ?? [];
+  const rawCustoms: unknown = c.appearance.customThemes;
+  if (rawCustoms !== undefined && !Array.isArray(rawCustoms)) errors.push("Temas personalizados em formato inválido.");
+  const customs = Array.isArray(rawCustoms) ? (rawCustoms as NonNullable<typeof c.appearance.customThemes>) : [];
   if (customs.length > MAX_CUSTOM_THEMES) errors.push(`No máximo ${MAX_CUSTOM_THEMES} temas personalizados.`);
-  customs.forEach((ct) => customThemeErrors(ct).forEach((e) => errors.push(`Tema "${ct.name || ct.id}": ${e}`)));
+  customs.forEach((ct) => customThemeErrors(ct).forEach((e) => errors.push(`Tema "${(ct && (ct.name || ct.id)) || "?"}": ${e}`)));
   const snd = c.appearance.sounds;
   if (snd && !(snd.volume >= 0 && snd.volume <= 1)) errors.push("Volume dos sons deve estar entre 0% e 100%.");
   if (!c.profiles.length) errors.push("É necessário ao menos um perfil.");

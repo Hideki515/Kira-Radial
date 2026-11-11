@@ -54,6 +54,22 @@ describe("submenus automáticos › cache das leituras lentas", () => {
     expect(result.current.displays).toHaveLength(1);
   });
 
+  it("leitura que chega depois de o menu fechar não conta como recente (relê na próxima abertura)", async () => {
+    const { result, rerender } = renderHook(({ k, on }) => useDynamicSources(items, on, k), { initialProps: { k: 1, on: true } });
+    await flush(); // 1ª abertura: nível 50 guardado
+    invalidateDynamic("brightness"); // ex.: mudou o brilho pelo menu
+    let finish!: (v: { id: string; name: string; level: number }[]) => void;
+    ipc.displays.mockImplementationOnce(() => new Promise((r) => (finish = r)));
+    rerender({ k: 2, on: true }); // 2ª abertura começa a ler...
+    rerender({ k: 2, on: false }); // ...e fecha antes da resposta
+    await act(async () => finish([{ id: "lcd", name: "Tela", level: 10 }]));
+    ipc.displays.mockResolvedValueOnce([{ id: "lcd", name: "Tela", level: 10 }]);
+    rerender({ k: 3, on: true });
+    await flush();
+    expect(ipc.displays).toHaveBeenCalledTimes(3); // não reaproveitou o nível 50 antigo
+    expect(result.current.displays?.[0]).toMatchObject({ level: 10 });
+  });
+
   it("prazo por tipo e ações que invalidam", () => {
     expect(isFresh("brightness", 1000, 1000 + CACHE_MS.brightness! - 1)).toBe(true);
     expect(isFresh("brightness", 1000, 1000 + CACHE_MS.brightness!)).toBe(false);

@@ -67,23 +67,36 @@ export const customRef = (id: string): `custom:${string}` => `custom:${id}`;
 export function findCustom(theme: string | undefined, list: CustomTheme[] | undefined): CustomTheme | undefined {
   if (!isCustomRef(theme)) return undefined;
   const id = theme!.slice(CUSTOM_PREFIX.length);
-  return list?.find((t) => t.id === id);
+  // Config editada à mão: lista que não é lista ou entradas que não são objetos são ignoradas.
+  if (!Array.isArray(list)) return undefined;
+  return list.find((t) => !!t && typeof t === "object" && t.id === id);
 }
 
 /** Variáveis CSS aplicadas no <svg> do menu (lidas por .theme-custom em themes2.css). */
 export function themeVars(t: CustomTheme): Record<string, string> {
-  const v: Record<string, string> = { "--active": t.colors.accent, "--accent": t.colors.gauge };
-  for (const k of COLOR_KEYS) v[`--k-${k}`] = t.colors[k];
+  // Só cores #rrggbb viram variável: cor inválida (config editada à mão) cai no padrão do CSS.
+  const c = (t?.colors && typeof t.colors === "object" ? t.colors : {}) as Partial<ThemeColors>;
+  const ok = (x: unknown): x is string => typeof x === "string" && HEX.test(x);
+  const v: Record<string, string> = {};
+  if (ok(c.accent)) v["--active"] = c.accent;
+  if (ok(c.gauge)) v["--accent"] = c.gauge;
+  for (const k of COLOR_KEYS) if (ok(c[k])) v[`--k-${k}`] = c[k];
   return v;
 }
 
 /** Problemas de um tema (vazio = ok). */
 export function customThemeErrors(t: CustomTheme): string[] {
   const out: string[] = [];
-  if (!t.name?.trim()) out.push("nome vazio.");
-  if (t.name && t.name.length > 40) out.push("nome com mais de 40 caracteres.");
-  if (!THEMES.includes(t.base)) out.push(`tema base desconhecido ("${t.base}").`);
-  for (const k of COLOR_KEYS) if (!HEX.test(t.colors?.[k] ?? "")) out.push(`cor "${COLOR_LABEL[k]}" inválida (use #rrggbb).`);
+  if (!t || typeof t !== "object") return ["formato inválido."];
+  const name = typeof t.name === "string" ? t.name : "";
+  if (!name.trim()) out.push("nome vazio.");
+  if (name.length > 40) out.push("nome com mais de 40 caracteres.");
+  if (!THEMES.includes(t.base)) out.push(`tema base desconhecido ("${String(t.base)}").`);
+  const colors = (t.colors && typeof t.colors === "object" ? t.colors : {}) as Record<string, unknown>;
+  for (const k of COLOR_KEYS) {
+    const c = colors[k];
+    if (typeof c !== "string" || !HEX.test(c)) out.push(`cor "${COLOR_LABEL[k]}" inválida (use #rrggbb).`);
+  }
   return out;
 }
 

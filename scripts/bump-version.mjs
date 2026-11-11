@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Atualiza a versão em package.json, src-tauri/Cargo.toml, src-tauri/tauri.conf.json e Cargo.lock.
 // Uso: node scripts/bump-version.mjs 0.2.0
-import { execFileSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -36,7 +36,7 @@ writeFileSync(file(cargoPath), cargo.replace(m[0], `version = "${version}"`));
 console.log(`${cargoPath}: ${m[1]} → ${version}`);
 
 // package-lock.json e Cargo.lock acompanham.
-execFileSync("npm", ["install", "--package-lock-only", "--ignore-scripts"], { cwd: root, stdio: "inherit", shell: true });
+execSync("npm install --package-lock-only --ignore-scripts", { cwd: root, stdio: "inherit" });
 execFileSync("cargo", ["update", "-p", "kira-radial", "--offline"], { cwd: file("src-tauri"), stdio: "inherit" });
 
 console.log(`\nPróximos passos:\n  1. Atualize o CHANGELOG.md\n  2. git commit -am "v${version}"\n  3. git tag -a v${version} -m "v${version}" && git push --follow-tags`);

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.19.1
+
+- **Submenu de brilho:** fechar o menu antes de os monitores responderem não deixa mais um nível antigo destacado na próxima abertura.
+- **Perfis:** um "Quando usar" mal formado na config (editada à mão) é ignorado e não derruba mais a configuração inteira. Horário impossível (ex.: "25:00"), faixa vazia ou dia inexistente não fazem mais o perfil valer o tempo todo.
+- **Temas personalizados:** cores ou entradas inválidas na config (editada à mão) não quebram mais o menu nem as Configurações. Cor inválida usa a cor padrão.
+- Scripts de build sem o aviso DEP0190 do Node.
+- Repositório com quebra de linha LF padronizada (`.gitattributes`), o que acaba com os avisos de CRLF a cada commit.
+- Testes novos: leitura atrasada do brilho, invalidação do cache após a ação, `when` e temas mal formados.
+
 ## 0.19.0
 
 - **Tempo de abertura do menu no Diagnóstico** (Configurações → Diagnóstico → "Abertura do menu"):

@@ -127,3 +127,23 @@ describe("Aparência › editor de tema", () => {
     expect(screen.getByRole("status").textContent).toContain("Não foi possível importar");
   });
 });
+
+describe("tema personalizado › config editada à mão", () => {
+  it("entradas quebradas não derrubam o menu nem a validação", async () => {
+    const { customThemeErrors, findCustom, themeVars } = await import("../../shared/customTheme");
+    const { validateConfig } = await import("../../shared/validate");
+    const { cloneConfig, defaultConfig } = await import("../../shared/defaults");
+    const bad = { id: "a", name: 7, base: "glass", colors: { accent: "red", slice: "#112233" } } as never;
+    expect(themeVars(bad)).toEqual({ "--k-slice": "#112233" });
+    expect(themeVars({ id: "b", name: "x", base: "glass" } as never)).toEqual({});
+    expect(customThemeErrors(bad)).toContain("nome vazio.");
+    expect(customThemeErrors(null as never)).toEqual(["formato inválido."]);
+    expect(findCustom("custom:a", { a: 1 } as never)).toBeUndefined();
+    expect(findCustom("custom:a", [null, bad] as never)).toBe(bad);
+    const c = cloneConfig(defaultConfig);
+    (c.appearance as Record<string, unknown>).customThemes = "x";
+    expect(validateConfig(c)).toContain("Temas personalizados em formato inválido.");
+    (c.appearance as Record<string, unknown>).customThemes = [null];
+    expect(() => validateConfig(c)).not.toThrow();
+  });
+});

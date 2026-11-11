@@ -40,8 +40,17 @@ pub fn parse_hhmm(s: &str) -> Option<u16> {
 
 impl When {
     /// Tem algum critério? (Sem nenhum, o perfil não é escolhido por horário/monitor.)
+    /// Só contam critérios válidos: um horário como "25:00" (config editada à mão) não pode
+    /// fazer o perfil valer o tempo todo.
     pub fn has_criteria(&self) -> bool {
-        !self.days.is_empty() || self.from.is_some() || self.to.is_some() || !self.monitors.is_empty()
+        self.days.iter().any(|d| *d < 7) || self.time_range().is_some() || self.monitors.iter().any(|m| !m.trim().is_empty())
+    }
+
+    /// Faixa de horário válida (início ≠ fim), em minutos.
+    fn time_range(&self) -> Option<(u16, u16)> {
+        let f = self.from.as_deref().and_then(parse_hhmm)?;
+        let t = self.to.as_deref().and_then(parse_hhmm)?;
+        (f != t).then_some((f, t))
     }
 
     /// Dentro da faixa de horário? Sem faixa (ou faixa inválida/incompleta) = sim.
@@ -142,5 +151,15 @@ mod tests {
         assert!(When::default().matches(&ctx(0, "00:00", "")));
         // Faixa incompleta (só "from") é ignorada.
         assert!(when(&[], Some("10:00"), None, &[]).time_ok(5));
+    }
+
+    #[test]
+    fn criterios_invalidos_nao_contam() {
+        // Horário impossível, faixa vazia, dia inexistente e monitor em branco: perfil não é escolhido.
+        assert!(!when(&[], Some("25:00"), Some("02:00"), &[]).has_criteria());
+        assert!(!when(&[], Some("10:00"), Some("10:00"), &[]).has_criteria());
+        assert!(!when(&[], Some("10:00"), None, &[]).has_criteria());
+        assert!(!when(&[9], None, None, &[" "]).has_criteria());
+        assert!(when(&[9, 2], None, None, &[]).has_criteria());
     }
 }

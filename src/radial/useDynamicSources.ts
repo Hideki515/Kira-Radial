@@ -72,10 +72,13 @@ export function useDynamicSources(items: MenuItem[], active: boolean, refreshKey
       if (isFresh(kind, loadedAt.get(kind), Date.now()) && sources[key] !== undefined) continue;
       load().then(
         (data) => {
-          loadedAt.set(kind, Date.now());
           const took = performance.now() - started;
           if (took > SLOW_LOAD_MS) perfLog(`submenu "${kind}" levou ${took.toFixed(0)} ms para ler`);
-          if (alive) setSources((s) => ({ ...s, [key]: data }));
+          // Menu já fechou/reabriu: o dado não foi mostrado, então não conta como "lido agora"
+          // (senão a próxima abertura usaria uma lista antiga por até CACHE_MS).
+          if (!alive) return;
+          loadedAt.set(kind, Date.now());
+          setSources((s) => ({ ...s, [key]: data }));
         },
         (e) => {
           loadedAt.delete(kind);
