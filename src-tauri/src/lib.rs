@@ -5,6 +5,7 @@ mod audio;
 mod backup;
 mod clipboard;
 mod brightness;
+mod dimmer;
 mod browsers;
 mod webvis;
 mod commands;
@@ -98,6 +99,8 @@ pub fn run() {
             orb::init(&handle);
             orb::apply(&handle, &cfg);
             orb::spawn_fullscreen_watch(handle.clone());
+            // Brilho por software salvo (monitores sem DDC/CI): reaplica a camada escura.
+            dimmer::restore();
 
             if !qa::ENABLED {
                 build_tray(app)?;

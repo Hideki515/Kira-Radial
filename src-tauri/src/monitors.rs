@@ -57,6 +57,63 @@ fn friendly(device: &str) -> Option<String> {
     unsafe { EnumDisplayDevicesW(&dev, 0, &mut dd, 0) }.as_bool().then(|| wide(&dd.DeviceString)).filter(|s| !s.trim().is_empty())
 }
 
+/// Nome genérico do Windows (não identifica o monitor).
+pub fn is_generic_name(s: &str) -> bool {
+    let s = s.trim();
+    s.is_empty() || s.eq_ignore_ascii_case("Generic PnP Monitor") || s.eq_ignore_ascii_case("Monitor PnP genérico")
+}
+
+/// Nome gravado no próprio monitor (EDID, ex.: "ARZOPA"), por dispositivo (`\\.\DISPLAY2`).
+/// É o nome que as Configurações do Windows mostram; o `DeviceString` costuma ser genérico.
+pub fn edid_names() -> std::collections::HashMap<String, String> {
+    use windows::Win32::Devices::Display::{
+        DisplayConfigGetDeviceInfo, GetDisplayConfigBufferSizes, QueryDisplayConfig, DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME,
+        DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME, DISPLAYCONFIG_DEVICE_INFO_HEADER, DISPLAYCONFIG_MODE_INFO, DISPLAYCONFIG_PATH_INFO,
+        DISPLAYCONFIG_SOURCE_DEVICE_NAME, DISPLAYCONFIG_TARGET_DEVICE_NAME, QDC_ONLY_ACTIVE_PATHS,
+    };
+    let mut out = std::collections::HashMap::new();
+    unsafe {
+        let (mut np, mut nm) = (0u32, 0u32);
+        if GetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, &mut np, &mut nm).is_err() {
+            return out;
+        }
+        let mut paths = vec![DISPLAYCONFIG_PATH_INFO::default(); np as usize];
+        let mut modes = vec![DISPLAYCONFIG_MODE_INFO::default(); nm as usize];
+        if QueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS, &mut np, paths.as_mut_ptr(), &mut nm, modes.as_mut_ptr(), None).is_err() {
+            return out;
+        }
+        paths.truncate(np as usize);
+        for p in &paths {
+            let mut src = DISPLAYCONFIG_SOURCE_DEVICE_NAME {
+                header: DISPLAYCONFIG_DEVICE_INFO_HEADER {
+                    r#type: DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME,
+                    size: std::mem::size_of::<DISPLAYCONFIG_SOURCE_DEVICE_NAME>() as u32,
+                    adapterId: p.sourceInfo.adapterId,
+                    id: p.sourceInfo.id,
+                },
+                ..Default::default()
+            };
+            let mut tgt = DISPLAYCONFIG_TARGET_DEVICE_NAME {
+                header: DISPLAYCONFIG_DEVICE_INFO_HEADER {
+                    r#type: DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME,
+                    size: std::mem::size_of::<DISPLAYCONFIG_TARGET_DEVICE_NAME>() as u32,
+                    adapterId: p.targetInfo.adapterId,
+                    id: p.targetInfo.id,
+                },
+                ..Default::default()
+            };
+            if DisplayConfigGetDeviceInfo(&mut src.header) != 0 || DisplayConfigGetDeviceInfo(&mut tgt.header) != 0 {
+                continue;
+            }
+            let name = wide(&tgt.monitorFriendlyDeviceName);
+            if !is_generic_name(&name) {
+                out.insert(wide(&src.viewGdiDeviceName), name.trim().to_string());
+            }
+        }
+    }
+    out
+}
+
 /// Monitores conectados, numerados da esquerda para a direita (depois de cima para baixo).
 pub fn list() -> Vec<MonitorInfo> {
     use windows::core::BOOL;
@@ -68,14 +125,16 @@ pub fn list() -> Vec<MonitorInfo> {
     unsafe {
         let _ = EnumDisplayMonitors(None, None, Some(cb), LPARAM(&mut hs as *mut _ as isize));
     }
+    let edid = edid_names();
     let mut out: Vec<MonitorInfo> = hs
         .into_iter()
         .filter_map(|h| {
             let mi = info_ex(h)?;
             let r = mi.monitorInfo.rcMonitor;
             let device = wide(&mi.szDevice);
+            let name = friendly(&device).filter(|n| !is_generic_name(n)).or_else(|| edid.get(&device).cloned()).unwrap_or_default();
             Some(MonitorInfo {
-                name: friendly(&device).unwrap_or_default(),
+                name,
                 device,
                 number: 0,
                 left: r.left,
@@ -95,7 +154,7 @@ pub fn number(list: &mut [MonitorInfo]) {
     list.sort_by_key(|m| (m.left, m.top));
     for (i, m) in list.iter_mut().enumerate() {
         m.number = i + 1;
-        if m.name.trim().is_empty() || m.name.eq_ignore_ascii_case("Generic PnP Monitor") {
+        if is_generic_name(&m.name) {
             m.name = format!("Monitor {}", i + 1);
         }
     }
@@ -208,6 +267,25 @@ mod tests {
         assert_eq!(l[0].name, "Monitor 1");
         assert_eq!(l[1].name, "Monitor 2");
         assert_eq!(l[2].name, "LG");
+    }
+
+    #[test]
+    fn nome_generico_em_ingles_portugues_ou_vazio() {
+        assert!(is_generic_name(""));
+        assert!(is_generic_name("  "));
+        assert!(is_generic_name("generic pnp monitor"));
+        assert!(is_generic_name(" Monitor PnP genérico "));
+        assert!(!is_generic_name("ARZOPA"));
+        let mut l = vec![m(0, "Monitor PnP genérico")];
+        number(&mut l);
+        assert_eq!(l[0].name, "Monitor 1");
+    }
+
+    #[test]
+    fn nomes_edid_so_leitura() {
+        // Só leitura (QueryDisplayConfig): nunca devolve nome genérico nem vazio.
+        let n = edid_names();
+        assert!(n.iter().all(|(dev, name)| dev.starts_with(r"\\.\DISPLAY") && !is_generic_name(name)));
     }
 
     #[test]

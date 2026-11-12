@@ -273,7 +273,7 @@ export function ActionEditor({ action, onChange }: { action: Action; onChange: (
 
       {action.type === "brightness" && (
         <>
-          <Field label="Ajuste" group hint="Vale para a tela do notebook e monitores externos com DDC/CI.">
+          <Field label="Ajuste" group hint="Vale para a tela do notebook e monitores com DDC/CI. Monitores sem DDC/CI (ex.: portáteis por USB-C) usam brilho por software: a Kira escurece a tela (não passa do brilho do próprio monitor).">
             <Segmented
               value={action.mode}
               options={[{ value: "up", label: "Aumentar 10%" }, { value: "down", label: "Diminuir 10%" }, { value: "set", label: "Definir valor" }]}

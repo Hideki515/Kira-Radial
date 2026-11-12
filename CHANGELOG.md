@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.20.0
+
+- **Brilho por software para monitores sem DDC/CI** (ex.: monitores portáteis como o Arzopa, por USB-C ou HDMI):
+  - Monitores que não aceitam controle de brilho agora aparecem nas fatias de brilho e no submenu automático, com "(por software)" no nome.
+  - A Kira põe uma camada escura sobre aquele monitor:
+    - não bloqueia o mouse nem pega o foco;
+    - não aparece em prints nem em compartilhamento de tela;
+    - só escurece: 100% é o brilho configurado no próprio monitor;
+    - o mínimo deixa a tela ~85% mais escura, ainda legível.
+  - O nível de cada monitor fica salvo e volta ao abrir a Kira. A camada acompanha mudanças de resolução e posição, e some se o monitor for desconectado (volta ao reconectar).
+  - Monitores com DDC/CI e a tela do notebook continuam com o controle de verdade.
+- **Nomes reais dos monitores:** no lugar de "Monitor PnP genérico", aparece o nome gravado no próprio monitor (ex.: "ARZOPA") no brilho, nos perfis por monitor e em "Identificar".
+
 ## 0.19.3
 
 - **Ícone encostado na borda da tela:** ao passar o mouse, o orbe aparecia cortado por uma linha reta.

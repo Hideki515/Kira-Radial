@@ -189,7 +189,7 @@ export const DYNAMIC_HINT: Record<DynamicKind, string> = {
   audioOutputs: "as saídas de áudio reconhecidas pelo Windows. A saída em uso aparece em verde; clique em outra para trocar.",
   windows: "as janelas abertas mais recentes, com o ícone de cada app. Clique numa para trazê-la para a frente.",
   powerPlans: "os planos de energia do Windows. O plano ativo aparece em verde; clique em outro para trocar.",
-  brightness: "níveis de brilho (10% a 100%) aplicados à tela escolhida abaixo — tela do notebook e monitores com DDC/CI. O nível mais próximo do atual aparece em verde.",
+  brightness: "níveis de brilho (10% a 100%) aplicados à tela escolhida abaixo — tela do notebook, monitores com DDC/CI e, nos outros (ex.: portáteis por USB-C), por software (escurece a tela). O nível mais próximo do atual aparece em verde.",
   radios: "o Wi-Fi e o Bluetooth do PC. Ligado aparece em verde; clique para ligar/desligar.",
   recentFiles: "os arquivos abertos recentemente no Windows (os mesmos de \"Recentes\" no Explorador). Clique para abrir.",
   clipboard: "os últimos textos copiados. Clique para colar no app que estava em uso. Precisa ligar o histórico em Configurações → Geral (fica só na memória).",

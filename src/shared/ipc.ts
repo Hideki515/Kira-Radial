@@ -191,7 +191,7 @@ export async function listRadios(): Promise<RadioInfo[]> {
 }
 
 export interface DisplayInfo {
-  /** "lcd" (notebook), "mon:<id permanente>" ou "ddc:N" (monitor externo com DDC/CI). */
+  /** "lcd" (notebook), "mon:<id permanente>" ou "ddc:N" (monitor externo com DDC/CI ou, com `software`, sem DDC/CI). */
   id: string;
   name: string;
   /** "\\.\DISPLAY2" (vazio = desconhecido). */
@@ -200,6 +200,8 @@ export interface DisplayInfo {
   number?: number;
   /** 0–100 */
   level: number;
+  /** Sem DDC/CI: brilho por software (camada escura da Kira; só escurece). */
+  software?: boolean;
 }
 
 export type BrowserFamily = "chrome" | "edge" | "brave" | "vivaldi" | "opera" | "firefox" | "other";

@@ -9,7 +9,7 @@ const MISSING = "__missing__";
 /** Rótulo de uma tela: "2. Monitor 2 (AOC2402) — 50%". */
 export function displayLabel(d: DisplayInfo): string {
   const num = d.number ? `${d.number}. ` : "";
-  return `${num}${d.name} — ${d.level}%`;
+  return `${num}${d.name}${d.software ? " (por software)" : ""} — ${d.level}%`;
 }
 
 export function BrightnessTargetField({
@@ -50,7 +50,7 @@ export function BrightnessTargetField({
     <Field
       group
       label="Tela"
-      hint="“Onde o menu abriu” ajusta o monitor em que você está. Funciona na tela do notebook e em monitores com DDC/CI."
+      hint="“Onde o menu abriu” ajusta o monitor em que você está. Funciona na tela do notebook, em monitores com DDC/CI e, nos demais, por software (a Kira escurece a tela)."
     >
       <div className="input-row">
         <select
