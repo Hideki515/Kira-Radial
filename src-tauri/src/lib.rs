@@ -12,6 +12,7 @@ mod config;
 mod foreground;
 mod icons;
 mod keycapture;
+mod lock;
 mod menu;
 mod monitors;
 mod nowplaying;
@@ -33,6 +34,7 @@ use tauri::menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{Manager, WindowEvent};
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
+use crate::lock::LockExt;
 
 /// Comandos do app. Na Kira de teste (feature `qa`) entram também os de automação;
 /// no build normal eles nem são compilados.
@@ -77,7 +79,7 @@ pub fn run() {
             if qa::ENABLED {
             } else if let Err(e) = menu::apply_hotkey(&handle, &cfg) {
                 eprintln!("[kira-radial] {e}");
-                *handle.state::<AppState>().hotkey_error.lock().unwrap() = Some(e);
+                *handle.state::<AppState>().hotkey_error.lock_ok() = Some(e);
                 // Sem atalho o app ainda é usável pela bandeja; abre as configurações para corrigir.
                 menu::open_settings(&handle);
             }

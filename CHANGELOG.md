@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.20.2
+
+Versão de robustez, sem mudanças visíveis.
+
+- **Um erro raro não derruba mais a Kira inteira.** As travas de dados compartilhados (config, área de transferência, atalho, captura de tecla etc.) agora se recuperam sozinhas. Antes, uma falha com uma delas presa fazia todas as operações seguintes falharem até reiniciar a Kira.
+- **Política de segurança de conteúdo (CSP)** no menu, nas Configurações e no ícone:
+  - as páginas só carregam scripts da própria Kira;
+  - imagens e sons só da própria Kira ou embutidos;
+  - nada de sites externos, formulários ou frames.
+  - Qualquer bloqueio aparece no log (Configurações → Diagnóstico).
+- **Testes de ponta a ponta novos (15 cenários):**
+  - o ícone encostado na borda mantém o hover e recebe o clique em toda a parte visível, nas quatro bordas;
+  - nenhuma janela teve algo bloqueado pela CSP, e ela está mesmo ativa.
+- Testes do registro de erros e do monitor de quadros (`perf.ts`).
+
 ## 0.20.1
 
 - **Removido o "brilho por software" da 0.20.0.** A Kira volta a ajustar só o brilho de verdade do aparelho: a tela do notebook e os monitores com DDC/CI. Monitores sem esse controle, como muitos portáteis ligados por USB-C, não aparecem na lista de brilho.

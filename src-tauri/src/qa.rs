@@ -48,6 +48,7 @@ pub fn set_visible_quiet(w: &WebviewWindow, visible: bool) {
 
 #[cfg(feature = "qa")]
 pub mod commands {
+    use crate::lock::LockExt;
     use crate::menu::{self, AppState};
     use serde::Serialize;
     use std::sync::atomic::Ordering;
@@ -87,7 +88,7 @@ pub mod commands {
     #[tauri::command]
     pub fn qa_state(app: AppHandle) -> QaState {
         let state = app.state::<AppState>();
-        let hotkey_registered = state.shortcut.lock().unwrap().is_some();
+        let hotkey_registered = state.shortcut.lock_ok().is_some();
         QaState {
             qa: true,
             version: app.package_info().version.to_string(),

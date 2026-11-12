@@ -11,6 +11,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, Once};
 use windows::core::w;
 use windows::Win32::Foundation::{HANDLE, HWND, LPARAM, LRESULT, WPARAM};
+use crate::lock::LockExt;
 
 pub const MAX_ITEMS: usize = 8;
 /// Textos maiores são guardados cortados neste tamanho (caracteres).
@@ -145,7 +146,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM)
     if msg == WM_CLIPBOARDUPDATE {
         if ENABLED.load(Ordering::SeqCst) {
             if let Some(t) = read_text() {
-                HISTORY.lock().unwrap().push(&t);
+                HISTORY.lock_ok().push(&t);
             }
         }
         return LRESULT(0);
@@ -187,7 +188,7 @@ pub fn set_enabled(on: bool) {
     if on {
         STARTED.call_once(start_listener);
     } else {
-        HISTORY.lock().unwrap().clear();
+        HISTORY.lock_ok().clear();
     }
 }
 
@@ -196,16 +197,16 @@ pub fn list() -> Vec<String> {
     if !ENABLED.load(Ordering::SeqCst) {
         return Vec::new();
     }
-    HISTORY.lock().unwrap().previews(60)
+    HISTORY.lock_ok().previews(60)
 }
 
 pub fn clear() {
-    HISTORY.lock().unwrap().clear();
+    HISTORY.lock_ok().clear();
 }
 
 /// Coloca o item `index` na área de transferência (o envio do Ctrl+V é feito por quem chama).
 pub fn put(index: usize) -> Result<(), String> {
-    let text = HISTORY.lock().unwrap().get(index).cloned().ok_or("item do histórico não existe mais")?;
+    let text = HISTORY.lock_ok().get(index).cloned().ok_or("item do histórico não existe mais")?;
     write_text(&text)
 }
 

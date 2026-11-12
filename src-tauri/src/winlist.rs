@@ -9,6 +9,7 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 use windows::Win32::Foundation::{HWND, LPARAM, WPARAM};
 use windows::Win32::UI::WindowsAndMessaging::HICON;
+use crate::lock::LockExt;
 
 /// Máximo de janelas no submenu (igual ao limite de subitens).
 pub const MAX_WINDOWS: usize = 8;
@@ -157,13 +158,13 @@ static ICON_CACHE: Mutex<Option<HashMap<String, Option<String>>>> = Mutex::new(N
 fn icon_for(hwnd: HWND, exe: Option<&str>) -> Option<String> {
     let key = exe.map(str::to_owned);
     if let Some(k) = &key {
-        if let Some(hit) = ICON_CACHE.lock().unwrap().get_or_insert_with(HashMap::new).get(k) {
+        if let Some(hit) = ICON_CACHE.lock_ok().get_or_insert_with(HashMap::new).get(k) {
             return hit.clone();
         }
     }
     let url = window_icon(hwnd).and_then(render_icon).and_then(|bgra| png_data_url(&bgra_to_rgba(&bgra), ICON_SIZE));
     if let Some(k) = key {
-        ICON_CACHE.lock().unwrap().get_or_insert_with(HashMap::new).insert(k, url.clone());
+        ICON_CACHE.lock_ok().get_or_insert_with(HashMap::new).insert(k, url.clone());
     }
     url
 }

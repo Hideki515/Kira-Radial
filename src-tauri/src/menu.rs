@@ -7,6 +7,7 @@ use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewWindow};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
+use crate::lock::LockExt;
 
 pub const RADIAL: &str = "radial";
 pub const SETTINGS: &str = "settings";
@@ -38,7 +39,7 @@ impl AppState {
     }
 
     pub fn config(&self) -> Config {
-        self.config.lock().unwrap().clone()
+        self.config.lock_ok().clone()
     }
 }
 
@@ -204,7 +205,7 @@ pub fn on_shortcut(app: &AppHandle, event: ShortcutState) {
     if state.paused.load(Ordering::SeqCst) {
         return;
     }
-    let mode = state.config.lock().unwrap().hotkey.mode;
+    let mode = state.config.lock_ok().hotkey.mode;
     let visible = state.visible.load(Ordering::SeqCst);
     let result = match (event, mode) {
         (ShortcutState::Pressed, HotkeyMode::Toggle) if visible => {
@@ -268,10 +269,10 @@ pub fn apply_hotkey(app: &AppHandle, cfg: &Config) -> Result<(), String> {
         return register_hotkey(app, &cfg.hotkey.accelerator);
     }
     let state = app.state::<AppState>();
-    if let Some(old) = state.shortcut.lock().unwrap().take() {
+    if let Some(old) = state.shortcut.lock_ok().take() {
         let _ = app.global_shortcut().unregister(old);
     }
-    *state.hotkey_error.lock().unwrap() = None;
+    *state.hotkey_error.lock_ok() = None;
     Ok(())
 }
 
@@ -281,7 +282,7 @@ pub fn register_hotkey(app: &AppHandle, accelerator: &str) -> Result<(), String>
     let state = app.state::<AppState>();
     let new = to_shortcut(accelerator)?;
     let gs = app.global_shortcut();
-    let mut current = state.shortcut.lock().unwrap();
+    let mut current = state.shortcut.lock_ok();
     if current.as_ref() == Some(&new) {
         return Ok(());
     }
@@ -297,7 +298,7 @@ pub fn register_hotkey(app: &AppHandle, accelerator: &str) -> Result<(), String>
             .map_err(|e| format!("não foi possível registrar {accelerator} (em uso por outro programa?): {e}"))?;
     }
     *current = Some(new);
-    *state.hotkey_error.lock().unwrap() = None;
+    *state.hotkey_error.lock_ok() = None;
     Ok(())
 }
 
@@ -306,7 +307,7 @@ pub fn register_hotkey(app: &AppHandle, accelerator: &str) -> Result<(), String>
 pub fn set_paused(app: &AppHandle, paused: bool) {
     let state = app.state::<AppState>();
     state.paused.store(paused, Ordering::SeqCst);
-    let current = *state.shortcut.lock().unwrap();
+    let current = *state.shortcut.lock_ok();
     if let Some(sc) = current {
         let gs = app.global_shortcut();
         if paused {

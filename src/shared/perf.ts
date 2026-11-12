@@ -22,6 +22,14 @@ export function installErrorLogging(source: string): void {
   installed = true;
   window.addEventListener("error", (e) => perfLog(`erro: ${e.message} (${e.filename?.split("/").pop() ?? "?"}:${e.lineno})`, "error", source));
   window.addEventListener("unhandledrejection", (e) => perfLog(`promise rejeitada: ${String(e.reason)}`, "error", source));
+  // Política de segurança (CSP do tauri.conf.json) bloqueou algo: aparece no Diagnóstico.
+  window.addEventListener("securitypolicyviolation", (e) => perfLog(describeCspViolation(e), "error", source));
+}
+
+/** "CSP bloqueou img-src: https://x.com/a.png (index.js:12)". */
+export function describeCspViolation(e: Pick<SecurityPolicyViolationEvent, "effectiveDirective" | "blockedURI" | "sourceFile" | "lineNumber">): string {
+  const where = e.sourceFile ? ` (${e.sourceFile.split("/").pop()}:${e.lineNumber})` : "";
+  return `CSP bloqueou ${e.effectiveDirective}: ${e.blockedURI || "inline"}${where}`;
 }
 
 let observing = false;

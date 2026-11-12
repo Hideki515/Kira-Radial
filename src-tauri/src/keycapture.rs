@@ -23,6 +23,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
     CallNextHookEx, GetMessageW, PostThreadMessageW, SetWindowsHookExW, UnhookWindowsHookEx, HC_ACTION,
     KBDLLHOOKSTRUCT, MSG, WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP, WM_QUIT, WM_SYSKEYDOWN, WM_SYSKEYUP,
 };
+use crate::lock::LockExt;
 
 const CTRL: u8 = 1;
 const ALT: u8 = 2;
@@ -151,7 +152,7 @@ pub fn start(app: AppHandle) -> Result<(), String> {
                 return;
             }
         };
-        *STATE.lock().unwrap() = Some(Capture {
+        *STATE.lock_ok() = Some(Capture {
             app,
             session,
             thread_id: GetCurrentThreadId(),
@@ -164,7 +165,7 @@ pub fn start(app: AppHandle) -> Result<(), String> {
         let mut msg = MSG::default();
         while GetMessageW(&mut msg, None, 0, 0).as_bool() {}
         let _ = UnhookWindowsHookEx(hook);
-        let mut guard = STATE.lock().unwrap();
+        let mut guard = STATE.lock_ok();
         if guard.as_ref().map(|c| c.session) == Some(session) {
             *guard = None;
         }
@@ -174,7 +175,7 @@ pub fn start(app: AppHandle) -> Result<(), String> {
     // Segurança: nunca deixar o teclado capturado por muito tempo.
     std::thread::spawn(move || {
         std::thread::sleep(TIMEOUT);
-        let mut guard = STATE.lock().unwrap();
+        let mut guard = STATE.lock_ok();
         if let Some(c) = guard.as_mut() {
             if c.session == session && !c.done {
                 c.held = 0;
@@ -187,7 +188,7 @@ pub fn start(app: AppHandle) -> Result<(), String> {
 
 /// Para a gravação atual (se houver) e remove o hook.
 pub fn stop() {
-    if let Some(c) = STATE.lock().unwrap().take() {
+    if let Some(c) = STATE.lock_ok().take() {
         unsafe {
             let _ = PostThreadMessageW(c.thread_id, WM_QUIT, WPARAM(0), LPARAM(0));
         }

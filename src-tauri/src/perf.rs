@@ -8,6 +8,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
+use crate::lock::LockExt;
 
 pub const MAX_BYTES: u64 = 1_000_000;
 /// kira.log + kira.log.1 + kira.log.2
@@ -261,11 +262,11 @@ pub fn open_stats_of(list: &[f64]) -> OpenStats {
 /// O menu informa quanto levou para aparecer (só na memória; some ao fechar a Kira).
 #[tauri::command]
 pub fn perf_open_sample(ms: f64) {
-    push_sample(&mut OPEN_TIMES.lock().unwrap(), ms);
+    push_sample(&mut OPEN_TIMES.lock_ok(), ms);
 }
 
 pub fn open_stats() -> OpenStats {
-    open_stats_of(&OPEN_TIMES.lock().unwrap())
+    open_stats_of(&OPEN_TIMES.lock_ok())
 }
 
 #[derive(Serialize)]
@@ -338,8 +339,8 @@ pub fn diagnostics_of(app: &tauri::AppHandle) -> Diagnostics {
     let state = app.state::<crate::menu::AppState>();
     let cfg = state.config();
     let (mons, _) = crate::positioning::monitors();
-    let hotkey_registered = state.shortcut.lock().unwrap().is_some();
-    let hotkey_error = state.hotkey_error.lock().unwrap().clone();
+    let hotkey_registered = state.shortcut.lock_ok().is_some();
+    let hotkey_error = state.hotkey_error.lock_ok().clone();
     Diagnostics {
         version: app.package_info().version.to_string(),
         webview: tauri::webview_version().unwrap_or_else(|e| format!("indisponível ({e})")),

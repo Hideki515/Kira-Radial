@@ -4,6 +4,7 @@
 
 use serde::Serialize;
 use std::sync::Mutex;
+use crate::lock::LockExt;
 
 #[derive(Serialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -69,7 +70,7 @@ pub fn current() -> Option<NowPlaying> {
     let app = session.SourceAppUserModelId().map(|s| app_name(&s.to_string())).unwrap_or_default();
     let key = format!("{title}\u{1f}{artist}");
     let thumb = {
-        let mut cache = THUMB_CACHE.lock().unwrap();
+        let mut cache = THUMB_CACHE.lock_ok();
         match cache.as_ref() {
             Some((k, t)) if *k == key => t.clone(),
             _ => {

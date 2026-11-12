@@ -254,4 +254,84 @@ describe("Kira de teste — ponta a ponta", () => {
     await save();
     expect(qaConfig().appearance.theme).toBe("glass");
   });
+
+  it("9. ícone encostado na borda: hover estável e clique em toda a parte visível (CSS real, eventos só na página)", async function () {
+    this.timeout(180000);
+    await toWindow("settings.html"); // a página das Configurações carrega o orb.css (pré-visualização do ícone)
+    const make = (edge) =>
+      browser.execute((edge) => {
+        document.getElementById("e2e-stage")?.remove();
+        const st = document.createElement("div");
+        st.className = `orb-stage anim-off${edge ? ` dock-${edge}` : ""}`;
+        st.id = "e2e-stage";
+        // Janela do ícone: 1,5 × o orbe (144 px para 96 px), como no app.
+        st.style.cssText = "position:fixed;left:0;top:0;width:144px;height:144px;z-index:99999;--orb-size:96px;--orb-idle:1;--orb-accent:#4ade9b";
+        const b = document.createElement("button");
+        b.className = "orb";
+        b.id = "e2e-orb";
+        window.__e2eUp = 0;
+        b.addEventListener("pointerup", () => window.__e2eUp++);
+        st.appendChild(b);
+        document.body.appendChild(st);
+      }, edge);
+    const hovered = () => browser.execute(() => document.getElementById("e2e-orb").matches(":hover"));
+    // Pontos dentro da metade visível em repouso, inclusive os "cantos" e a beirada da tela.
+    const POINTS = {
+      right: [[143, 40], [130, 30], [135, 100], [130, 72]],
+      left: [[0, 40], [13, 30], [8, 100], [14, 72]],
+      bottom: [[40, 143], [30, 130], [100, 135], [72, 130]],
+      top: [[40, 0], [30, 13], [100, 8], [72, 14]],
+    };
+    const problems = [];
+    for (const [edge, points] of Object.entries(POINTS)) {
+      await make(edge);
+      for (const [x, y] of points) {
+        await browser.action("pointer").move({ x: 400, y: 400, origin: "viewport" }).pause(300).perform();
+        await browser.action("pointer").move({ x, y, origin: "viewport" }).pause(450).perform(); // fim da transição (220 ms)
+        const states = [];
+        for (let i = 0; i < 4; i++) {
+          // tremida de 1 px para dentro da janela: o orbe não pode sair de baixo do cursor
+          const d = i % 2;
+          const horiz = edge === "left" || edge === "right";
+          const nx = horiz ? (x >= 72 ? x - d : x + d) : x;
+          const ny = horiz ? y : y >= 72 ? y - d : y + d;
+          await browser.action("pointer").move({ x: nx, y: ny, origin: "viewport" }).pause(300).perform();
+          states.push(await hovered());
+        }
+        await browser.action("pointer").move({ x, y, origin: "viewport" }).down().pause(80).up().pause(200).perform();
+        const ups = await browser.execute(() => window.__e2eUp);
+        await browser.execute(() => (window.__e2eUp = 0));
+        if (!states.every(Boolean) || ups !== 1) problems.push(`${edge} (${x},${y}): hover=${states.join("/")} cliques=${ups}`);
+      }
+    }
+    // Ícone solto: sem a área de toque quadrada e sem deslocamento.
+    await make(null);
+    const loose = await browser.execute(() => {
+      const o = document.getElementById("e2e-orb");
+      return { tf: getComputedStyle(o).transform, before: getComputedStyle(o, "::before").content };
+    });
+    await browser.execute(() => document.getElementById("e2e-stage")?.remove());
+    expect(problems).toEqual([]);
+    expect(loose.tf).toBe("none");
+    expect(loose.before).toBe("none");
+  });
+
+  it("10. a política de segurança (CSP) não bloqueou nada em nenhuma janela", async () => {
+    const log = (await invoke("read_log", { lines: 2000 })).join("\n");
+    expect(log).not.toContain("CSP bloqueou");
+    expect(log).not.toMatch(/ ERROR /);
+    // A CSP está mesmo ativa: imagem de outro site é barrada antes de qualquer requisição.
+    const blocked = await browser.execute(
+      () =>
+        new Promise((done) => {
+          const t = setTimeout(() => done(null), 3000);
+          document.addEventListener("securitypolicyviolation", (e) => (clearTimeout(t), done(e.effectiveDirective)), { once: true });
+          const img = document.createElement("img");
+          img.src = "https://example.invalid/kira-csp-check.png";
+          document.body.appendChild(img);
+          img.remove();
+        }),
+    );
+    expect(blocked).toBe("img-src");
+  });
 });

@@ -8,6 +8,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, WebviewWindow};
+use crate::lock::LockExt;
 
 pub const ORB: &str = "orb";
 
@@ -79,7 +80,7 @@ pub fn apply(app: &AppHandle, cfg: &Config) {
     let (x, y) = positioning::orb_position(saved, side, &monitors, primary_work, orb.docked);
     // Movimento feito pelo próprio app: não deve virar "posição escolhida pelo usuário"
     // (senão o canto padrão seria gravado como posição fixa).
-    *PLACED.lock().unwrap() = Some((x, y));
+    *PLACED.lock_ok() = Some((x, y));
     let _ = win.set_position(PhysicalPosition::new(x, y));
     crate::qa::keep_offscreen(&win);
     set_visible(&win, true);
@@ -126,8 +127,8 @@ pub fn on_moved(app: &AppHandle, x: i32, y: i32) {
             return;
         }
         let state = app.state::<AppState>();
-        let mut cfg = state.config.lock().unwrap();
-        let placed = *PLACED.lock().unwrap();
+        let mut cfg = state.config.lock_ok();
+        let placed = *PLACED.lock_ok();
         if !cfg.launcher.mode.wants_orb() || !should_save((x, y), placed, (cfg.launcher.orb.x, cfg.launcher.orb.y)) {
             return;
         }
@@ -147,7 +148,7 @@ pub fn on_moved(app: &AppHandle, x: i32, y: i32) {
             eprintln!("[kira-radial] falha ao salvar posição do ícone: {e}");
         }
         if (fx, fy) != (x, y) {
-            *PLACED.lock().unwrap() = Some((fx, fy));
+            *PLACED.lock_ok() = Some((fx, fy));
             if let Some(w) = window(&app) {
                 let _ = w.set_position(PhysicalPosition::new(fx, fy));
             }
@@ -162,7 +163,7 @@ pub fn on_moved(app: &AppHandle, x: i32, y: i32) {
 pub fn reset_position(app: &AppHandle) {
     let cfg = {
         let state = app.state::<AppState>();
-        let mut cfg = state.config.lock().unwrap();
+        let mut cfg = state.config.lock_ok();
         cfg.launcher.orb.x = None;
         cfg.launcher.orb.y = None;
         // Volta ao canto = sai do encaixe (senão o front manteria a classe dock-* e o
@@ -299,7 +300,7 @@ pub fn context_menu(app: &AppHandle) -> Result<(), String> {
 pub fn set_hidden(app: &AppHandle, hidden: bool) {
     let cfg = {
         let state = app.state::<AppState>();
-        let mut cfg = state.config.lock().unwrap();
+        let mut cfg = state.config.lock_ok();
         cfg.launcher.orb.hidden = hidden;
         if let Err(e) = config::save(&cfg) {
             eprintln!("[kira-radial] falha ao salvar ícone escondido: {e}");

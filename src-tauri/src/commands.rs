@@ -8,6 +8,7 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_autostart::ManagerExt;
+use crate::lock::LockExt;
 
 #[tauri::command]
 pub fn get_config(state: State<'_, AppState>) -> Config {
@@ -35,7 +36,7 @@ pub fn save_config(app: AppHandle, state: State<'_, AppState>, mut config: Confi
     }
     config::save(&config)?;
     crate::icons::prune(&config);
-    *state.config.lock().unwrap() = config.clone();
+    *state.config.lock_ok() = config.clone();
     crate::orb::apply(&app, &config);
     let _ = app.emit("config:changed", config);
     Ok(())
@@ -210,7 +211,7 @@ pub async fn run_action(app: AppHandle, mut action: Action) -> Result<(), String
     }
     let (close, prev) = {
         let state = tauri::Manager::state::<AppState>(&app);
-        let cfg = state.config.lock().unwrap();
+        let cfg = state.config.lock_ok();
         // Site sem navegador próprio: usa o navegador geral (Configurações → Geral).
         // Endereço que o navegador não aceitaria como argumento único (espaço, aspas, muito longo)
         // continua indo pelo padrão do Windows, como antes do navegador geral existir.
@@ -280,5 +281,5 @@ pub async fn list_audio_outputs() -> Result<Vec<crate::audio::AudioDevice>, Stri
 /// Erro de registro do atalho global, se houver (ex.: combinação já usada por outro app).
 #[tauri::command]
 pub fn hotkey_error(state: State<'_, AppState>) -> Option<String> {
-    state.hotkey_error.lock().unwrap().clone()
+    state.hotkey_error.lock_ok().clone()
 }
