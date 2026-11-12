@@ -1,6 +1,6 @@
 //! Brilho das telas: painel interno (notebook) pelo IOCTL de vídeo "\\.\LCD" e monitores
-//! externos por DDC/CI (dxva2). Quem não responde a nenhum dos dois (ex.: monitores
-//! portáteis por USB-C) ganha "brilho por software": uma camada escura (veja `dimmer.rs`).
+//! externos por DDC/CI (dxva2). Monitores sem suporte (ex.: muitos portáteis por USB-C)
+//! não aparecem: só ajustamos o brilho de verdade do aparelho.
 //! As leituras DDC/CI podem levar ~50–100 ms por monitor: chame numa thread bloqueante.
 
 use serde::Serialize;
@@ -22,8 +22,6 @@ pub struct Display {
     /// Posição na enumeração (ids antigos "ddc:N").
     #[serde(skip)]
     pub legacy: usize,
-    /// Sem DDC/CI: o brilho é uma camada escura da Kira (só escurece).
-    pub software: bool,
 }
 
 /// Telas que um alvo escolhe:
@@ -31,7 +29,7 @@ pub struct Display {
 /// "lcd"; "ddc:N" (configs antigas); "mon:..." pelo id ou, se sumiu, pelo nome (`name`).
 pub fn resolve<'a>(target: &str, name: Option<&str>, list: &'a [Display], cursor_device: &str) -> Result<Vec<&'a Display>, String> {
     if list.is_empty() {
-        return Err("nenhuma tela com brilho ajustável".into());
+        return Err("nenhuma tela com brilho ajustável (o monitor pode não suportar DDC/CI)".into());
     }
     let t = target.trim();
     let found: Vec<&Display> = match t {
@@ -304,32 +302,15 @@ pub fn list() -> Vec<Display> {
             device: p.device.clone(),
             number,
             legacy: p.legacy,
-            software: false,
         })
     });
     let mut out = Vec::new();
     if let Some(level) = lcd_level() {
         let device = internal_device().unwrap_or_else(|| guess_lcd_device(&monitors, &ddc));
         let number = info(&device).map(|m| m.number).unwrap_or(0);
-        out.push(Display { id: "lcd".into(), name: "Tela do notebook".into(), level, device, number, legacy: 0, software: false });
+        out.push(Display { id: "lcd".into(), name: "Tela do notebook".into(), level, device, number, legacy: 0 });
     }
     out.extend(ddc);
-    // Quem respondeu como hardware não usa camada (tira a que sobrou de uma falha passageira).
-    let hardware: Vec<String> = out
-        .iter()
-        .map(|d| if d.id == "lcd" { crate::monitors::interface_id(&d.device, 0).map(|s| format!("mon:{s}")).unwrap_or_default() } else { d.id.clone() })
-        .filter(|id| id.starts_with("mon:"))
-        .collect();
-    crate::dimmer::forget_hardware(&hardware);
-    // Monitores que não responderam a nada: brilho por software (camada escura).
-    for m in &monitors {
-        if out.iter().any(|d| d.device.eq_ignore_ascii_case(&m.device)) {
-            continue;
-        }
-        let Some(id) = crate::monitors::interface_id(&m.device, 0).map(|s| format!("mon:{s}")) else { continue };
-        let name = display_name("", Some(&m.name), m.number, &id);
-        out.push(Display { level: crate::dimmer::level(&id), id, name, device: m.device.clone(), number: m.number, legacy: usize::MAX, software: true });
-    }
     out.sort_by_key(|d| (d.number == 0, d.number));
     out
 }
@@ -339,9 +320,6 @@ fn set_one(d: &Display, pct: u32) -> Result<(), String> {
     use windows::Win32::Devices::Display::SetMonitorBrightness;
     if d.id == "lcd" {
         return lcd_set(pct);
-    }
-    if d.software {
-        return crate::dimmer::set(&d.id, pct);
     }
     let done = with_physical_monitors(|p, h| {
         if p.id != d.id {
@@ -414,7 +392,7 @@ mod tests {
     }
 
     fn d(id: &str, name: &str, device: &str, legacy: usize) -> Display {
-        Display { id: id.into(), name: name.into(), level: 50, device: device.into(), number: 0, legacy, software: false }
+        Display { id: id.into(), name: name.into(), level: 50, device: device.into(), number: 0, legacy }
     }
 
     fn ids(v: Result<Vec<&Display>, String>) -> Vec<String> {

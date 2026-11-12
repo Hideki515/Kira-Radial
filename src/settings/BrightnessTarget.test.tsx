@@ -7,7 +7,6 @@ import type { Action, MenuItem, Profile } from "../shared/types";
 import { validateAction, validateConfig } from "../shared/validate";
 import { cloneConfig, defaultConfig } from "../shared/defaults";
 import { ActionEditor } from "./ActionEditor";
-import { displayLabel } from "./BrightnessTarget";
 import { ItemsPage, type Selection } from "./pages/ItemsPage";
 
 afterEach(cleanup);
@@ -18,15 +17,6 @@ const D: DisplayInfo[] = [
 ];
 
 describe("brilho por tela (lógica)", () => {
-  it("monitor sem DDC/CI aparece como 'por software' na lista de telas", () => {
-    const arzopa: DisplayInfo = { id: "mon:GWD", name: "ARZOPA", level: 60, device: "\\.\DISPLAY2", number: 2, software: true };
-    expect(displayLabel(arzopa)).toBe("2. ARZOPA (por software) — 60%");
-    expect(displayLabel(D[1])).toBe("2. Monitor 2 (AOC2402) — 20%");
-    const kids = brightnessChildren("b", [D[0], arzopa], "mon:GWD", "ARZOPA");
-    expect(kids.find((k) => k.color === AUDIO_CURRENT_COLOR)!.label).toBe("50%");
-    expect(kids[0].action).toMatchObject({ target: "mon:GWD", targetName: "ARZOPA" });
-  });
-
   it("submenu: destaca o nível da tela escolhida e passa o alvo para a ação", () => {
     const kids = brightnessChildren("b", D, "mon:AOC", "Monitor 2 (AOC2402)");
     expect(kids.find((k) => k.color === AUDIO_CURRENT_COLOR)!.label).toBe("25%");

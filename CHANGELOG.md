@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.20.1
+
+- **Removido o "brilho por software" da 0.20.0.** A Kira volta a ajustar só o brilho de verdade do aparelho: a tela do notebook e os monitores com DDC/CI. Monitores sem esse controle, como muitos portáteis ligados por USB-C, não aparecem na lista de brilho.
+- Continua: o nome real de cada monitor (ex.: "ARZOPA") no lugar de "Monitor PnP genérico", no brilho, nos perfis por monitor e em "Identificar".
+
 ## 0.20.0
 
 - **Brilho por software para monitores sem DDC/CI** (ex.: monitores portáteis como o Arzopa, por USB-C ou HDMI):
