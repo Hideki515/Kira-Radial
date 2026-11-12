@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.19.3
+
+- **Ícone encostado na borda da tela:** ao passar o mouse, o orbe aparecia cortado por uma linha reta.
+  - Causa: a janela do ícone ficava metade para fora da tela, e o orbe saía dela ao deslizar para dentro.
+  - Agora a janela fica inteira na tela, encostada na borda, e o orbe desliza dentro dela: em repouso continua com metade escondida e, ao passar o mouse, aparece inteiro, encostado na borda (não foge do cursor nem pisca com o mouse na beirada da tela).
+  - O encaixe ficou mais tolerante: um arrasto curto não solta o ícone da borda, e ele continua encaixado em qualquer tamanho ou escala de tela.
+  - Quem já tinha o ícone encostado é ajustado sozinho ao abrir a Kira.
+
 ## 0.19.2
 
 Versão de manutenção, sem mudanças visíveis no app.

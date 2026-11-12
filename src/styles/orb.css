@@ -127,11 +127,29 @@
   .orb-spin, .orb-glow, .orb-core { animation: none; }
 }
 
-/* --- encaixado na borda: metade fora da tela; desliza para dentro ao passar o mouse --- */
-.dock-left .orb:hover   { transform: translateX(calc(var(--orb-size) * 0.5)); opacity: 1; }
-.dock-right .orb:hover  { transform: translateX(calc(var(--orb-size) * -0.5)); opacity: 1; }
-.dock-top .orb:hover    { transform: translateY(calc(var(--orb-size) * 0.5)); opacity: 1; }
-.dock-bottom .orb:hover { transform: translateY(calc(var(--orb-size) * -0.5)); opacity: 1; }
+/* --- encaixado na borda: a janela (1,5 × orbe) fica inteira dentro da tela, encostada na
+   borda. Em repouso o orbe é deslocado até a borda (metade escondida pela beirada da janela =
+   beirada da tela). Ao passar o mouse ele aparece inteiro, mas continua ENCOSTADO na borda:
+   assim nunca sai de baixo do cursor (centralizar fazia piscar com o mouse na beirada) e
+   sobra 1/4 do orbe do lado de dentro para os anéis e o brilho. --- */
+.dock-left .orb   { transform: translateX(calc(var(--orb-size) * -0.75)); }
+.dock-right .orb  { transform: translateX(calc(var(--orb-size) * 0.75)); }
+.dock-top .orb    { transform: translateY(calc(var(--orb-size) * -0.75)); }
+.dock-bottom .orb { transform: translateY(calc(var(--orb-size) * 0.75)); }
+.orb-stage[class*="dock-"] .orb:hover { opacity: 1; }
+.dock-left .orb:hover   { transform: translateX(calc(var(--orb-size) * -0.25)); }
+.dock-right .orb:hover  { transform: translateX(calc(var(--orb-size) * 0.25)); }
+.dock-top .orb:hover    { transform: translateY(calc(var(--orb-size) * -0.25)); }
+.dock-bottom .orb:hover { transform: translateY(calc(var(--orb-size) * 0.25)); }
+/* Área de toque quadrada (o botão é redondo): a caixa do orbe com hover contém toda a parte
+   visível em repouso, então o cursor nunca "cai fora" ao ele deslizar (sem isso, perto dos
+   cantos da parte visível o orbe saía de baixo do mouse, piscava e o clique se perdia). */
+.orb-stage[class*="dock-"] .orb::before { content: ""; position: absolute; inset: 0; }
+/* Encaixado, o clique não encolhe (scale): a caixa encolhida deixaria a beirada sem toque. */
+.dock-left .orb:hover:active   { transform: translateX(calc(var(--orb-size) * -0.25)); }
+.dock-right .orb:hover:active  { transform: translateX(calc(var(--orb-size) * 0.25)); }
+.dock-top .orb:hover:active    { transform: translateY(calc(var(--orb-size) * -0.25)); }
+.dock-bottom .orb:hover:active { transform: translateY(calc(var(--orb-size) * 0.25)); }
 .orb-stage[class*="dock-"] .orb { transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease; }
 
 /* --- CPU alta: núcleo avermelhado, pulso rápido --- */

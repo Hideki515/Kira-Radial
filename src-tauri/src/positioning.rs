@@ -74,7 +74,7 @@ pub fn place(cursor: (i32, i32), work: Rect, dpi_scale: f64, ui_scale: f64, cent
 /// Margem do ícone flutuante até as bordas da área de trabalho na posição padrão.
 pub const ORB_MARGIN: i32 = 24;
 
-/// Borda de monitor onde o ícone fica encaixado (metade para fora da tela).
+/// Borda de monitor onde o ícone fica encaixado (orbe com metade escondida na borda).
 #[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum Edge {
@@ -92,11 +92,15 @@ fn monitor_at(monitors: &[Rect], x: i32, y: i32) -> Option<Rect> {
 }
 
 /// Ao soltar o ícone (janela de lado `side` em `pos`): encaixa na borda do monitor se o
-/// orbe (1/1,5 da janela, centralizado) estiver a até `DOCK_DISTANCE` dela ou passando dela.
+/// orbe (1/1,5 da janela, centralizado) estiver a até `DOCK_DISTANCE` + `side`/6 dela ou passando dela.
 pub fn orb_dock(pos: (i32, i32), side: i32, monitors: &[Rect]) -> Option<Edge> {
     let (cx, cy) = (pos.0 + side / 2, pos.1 + side / 2);
     let m = monitor_at(monitors, cx, cy)?;
     let r = side / 3; // raio do orbe = (side / 1,5) / 2
+    // Distância medida da borda do ORBE; a janela tem side/6 de folga em volta dele. Encaixada,
+    // a janela encosta na borda (folga = side/6), então a tolerância soma essa margem: o ícone
+    // continua encaixado em qualquer tamanho/DPI e um arrasto curto não o desencaixa.
+    let limit = DOCK_DISTANCE + side / 6;
     let gaps = [
         (Edge::Left, cx - r - m.left),
         (Edge::Right, m.right - (cx + r)),
@@ -112,7 +116,7 @@ pub fn orb_dock(pos: (i32, i32), side: i32, monitors: &[Rect]) -> Option<Edge> {
         Edge::Bottom => (cx, m.bottom),
     };
     gaps.iter()
-        .filter(|(e, g)| *g <= DOCK_DISTANCE && monitor_at(monitors, outside(*e).0, outside(*e).1).is_none())
+        .filter(|(e, g)| *g <= limit && monitor_at(monitors, outside(*e).0, outside(*e).1).is_none())
         .min_by_key(|(_, g)| *g)
         .map(|(e, _)| *e)
 }
@@ -122,15 +126,17 @@ pub fn monitor_of(pos: (i32, i32), side: i32, monitors: &[Rect]) -> Option<Rect>
     monitor_at(monitors, pos.0 + side / 2, pos.1 + side / 2)
 }
 
-/// Posição encaixada: centro do orbe exatamente sobre a borda; o outro eixo cabe no monitor.
+/// Posição encaixada: a janela fica INTEIRA dentro do monitor, encostada na borda; o outro
+/// eixo cabe no monitor. O front desloca o orbe até a borda (metade escondida) e, ao passar
+/// o mouse, o traz de volta ao centro da janela — sem ser cortado pela beirada da janela.
+/// (Antes a janela ficava metade para fora e o orbe era cortado ao deslizar para dentro.)
 pub fn docked_position(pos: (i32, i32), side: i32, edge: Edge, m: Rect) -> (i32, i32) {
-    let half = side / 2;
     let fit = |v: i32, lo: i32, hi: i32| if hi - lo <= side { lo } else { v.clamp(lo, hi - side) };
     match edge {
-        Edge::Left => (m.left - half, fit(pos.1, m.top, m.bottom)),
-        Edge::Right => (m.right - half, fit(pos.1, m.top, m.bottom)),
-        Edge::Top => (fit(pos.0, m.left, m.right), m.top - half),
-        Edge::Bottom => (fit(pos.0, m.left, m.right), m.bottom - half),
+        Edge::Left => (m.left, fit(pos.1, m.top, m.bottom)),
+        Edge::Right => (m.right - side, fit(pos.1, m.top, m.bottom)),
+        Edge::Top => (fit(pos.0, m.left, m.right), m.top),
+        Edge::Bottom => (fit(pos.0, m.left, m.right), m.bottom - side),
     }
 }
 
@@ -140,7 +146,8 @@ pub fn docked_position(pos: (i32, i32), side: i32, edge: Edge, m: Rect) -> (i32,
 /// resolução menor), volta ao canto inferior direito da área de trabalho principal.
 pub fn orb_position(saved: Option<(i32, i32)>, side: i32, monitors: &[Rect], primary_work: Rect, docked: Option<Edge>) -> (i32, i32) {
     if let (Some((x, y)), Some(edge)) = (saved, docked) {
-        // Encaixado: o centro está sobre a borda; procura o monitor 1 px para dentro.
+        // Encaixado: a janela encosta na borda por dentro (configs antigas: centro sobre a
+        // borda); procura o monitor 1 px para dentro do centro.
         let (cx, cy) = (x + side / 2, y + side / 2);
         let (ix, iy) = match edge {
             Edge::Left => (cx + 1, cy),
@@ -311,17 +318,42 @@ mod tests {
     }
 
     #[test]
-    fn posicao_encaixada_fica_meio_para_fora_e_sobrevive_ao_reaplicar() {
+    fn posicao_encaixada_fica_dentro_da_tela_e_sobrevive_ao_reaplicar() {
         let m = MONS[0];
         let p = docked_position((-10, 400), 144, Edge::Left, m);
-        assert_eq!(p, (-72, 400));
+        assert_eq!(p, (0, 400));
         assert_eq!(orb_position(Some(p), 144, &MONS, WORK, Some(Edge::Left)), p);
         let r = docked_position((1900, 2000), 144, Edge::Right, m);
-        assert_eq!(r, (1920 - 72, 1080 - 144));
+        assert_eq!(r, (1920 - 144, 1080 - 144));
         assert_eq!(orb_position(Some(r), 144, &MONS, WORK, Some(Edge::Right)), r);
+        assert_eq!(docked_position((800, 5), 144, Edge::Top, m), (800, 0));
+        assert_eq!(docked_position((800, 1000), 144, Edge::Bottom, m), (800, 1080 - 144));
         // Monitor sumiu: volta ao canto.
         let gone = orb_position(Some((3000 - 72, 300)), 144, &[m], WORK, Some(Edge::Left));
         assert_eq!(gone, (1920 - 144 - ORB_MARGIN, 1032 - 144 - ORB_MARGIN));
+    }
+
+    #[test]
+    fn posicao_encaixada_antiga_meio_para_fora_e_migrada() {
+        // Configs até a 0.19.2 guardavam a janela metade para fora da tela.
+        let m = MONS[0];
+        assert_eq!(orb_position(Some((1920 - 72, 478)), 144, &[m], WORK, Some(Edge::Right)), (1920 - 144, 478));
+        assert_eq!(orb_position(Some((-72, 478)), 144, &MONS, WORK, Some(Edge::Left)), (0, 478));
+        assert_eq!(orb_position(Some((600, 1080 - 72)), 144, &MONS, WORK, Some(Edge::Bottom)), (600, 1080 - 144));
+    }
+
+    #[test]
+    fn encaixado_continua_encaixado_em_qualquer_tamanho_e_arrasto_curto_nao_solta() {
+        let m = MONS[0];
+        for side in [84, 144, 150, 180, 240] {
+            for e in [Edge::Left, Edge::Right, Edge::Top, Edge::Bottom] {
+                let p = docked_position((600, 400), side, e, m);
+                assert_eq!(orb_dock(p, side, &[m]), Some(e), "lado {side}, borda {e:?}");
+            }
+        }
+        // Arrastar 20 px para dentro ainda encaixa; 60 px solta.
+        assert_eq!(orb_dock((1920 - 144 - 20, 400), 144, &[m]), Some(Edge::Right));
+        assert_eq!(orb_dock((1920 - 144 - 60, 400), 144, &[m]), None);
     }
 
     #[test]
@@ -349,5 +381,23 @@ mod dock_edge_qa_tests {
         assert_eq!(orb_dock((1888, 1078), 144, &mons), Some(Edge::Left));
         // Acima do monitor 1 (y = -100): também borda real.
         assert_eq!(orb_dock((1888, -172), 144, &mons), Some(Edge::Left));
+    }
+}
+
+#[cfg(test)]
+mod dock_inside_qa_tests {
+    use super::*;
+
+    // QA (v0.19.3): a posição encaixada (janela inteira dentro da tela) com o tamanho padrão
+    // (lado 144) continua sendo reconhecida como encaixada por `orb_dock` em todas as bordas,
+    // e a janela nunca sai do monitor.
+    #[test]
+    fn posicao_encaixada_padrao_continua_encaixada_e_dentro_do_monitor() {
+        let m = Rect { left: 0, top: 0, right: 1920, bottom: 1080 };
+        for (edge, pos) in [(Edge::Left, (5, 400)), (Edge::Right, (1800, 400)), (Edge::Top, (800, 3)), (Edge::Bottom, (800, 950))] {
+            let p = docked_position(pos, 144, edge, m);
+            assert!(p.0 >= m.left && p.0 + 144 <= m.right && p.1 >= m.top && p.1 + 144 <= m.bottom, "{edge:?} {p:?}");
+            assert_eq!(orb_dock(p, 144, &[m]), Some(edge), "{edge:?} {p:?}");
+        }
     }
 }

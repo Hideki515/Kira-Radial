@@ -131,7 +131,7 @@ pub fn on_moved(app: &AppHandle, x: i32, y: i32) {
         if !cfg.launcher.mode.wants_orb() || !should_save((x, y), placed, (cfg.launcher.orb.x, cfg.launcher.orb.y)) {
             return;
         }
-        // Solto perto de uma borda: encaixa (metade para fora). Longe: solta do encaixe.
+        // Solto perto de uma borda: encaixa (janela encostada na borda, orbe metade escondido). Longe: solta do encaixe.
         let side = window(&app).and_then(|w| w.outer_size().ok()).map(|s| s.width as i32).unwrap_or(144);
         let (monitors, _) = positioning::monitors();
         let edge = positioning::orb_dock((x, y), side, &monitors);
