@@ -70,9 +70,9 @@ export function SettingsApp() {
   const errors = useMemo(() => (draft ? validateConfig(draft) : []), [draft]);
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(saved), [draft, saved]);
 
-  // Ctrl+S salva.
+  // Botão Salvar e Ctrl+S: só com mudança, sem erro e sem outro salvamento em andamento.
   const save = useCallback(async () => {
-    if (!draft || errors.length || saving) return;
+    if (!draft || !dirty || errors.length || saving) return;
     setSaving(true);
     try {
       await saveConfig(draft);
@@ -84,7 +84,7 @@ export function SettingsApp() {
     } finally {
       setSaving(false);
     }
-  }, [draft, errors.length, saving]);
+  }, [draft, dirty, errors.length, saving]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

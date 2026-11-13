@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.20.3
+
+- **Configurações:** o Ctrl+S agora só salva quando há mudanças, como o botão Salvar. Antes, ele regravava a configuração mesmo sem nada alterado.
+- **Testes da janela de Configurações:**
+  - salvar, descartar e Ctrl+S;
+  - erros de validação e falha ao salvar;
+  - aviso de atalho que não registrou;
+  - página Ícone conforme o modo de abertura.
+- A cobertura do front subiu para ~86% das linhas.
+
 ## 0.20.2
 
 Versão de robustez, sem mudanças visíveis.
