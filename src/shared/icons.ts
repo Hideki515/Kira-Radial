@@ -1,6 +1,6 @@
 import {
   Activity, AppWindow, Bluetooth, BluetoothOff, Calculator, Camera, Circle, Clipboard, Code, File, FileCode,
-  FileImage, FileSpreadsheet, FileText, FolderOpen, Gauge, Github, Globe, Headphones, History, Layers, Leaf,
+  FileImage, FileSpreadsheet, FileText, FolderOpen, Gauge, GitBranch, Globe, Headphones, History, Layers, Leaf,
   Lock, Maximize2, Minimize2, Monitor, MonitorUp, Moon, Music, NotebookPen, PanelLeft, PanelRight, Pin, Play,
   Server, Settings, SkipBack, SkipForward, SlidersHorizontal, Speaker, Sun, SunDim, Terminal, Volume1,
   Volume2, VolumeX, Wifi, WifiOff, Zap,
@@ -16,7 +16,8 @@ export const ICONS: Record<string, LucideIcon> = {
   code: Code,
   "file-text": FileText,
   "folder-open": FolderOpen,
-  github: Github,
+  // O lucide 1.x tirou os logotipos de marcas: "github" (configs salvas) vira o ícone de Git.
+  github: GitBranch,
   globe: Globe,
   headphones: Headphones,
   lock: Lock,

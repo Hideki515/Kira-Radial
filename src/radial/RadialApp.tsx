@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useConfig } from "../hooks/useConfig";
 import { useSystemStats } from "../hooks/useSystemStats";
-import { describeAction, getVolume, hideMenu, isTauri, nowPlaying as fetchNowPlaying, type NowPlaying, onEvent, openTimeMs, reportOpenTime, runAction, type MenuShowPayload } from "../shared/ipc";
-import { observeLongTasks, perfLog, startFrameMonitor } from "../shared/perf";
+import { describeAction, hideMenu, isTauri, onEvent, runAction, type MenuShowPayload } from "../shared/ipc";
 import type { Config, MenuItem } from "../shared/types";
 import { clearSoundCache, playSound } from "../shared/sound";
 import { resolveItems } from "./dynamic";
@@ -10,20 +9,16 @@ import { useIconFiles } from "../shared/iconFiles";
 import { invalidateDynamic, kindChangedBy, useDynamicSources } from "./useDynamicSources";
 import { LAYOUT, hitTest, sliceAngle, type Hit } from "./geometry";
 import { RadialCanvas } from "./RadialCanvas";
+import { useNowPlaying, useOpenDiagnostics, useToast, useVolumeNudge } from "./menuHooks";
+import { digitIndex, stepIndex, wheelIndex } from "./navigation";
+
+export { MEDIA_POLL_MS, TOAST_MS, VOLUME_SHOW_MS } from "./menuHooks";
 
 const CONFIRM: Record<string, string> = {
   shutdown: "Desligar o computador agora?",
   restart: "Reiniciar o computador agora?",
   signout: "Encerrar a sessão agora?",
 };
-
-/** Intervalo de atualização do "Tocando agora" com o menu aberto. */
-export const MEDIA_POLL_MS = 2000;
-/** Quanto tempo o arco de volume fica visível após girar a roda. */
-export const VOLUME_SHOW_MS = 1200;
-
-/** Quanto tempo o aviso (toast) fica na tela após o último aviso. */
-export const TOAST_MS = 2200;
 
 /** Duração da animação de recolher para o ícone (igual a .is-closing em radial.css). */
 export const CLOSE_TO_ORB_MS = 170;
@@ -52,9 +47,6 @@ function initialSelection(items: MenuItem[]): [number | null, number | null] {
 function RadialMenu({ config }: { config: Config }) {
   const [profileId, setProfileId] = useState(config.profiles[0].id);
   const profile = config.profiles.find((p) => p.id === profileId) ?? config.profiles[0];
-  const [media, setMedia] = useState<NowPlaying | null>(null);
-  const [volume, setVolume] = useState<number | null>(null);
-  const volumeTimer = useRef<number | null>(null);
   const showMedia = config.appearance.showMedia !== false;
   /** Config de sons sempre atual para os callbacks estáveis. */
   const soundsRef = useRef(config.appearance.sounds);
@@ -92,8 +84,11 @@ function RadialMenu({ config }: { config: Config }) {
   /** Fatia cujo sub-anel está aberto (abre com clique/Enter; Esc/Backspace volta ao anel principal). */
   const [openMain, setOpenMain] = useState<number | null>(() => (initialSelection(items)[1] !== null ? initialSelection(items)[0] : null));
   const [hubHovered, setHubHovered] = useState(false);
-  const [toast, setToast] = useState<{ text: string; error?: boolean } | null>(null);
   const stats = useSystemStats();
+  const media = useNowPlaying(open, openKey, showMedia);
+  const { volume, nudgeVolume } = useVolumeNudge();
+  const { toast, flash } = useToast();
+  const markShow = useOpenDiagnostics(open, openKey);
 
   const children: MenuItem[] = openMain !== null ? items[openMain]?.children ?? [] : [];
 
@@ -155,18 +150,6 @@ function RadialMenu({ config }: { config: Config }) {
     }, CLOSE_TO_ORB_MS);
   }, [reset]);
 
-  const toastTimer = useRef<number | null>(null);
-  useEffect(() => () => void (toastTimer.current !== null && window.clearTimeout(toastTimer.current)), []);
-  /** Mostra um aviso por 2,2 s contados do ÚLTIMO aviso (cliques repetidos renovam o prazo). */
-  const flash = useCallback((text: string, error = false) => {
-    setToast({ text, error });
-    if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
-    toastTimer.current = window.setTimeout(() => {
-      toastTimer.current = null;
-      setToast(null);
-    }, TOAST_MS);
-  }, []);
-
   const execute = useCallback(
     async (item: MenuItem | undefined) => {
       const action = item?.action;
@@ -218,79 +201,11 @@ function RadialMenu({ config }: { config: Config }) {
     if (open && (activeMain !== null || activeSub !== null)) void playSound("hover", soundsRef.current);
   }, [open, activeMain, activeSub]);
 
-  // "Tocando agora": lê ao abrir e a cada 2 s enquanto o menu está aberto.
-  useEffect(() => {
-    if (!open || !showMedia) return void setMedia(null);
-    let alive = true;
-    const load = () =>
-      fetchNowPlaying().then(
-        (m) => alive && setMedia(m),
-        (e) => perfLog(`falha ao ler mídia: ${String(e)}`),
-      );
-    void load();
-    const t = window.setInterval(load, MEDIA_POLL_MS);
-    return () => {
-      alive = false;
-      window.clearInterval(t);
-    };
-  }, [open, openKey, showMedia]);
-
-  useEffect(() => () => void (volumeTimer.current !== null && window.clearTimeout(volumeTimer.current)), []);
-
-  /** Roda sobre o centro: ajusta o volume e mostra o arco por um instante. */
-  const nudgeVolume = useCallback(async (up: boolean) => {
-    try {
-      await runAction({ type: "media", cmd: up ? "volup" : "voldown" });
-      const v = await getVolume();
-      setVolume(v.muted ? 0 : v.level);
-    } catch (e) {
-      perfLog(`falha ao ajustar volume: ${String(e)}`);
-    }
-    if (volumeTimer.current !== null) window.clearTimeout(volumeTimer.current);
-    volumeTimer.current = window.setTimeout(() => {
-      volumeTimer.current = null;
-      setVolume(null);
-    }, VOLUME_SHOW_MS);
-  }, []);
-
-
-  // --- Diagnóstico de desempenho (perf.log) ---
-  const showReceivedAt = useRef<number | null>(null);
-  /** Dados do último menu:show para medir o tempo total de abertura (uma vez por abertura). */
-  const showTiming = useRef<Pick<MenuShowPayload, "sentAt" | "prepMs"> | null>(null);
-  useEffect(() => {
-    if (isTauri()) observeLongTasks();
-  }, []);
-  useEffect(() => {
-    if (!open || !isTauri()) return;
-    const t0 = showReceivedAt.current;
-    const timing = showTiming.current;
-    showTiming.current = null;
-    // Dois rAF: o segundo roda depois que o primeiro quadro com o menu foi pintado.
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        if (t0 !== null) perfLog(`primeiro quadro pintado ${(performance.now() - t0).toFixed(0)} ms após receber menu:show`);
-        const total = timing ? openTimeMs(timing) : null;
-        if (total !== null) void reportOpenTime(total);
-      }),
-    );
-    const stop = startFrameMonitor();
-    return () => {
-      const s = stop();
-      perfLog(
-        `menu aberto por ${(s.durationMs / 1000).toFixed(1)} s: ${s.frames} quadros, ` +
-          `maior intervalo ${s.maxGapMs.toFixed(0)} ms, ${s.janky} quadros travados (>50 ms)`,
-      );
-    };
-  }, [open, openKey]);
-
   // --- Eventos do backend (Tauri) ---
   useEffect(() => {
     const offs = [
       onEvent<MenuShowPayload>("menu:show", (p) => {
-        showReceivedAt.current = performance.now();
-        showTiming.current = { sentAt: p.sentAt, prepMs: p.prepMs };
-        if (p.sentAt) perfLog(`evento menu:show chegou ${Date.now() - p.sentAt} ms após ser emitido pelo Rust`);
+        markShow(p);
         setProfileId(p.profileId);
         const from = p.originX != null && p.originY != null ? { x: p.originX, y: p.originY } : null;
         showAt(p.cx, p.cy, from);
@@ -310,7 +225,7 @@ function RadialMenu({ config }: { config: Config }) {
       }),
     ];
     return () => offs.forEach((p) => p.then((off) => off()));
-  }, [cancelClosing, close, executeSelection, reset, showAt]);
+  }, [cancelClosing, close, executeSelection, markShow, reset, showAt]);
 
   // --- Mouse / teclado / roda ---
   useEffect(() => {
@@ -354,9 +269,8 @@ function RadialMenu({ config }: { config: Config }) {
       const s = state.current;
       if (!s.open) return;
       // 1–9 (linha de números ou teclado numérico): escolhe a fatia/subitem direto.
-      const digit = /^(Digit|Numpad)([1-9])$/.exec(e.code)?.[2];
-      if (digit && !e.ctrlKey && !e.altKey && !e.metaKey) {
-        const n = Number(digit) - 1;
+      const n = digitIndex(e);
+      if (n !== null) {
         e.preventDefault();
         if (s.openMain !== null && s.children.length) {
           const child = s.children[n];
@@ -370,12 +284,11 @@ function RadialMenu({ config }: { config: Config }) {
         if (item.children?.length) return openSub(n, false);
         return void execute(item);
       }
-      const n = s.items.length;
       const step = (d: number) => {
         if (s.openMain !== null && s.children.length) {
-          setActiveSub(((s.activeSub ?? (d > 0 ? -1 : 0)) + d + s.children.length) % s.children.length);
+          setActiveSub(stepIndex(s.activeSub, d, s.children.length));
         } else {
-          setActiveMain(((s.activeMain ?? (d > 0 ? -1 : 0)) + d + n) % n);
+          setActiveMain(stepIndex(s.activeMain, d, s.items.length));
           setActiveSub(null);
         }
       };
@@ -403,9 +316,9 @@ function RadialMenu({ config }: { config: Config }) {
       // Roda sobre o centro: volume (para cima = aumenta), em vez de girar a seleção.
       if (computeHit(e.clientX, e.clientY).ring === "center") return void nudgeVolume(d < 0);
       if (s.openMain !== null && s.children.length) {
-        setActiveSub(((s.activeSub ?? -1) + d + s.children.length) % s.children.length);
+        setActiveSub(wheelIndex(s.activeSub, d, s.children.length, -1));
       } else {
-        setActiveMain(((s.activeMain ?? 0) + d + s.items.length) % s.items.length);
+        setActiveMain(wheelIndex(s.activeMain, d, s.items.length, 0));
       }
     };
 

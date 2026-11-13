@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.20.4
+
+Versão de manutenção, sem mudanças visíveis.
+
+- **Atualizações:** React 19, lucide-react 1.x (ícones) e TypeScript 7.
+  - O lucide 1.x removeu os logotipos de marcas. Fatias com o ícone "github" agora mostram o ícone de Git, e a configuração continua valendo.
+  - Com o React 19, o código do front ficou ~80 KB maior (lido do disco uma vez por janela).
+- **Menu radial reorganizado,** sem mudança de comportamento: o `RadialApp.tsx` caiu de 484 para ~400 linhas.
+  - "Tocando agora", volume pela roda, avisos e medições de abertura foram para `menuHooks.ts`.
+  - As contas de navegação (setas, roda, teclas 1–9) foram para `navigation.ts`, com testes próprios.
+
 ## 0.20.3
 
 - **Configurações:** o Ctrl+S agora só salva quando há mudanças, como o botão Salvar. Antes, ele regravava a configuração mesmo sem nada alterado.
