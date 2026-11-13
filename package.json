@@ -1,7 +1,7 @@
 {
   "name": "kira-radial",
   "private": true,
-  "version": "0.20.4",
+  "version": "0.21.0",
   "license": "MIT",
   "type": "module",
   "scripts": {

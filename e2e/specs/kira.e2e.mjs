@@ -1,5 +1,7 @@
 // Cenários de ponta a ponta na Kira de teste (pasta de dados de teste limpa no início).
-import { invoke, nav, pickRadio, pressKey, qaConfig, qaFiles, qaState, save, toWindow } from "../helpers.mjs";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { QA_DATA, invoke, nav, pickRadio, pressKey, qaConfig, qaFiles, qaState, save, toWindow } from "../helpers.mjs";
 
 /** Espera a lista real de navegadores (o select fica desabilitado enquanto carrega) e devolve o 1º instalado. */
 async function firstInstalled(sel) {
@@ -333,5 +335,40 @@ describe("Kira de teste — ponta a ponta", () => {
         }),
     );
     expect(blocked).toBe("img-src");
+  });
+  it("11. Discord (FALSO, da Kira de teste): conectar, submenu com o estado e mutar pelo menu", async () => {
+    await nav("Discord");
+    await $('input[placeholder="123456789012345678"]').setValue("123456");
+    await $('input[type="password"]').setValue("segredo-e2e");
+    await $("button*=Conectar").click();
+    await browser.waitUntil(async () => (await $('[data-testid="discord-status"]').getText()).includes("kira-teste"), { timeoutMsg: "não conectou ao Discord falso" });
+    // Credenciais cifradas na pasta de TESTE (sem o segredo em texto puro).
+    expect(qaFiles()).toContain("discord.bin");
+    expect(readFileSync(join(QA_DATA, "discord.bin")).includes(Buffer.from("segredo-e2e"))).toBe(false);
+    expect(JSON.stringify(qaConfig())).not.toContain("segredo-e2e");
+
+    await nav("Itens do menu");
+    // O cenário 5b deixou o perfil 2 ("Padrão (cópia)", todos os monitores) valendo no menu.
+    await $(".profile-picker select").selectByIndex(1);
+    await $$(".tree-row")[0].click();
+    await pickRadio("Submenu automático");
+    await $('.item-editor select:has(option[value="discordVoice"])').selectByAttribute("value", "discordVoice");
+    await save();
+    await invoke("qa_show_menu", { fromOrb: false });
+    await toWindow("");
+    await pressKey("1", "Digit1");
+    await browser.waitUntil(
+      async () => {
+        const subs = await $$(".sub-slice");
+        return subs.length > 0 && (await subs[0].getAttribute("aria-label")) === "Microfone ligado";
+      },
+      { timeoutMsg: "submenu do Discord não mostrou o estado" },
+    );
+    expect(await $$(".sub-slice")[1].getAttribute("aria-label")).toBe("Áudio ligado");
+    await pressKey("1", "Digit1"); // "Microfone ligado" → muta
+    await browser.waitUntil(async () => (await invoke("discord_voice")).voice?.mute === true, { timeoutMsg: "não mutou" });
+    const v = await invoke("discord_voice");
+    expect(v.status).toBe("ok");
+    expect(v.voice.deaf).toBe(false);
   });
 });

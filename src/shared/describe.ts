@@ -1,6 +1,6 @@
 // Textos e contas para a interface (funções puras, sem chamar o backend).
 // Reexportado por ipc.ts: quem já importa de lá continua funcionando.
-import type { Action, WindowCmd } from "./types";
+import type { Action, DiscordCmd, WindowCmd } from "./types";
 
 const MEDIA_LABEL: Record<string, string> = {
   playpause: "play/pause",
@@ -19,6 +19,17 @@ export const WINDOW_LABEL: Record<WindowCmd, string> = {
   maximize: "Maximizar / restaurar",
   minimize: "Minimizar",
   minimizeAll: "Minimizar todas as janelas",
+};
+
+export const DISCORD_LABEL: Record<DiscordCmd, string> = {
+  toggleMute: "Alternar microfone (mudo)",
+  mute: "Mutar microfone",
+  unmute: "Desmutar microfone",
+  toggleDeafen: "Alternar fone (ensurdecer)",
+  deafen: "Ensurdecer",
+  undeafen: "Reativar o áudio",
+  setInput: "Usar dispositivo de entrada",
+  setOutput: "Usar dispositivo de saída",
 };
 
 export function describeAction(a: Action): string {
@@ -52,6 +63,10 @@ export function describeAction(a: Action): string {
       return `Plano de energia: ${a.name ?? a.guid}`;
     case "focusWindow":
       return `Ir para ${a.title ?? "a janela"}`;
+    case "discord":
+      return a.cmd === "setInput" || a.cmd === "setOutput"
+        ? `Discord: ${a.cmd === "setInput" ? "entrada" : "saída"} ${a.deviceName ?? a.deviceId ?? "?"}`
+        : `Discord: ${(DISCORD_LABEL[a.cmd] ?? a.cmd).toLowerCase()}`;
     case "audioOutput":
       return a.mode === "cycle" ? "Alternar saída de áudio" : `Saída de áudio: ${a.deviceName ?? a.deviceId ?? "?"}`;
   }

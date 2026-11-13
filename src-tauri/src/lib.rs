@@ -9,6 +9,7 @@ mod browsers;
 mod webvis;
 mod commands;
 mod config;
+mod discord;
 mod foreground;
 mod icons;
 mod keycapture;
@@ -148,6 +149,10 @@ pub fn run() {
             perf::perf_open_sample,
             commands::list_browser_profiles,
             commands::list_radios,
+            commands::discord_voice,
+            commands::discord_status,
+            commands::discord_connect,
+            commands::discord_disconnect,
             commands::list_recent_files,
             commands::clipboard_list,
             commands::clipboard_clear,

@@ -149,6 +149,28 @@ pub async fn list_radios() -> Result<Vec<crate::radios::RadioInfo>, String> {
     tauri::async_runtime::spawn_blocking(crate::radios::list).await.map_err(|e| e.to_string())
 }
 
+/// Estado de voz do Discord (submenus automáticos e página Discord).
+#[tauri::command]
+pub async fn discord_voice() -> Result<crate::discord::VoiceState, String> {
+    tauri::async_runtime::spawn_blocking(crate::discord::voice_state).await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn discord_status() -> Result<crate::discord::Status, String> {
+    tauri::async_runtime::spawn_blocking(crate::discord::status).await.map_err(|e| e.to_string())?
+}
+
+/// Pede a autorização no Discord (o usuário clica em "Autorizar" lá) e guarda as credenciais.
+#[tauri::command]
+pub async fn discord_connect(client_id: String, client_secret: String) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || crate::discord::connect(client_id, client_secret)).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+pub async fn discord_disconnect() -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(crate::discord::disconnect).await.map_err(|e| e.to_string())?
+}
+
 /// A página das Configurações carregou (veja `menu::settings_ready`).
 #[tauri::command]
 pub fn settings_ready(app: AppHandle) {

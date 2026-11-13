@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.21.0
+
+- **Controle do Discord** pelo RPC local do próprio Discord:
+  - mutar e desmutar o microfone;
+  - ensurdecer e reativar o áudio (fone);
+  - trocar o dispositivo de entrada e o de saída **do Discord** (não os do Windows).
+- **Submenus automáticos novos:**
+  - "Discord: microfone e fone" mostra o estado atual (verde = ligado) e alterna ao clicar;
+  - "Discord: entrada" e "Discord: saída" listam os dispositivos do Discord, com o atual em verde.
+- **Ação nova "Discord"** para comandos diretos: alternar, mutar ou desmutar, ensurdecer, e usar um microfone ou uma saída específica.
+- **Página nova Configurações → Discord:**
+  - passo a passo para criar o app no portal do Discord (uma vez);
+  - botões Conectar, Testar e Desconectar.
+- **Segurança:**
+  - o Client Secret e os tokens ficam cifrados (DPAPI) em `discord.bin`, fora do `config.json`, então não vão para backups, exportação nem relatório;
+  - o token é renovado sozinho antes de vencer.
+- **Consumo e testes:**
+  - sem processo em segundo plano: a conexão só abre quando uma ação do Discord é usada;
+  - a Kira de teste usa um Discord falso e nunca toca no Discord de verdade.
+
 ## 0.20.4
 
 Versão de manutenção, sem mudanças visíveis.

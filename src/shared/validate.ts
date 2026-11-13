@@ -1,4 +1,5 @@
 import { MAX_CUSTOM_THEMES, customThemeErrors, findCustom } from "./customTheme";
+import { DISCORD_LABEL } from "./describe";
 import { parseCombo } from "./keys";
 import { hasCriteria, whenErrors } from "./schedule";
 import { DYNAMIC_KINDS, LAUNCHER_MODES, LIMITS, ORB_ANIMATIONS, ORB_LIMITS, SCALE_LIMITS, THEMES, wantsHotkey, type Action, type Theme, type Config, type MenuItem } from "./types";
@@ -105,6 +106,11 @@ export function validateAction(a: Action): string | null {
       return null;
     case "audioOutput":
       if (a.mode === "set" && !a.deviceId?.trim() && !a.deviceName?.trim()) return "escolha o dispositivo de saída.";
+      return null;
+    case "discord":
+      if (!Object.prototype.hasOwnProperty.call(DISCORD_LABEL, a.cmd)) return "comando do Discord inválido.";
+      if ((a.cmd === "setInput" || a.cmd === "setOutput") && !a.deviceId?.trim() && !a.deviceName?.trim())
+        return "escolha o dispositivo do Discord.";
       return null;
     default: return null;
   }

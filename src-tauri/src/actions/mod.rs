@@ -91,6 +91,14 @@ pub enum Action {
     Radio { kind: crate::radios::Kind, mode: crate::radios::Mode },
     /// Cola o item `index` do histórico da área de transferência no app anterior.
     Paste { index: usize },
+    /// Discord: mudo, ensurdecer e dispositivos de entrada/saída (pelo RPC local).
+    Discord {
+        cmd: crate::discord::DiscordCmd,
+        #[serde(default, rename = "deviceId")]
+        device_id: Option<String>,
+        #[serde(default, rename = "deviceName")]
+        device_name: Option<String>,
+    },
 }
 
 #[derive(Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
@@ -235,6 +243,7 @@ pub fn execute(action: &Action) -> Result<(), String> {
             keys::send_combo("Ctrl+V")
         }
         Action::Radio { kind, mode } => crate::radios::set(*kind, *mode).map(|_| ()),
+        Action::Discord { cmd, device_id, device_name } => crate::discord::run(*cmd, device_id.as_deref(), device_name.as_deref()),
         Action::Brightness { mode, value, target, target_name } => {
             let t = target.as_deref().unwrap_or("all");
             let n = target_name.as_deref();

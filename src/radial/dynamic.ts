@@ -1,4 +1,4 @@
-import type { AudioDevice, DisplayInfo, PowerPlan, RadioInfo, RecentFile, WindowInfo } from "../shared/ipc";
+import type { AudioDevice, DiscordVoiceState, DisplayInfo, PowerPlan, RadioInfo, RecentFile, WindowInfo } from "../shared/ipc";
 import { DYNAMIC_KINDS, LIMITS, type DynamicKind, type MenuItem } from "../shared/types";
 
 /** Cor do dispositivo em uso e dos demais no sub-anel. */
@@ -131,6 +131,54 @@ export function radioChildren(parentId: string, radios: RadioInfo[] | null): Men
   }));
 }
 
+/** Discord fechado / não conectado / erro: uma fatia que explica (sem ação). */
+function discordProblem(parentId: string, state: DiscordVoiceState): MenuItem[] {
+  const label = state.status === "closed" ? "Discord fechado" : state.status === "notConnected" ? "Conectar nas Configurações" : "Discord sem resposta";
+  return [{ id: `${parentId}:${state.status}`, label, icon: "headset" }];
+}
+
+/** Microfone e fone do Discord: estado atual (verde = ligado); clique alterna. */
+export function discordVoiceChildren(parentId: string, state: DiscordVoiceState | null): MenuItem[] {
+  if (state === null) return [{ id: `${parentId}:loading`, label: "Carregando…", icon: "headset" }];
+  if (state.status !== "ok" || !state.voice) return discordProblem(parentId, state);
+  const { mute, deaf } = state.voice;
+  return [
+    {
+      id: `${parentId}:mic`,
+      label: mute ? "Microfone mutado" : "Microfone ligado",
+      icon: mute ? "mic-off" : "mic",
+      color: mute ? AUDIO_OTHER_COLOR : AUDIO_CURRENT_COLOR,
+      action: { type: "discord", cmd: "toggleMute" },
+    },
+    {
+      id: `${parentId}:deaf`,
+      label: deaf ? "Ensurdecido" : "Áudio ligado",
+      icon: deaf ? "headphone-off" : "headphones",
+      color: deaf ? AUDIO_OTHER_COLOR : AUDIO_CURRENT_COLOR,
+      action: { type: "discord", cmd: "toggleDeafen" },
+    },
+  ];
+}
+
+/** Dispositivos de entrada ou saída do Discord; o atual em verde, "Padrão" primeiro. */
+export function discordDeviceChildren(parentId: string, state: DiscordVoiceState | null, kind: "input" | "output"): MenuItem[] {
+  const icon = kind === "input" ? "mic" : "headphones";
+  if (state === null) return [{ id: `${parentId}:loading`, label: "Carregando…", icon }];
+  if (state.status !== "ok" || !state.voice) return discordProblem(parentId, state);
+  const list = state.voice[kind];
+  const sorted = [...list.devices].sort((a, b) => Number(b.id === "default") - Number(a.id === "default"));
+  if (!sorted.length) return [{ id: `${parentId}:none`, label: kind === "input" ? "Sem entradas" : "Sem saídas", icon }];
+  const shown = sorted.slice(0, LIMITS.maxChildren);
+  const labels = audioLabels(shown.map((d) => (d.id === "default" ? "Padrão" : d.name)));
+  return shown.map((d, i) => ({
+    id: `${parentId}:${d.id}`,
+    label: labels[i],
+    icon: kind === "input" ? "mic" : audioIcon(d.name),
+    color: d.id === list.current ? AUDIO_CURRENT_COLOR : AUDIO_OTHER_COLOR,
+    action: { type: "discord", cmd: kind === "input" ? "setInput" : "setOutput", deviceId: d.id, deviceName: d.name },
+  }));
+}
+
 /** Ícone pelo tipo de arquivo. */
 export function fileIcon(ext: string): string {
   if (/^(png|jpe?g|gif|webp|bmp|svg|heic|ico)$/.test(ext)) return "file-image";
@@ -171,6 +219,8 @@ export interface DynamicSources {
   radios?: RadioInfo[] | null;
   recent?: RecentFile[] | null;
   clipboard?: string[] | null;
+  /** Os três submenus do Discord usam a mesma leitura. */
+  discord?: DiscordVoiceState | null;
 }
 
 /** Nome de cada submenu automático (página Itens). */
@@ -182,6 +232,9 @@ export const DYNAMIC_LABEL: Record<DynamicKind, string> = {
   radios: "Wi-Fi e Bluetooth",
   recentFiles: "Arquivos recentes",
   clipboard: "Área de transferência",
+  discordVoice: "Discord: microfone e fone",
+  discordInput: "Discord: entrada (microfone)",
+  discordOutput: "Discord: saída (fone)",
 };
 
 /** Explicação exibida na página Itens. */
@@ -193,6 +246,9 @@ export const DYNAMIC_HINT: Record<DynamicKind, string> = {
   radios: "o Wi-Fi e o Bluetooth do PC. Ligado aparece em verde; clique para ligar/desligar.",
   recentFiles: "os arquivos abertos recentemente no Windows (os mesmos de \"Recentes\" no Explorador). Clique para abrir.",
   clipboard: "os últimos textos copiados. Clique para colar no app que estava em uso. Precisa ligar o histórico em Configurações → Geral (fica só na memória).",
+  discordVoice: "o microfone e o fone do Discord, com o estado atual (verde = ligado). Clique para mutar/desmutar ou ensurdecer. Precisa conectar em Configurações → Discord.",
+  discordInput: "os microfones que o Discord reconhece (os do próprio Discord, não do Windows). O atual aparece em verde. Precisa conectar em Configurações → Discord.",
+  discordOutput: "as saídas de áudio que o Discord reconhece (as do próprio Discord, não do Windows). A atual aparece em verde. Precisa conectar em Configurações → Discord.",
 };
 
 function childrenFor(it: MenuItem, src: DynamicSources): MenuItem[] {
@@ -205,6 +261,9 @@ function childrenFor(it: MenuItem, src: DynamicSources): MenuItem[] {
     case "radios": return radioChildren(it.id, src.radios ?? null);
     case "recentFiles": return recentChildren(it.id, src.recent ?? null);
     case "clipboard": return clipboardChildren(it.id, src.clipboard ?? null);
+    case "discordVoice": return discordVoiceChildren(it.id, src.discord ?? null);
+    case "discordInput": return discordDeviceChildren(it.id, src.discord ?? null, "input");
+    case "discordOutput": return discordDeviceChildren(it.id, src.discord ?? null, "output");
   }
 }
 

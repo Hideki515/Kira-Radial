@@ -4,7 +4,7 @@ import { cloneConfig, defaultConfig, withDefaults } from "./defaults";
 import type { OpenStats } from "./describe";
 import type { Action, Config } from "./types";
 
-export { WINDOW_LABEL, describeAction, describeOpenStats, openTimeMs } from "./describe";
+export { DISCORD_LABEL, WINDOW_LABEL, describeAction, describeOpenStats, openTimeMs } from "./describe";
 export type { OpenStats } from "./describe";
 
 export const isTauri = (): boolean =>
@@ -188,6 +188,64 @@ export async function listRadios(): Promise<RadioInfo[]> {
     { kind: "wifi", name: "Wi-Fi", on: true },
     { kind: "bluetooth", name: "Bluetooth", on: false },
   ];
+}
+
+export interface DiscordDevice {
+  id: string;
+  name: string;
+}
+
+export interface DiscordDeviceList {
+  current: string;
+  devices: DiscordDevice[];
+}
+
+export interface DiscordVoice {
+  /** Microfone mudo (ensurdecido também conta como mudo). */
+  mute: boolean;
+  deaf: boolean;
+  input: DiscordDeviceList;
+  output: DiscordDeviceList;
+}
+
+export interface DiscordVoiceState {
+  status: "ok" | "notConnected" | "closed" | "error";
+  message?: string | null;
+  voice?: DiscordVoice | null;
+}
+
+export interface DiscordStatus {
+  configured: boolean;
+  clientId?: string | null;
+  user?: string | null;
+}
+
+const DEMO_VOICE: DiscordVoice = {
+  mute: false,
+  deaf: false,
+  input: { current: "default", devices: [{ id: "default", name: "Default" }, { id: "mic-1", name: "Microfone (USB Audio)" }] },
+  output: { current: "default", devices: [{ id: "default", name: "Default" }, { id: "out-1", name: "Headset Earphone (Arctis)" }] },
+};
+
+/** Estado de voz do Discord (nunca rejeita: o status explica se está fechado ou desconectado). */
+export async function discordVoice(): Promise<DiscordVoiceState> {
+  if (isTauri()) return invoke<DiscordVoiceState>("discord_voice");
+  return { status: "ok", voice: DEMO_VOICE };
+}
+
+export async function discordStatus(): Promise<DiscordStatus> {
+  if (isTauri()) return invoke<DiscordStatus>("discord_status");
+  return { configured: false };
+}
+
+/** Pede a autorização no Discord; devolve o nome do usuário conectado. */
+export async function discordConnect(clientId: string, clientSecret: string): Promise<string> {
+  if (isTauri()) return invoke<string>("discord_connect", { clientId, clientSecret });
+  return "demo";
+}
+
+export async function discordDisconnect(): Promise<void> {
+  if (isTauri()) await invoke<void>("discord_disconnect");
 }
 
 export interface DisplayInfo {

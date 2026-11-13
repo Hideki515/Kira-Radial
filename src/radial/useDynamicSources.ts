@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { clipboardList, listAudioOutputs, listDisplays, listPowerPlans, listRadios, listRecentFiles, listWindows } from "../shared/ipc";
+import { clipboardList, discordVoice, listAudioOutputs, listDisplays, listPowerPlans, listRadios, listRecentFiles, listWindows } from "../shared/ipc";
 import { perfLog } from "../shared/perf";
 import type { Action, DynamicKind, MenuItem } from "../shared/types";
 import type { DynamicSources } from "./dynamic";
 
 /** Como ler cada tipo de submenu automático e onde guardar o resultado. */
-const LOADERS: { [K in DynamicKind]: { key: keyof DynamicSources; load: () => Promise<unknown[]> } } = {
+const LOADERS: { [K in DynamicKind]: { key: keyof DynamicSources; load: () => Promise<unknown> } } = {
   audioOutputs: { key: "audio", load: listAudioOutputs },
   windows: { key: "windows", load: listWindows },
   powerPlans: { key: "power", load: listPowerPlans },
@@ -13,7 +13,13 @@ const LOADERS: { [K in DynamicKind]: { key: keyof DynamicSources; load: () => Pr
   radios: { key: "radios", load: listRadios },
   recentFiles: { key: "recent", load: listRecentFiles },
   clipboard: { key: "clipboard", load: clipboardList },
+  discordVoice: { key: "discord", load: discordVoice },
+  discordInput: { key: "discord", load: discordVoice },
+  discordOutput: { key: "discord", load: discordVoice },
 };
+
+/** Falha ao ler: o que mostrar (listas vazias; o Discord explica o erro na própria fatia). */
+const FAILED: Partial<Record<keyof DynamicSources, unknown>> = { discord: { status: "error" } };
 
 /**
  * Leituras lentas que quase não mudam sozinhas: dentro deste prazo, reabrir o menu usa o
@@ -64,10 +70,14 @@ export function useDynamicSources(items: MenuItem[], active: boolean, refreshKey
   useEffect(() => {
     if (!active || !kinds) return;
     let alive = true;
+    // Tipos que compartilham a mesma leitura (os três do Discord) leem uma vez só.
+    const readKeys = new Set<keyof DynamicSources>();
     for (const kind of kinds.split(",") as DynamicKind[]) {
       // Tipo desconhecido (config de versão mais nova / editada à mão): ignora.
       if (!LOADERS[kind]) continue;
       const { key, load } = LOADERS[kind];
+      if (readKeys.has(key)) continue;
+      readKeys.add(key);
       const started = performance.now();
       if (isFresh(kind, loadedAt.get(kind), Date.now()) && sources[key] !== undefined) continue;
       load().then(
@@ -83,7 +93,7 @@ export function useDynamicSources(items: MenuItem[], active: boolean, refreshKey
         (e) => {
           loadedAt.delete(kind);
           if (!alive) return;
-          setSources((s) => ({ ...s, [key]: [] }));
+          setSources((s) => ({ ...s, [key]: key in FAILED ? FAILED[key] : [] }));
           perfLog(`falha ao ler "${kind}": ${String(e)}`);
         },
       );

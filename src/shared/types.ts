@@ -2,6 +2,9 @@ import type { CustomTheme } from "./customTheme";
 // Schema da configuração. Espelhado em src-tauri/src/config/schema.rs (serde).
 // Ao mudar algo aqui, incremente `version` e adicione migração nos dois lados.
 
+/** Discord (RPC local): mudo, ensurdecer e dispositivos de entrada/saída do próprio Discord. */
+export type DiscordCmd = "toggleMute" | "mute" | "unmute" | "toggleDeafen" | "deafen" | "undeafen" | "setInput" | "setOutput";
+
 export type MediaCmd = "playpause" | "next" | "prev" | "volup" | "voldown" | "mute";
 export type SystemCmd =
   | "lock"
@@ -63,7 +66,9 @@ export type Action =
   /** Liga/desliga Wi-Fi ou Bluetooth. */
   | { type: "radio"; kind: "wifi" | "bluetooth"; mode: "toggle" | "on" | "off" }
   /** Cola um item do histórico da área de transferência (gerada pelo submenu; não aparece no editor). */
-  | { type: "paste"; index: number; preview?: string };
+  | { type: "paste"; index: number; preview?: string }
+  /** Discord: setInput/setOutput usam o id do dispositivo no Discord (nome = reserva se o id mudar). */
+  | { type: "discord"; cmd: DiscordCmd; deviceId?: string; deviceName?: string };
 
 export interface MenuItem {
   id: string;
@@ -85,8 +90,8 @@ export interface MenuItem {
   dynamicTargetName?: string;
 }
 
-export type DynamicKind = "audioOutputs" | "windows" | "powerPlans" | "brightness" | "radios" | "recentFiles" | "clipboard";
-export const DYNAMIC_KINDS: readonly DynamicKind[] = ["audioOutputs", "windows", "powerPlans", "brightness", "radios", "recentFiles", "clipboard"];
+export type DynamicKind = "audioOutputs" | "windows" | "powerPlans" | "brightness" | "radios" | "recentFiles" | "clipboard" | "discordVoice" | "discordInput" | "discordOutput";
+export const DYNAMIC_KINDS: readonly DynamicKind[] = ["audioOutputs", "windows", "powerPlans", "brightness", "radios", "recentFiles", "clipboard", "discordVoice", "discordInput", "discordOutput"];
 
 export interface ProfileWhen {
   days?: number[];
