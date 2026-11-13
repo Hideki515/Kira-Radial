@@ -73,36 +73,46 @@ pub fn shortcuts(k: &Knob, menu_hotkey: Option<&str>) -> Result<Vec<(Shortcut, I
 
 /// Liga/desliga as teclas do knob conforme a config. A Kira de teste nunca registra teclas
 /// globais (usa o comando qa_knob).
+///
+/// O plugin registra na thread principal e espera; o handler das teclas também roda lá e
+/// trava `REGISTERED`. Por isso a trava nunca fica presa durante register/unregister.
 pub fn apply(app: &AppHandle, cfg: &crate::config::Config) -> Result<(), String> {
     let gs = app.global_shortcut();
-    let mut reg = REGISTERED.lock_ok();
-    for (sc, _) in reg.keys.drain(..) {
+    let old = std::mem::take(&mut REGISTERED.lock_ok().keys);
+    for (sc, _) in old {
         let _ = gs.unregister(sc);
     }
-    reg.error = None;
-    if !cfg.knob.enabled || crate::qa::ENABLED {
-        return Ok(());
-    }
-    let menu_hotkey = cfg.launcher.mode.wants_hotkey().then_some(cfg.hotkey.accelerator.as_str());
-    let wanted = match shortcuts(&cfg.knob, menu_hotkey) {
-        Ok(w) => w,
+    let result = if !cfg.knob.enabled || crate::qa::ENABLED {
+        Ok(Vec::new())
+    } else {
+        let menu_hotkey = cfg.launcher.mode.wants_hotkey().then_some(cfg.hotkey.accelerator.as_str());
+        shortcuts(&cfg.knob, menu_hotkey).and_then(|wanted| {
+            let mut done = Vec::new();
+            for (sc, input) in wanted {
+                if let Err(e) = gs.register(sc) {
+                    // Nenhuma tecla fica presa registrada pela metade.
+                    for (old, _) in done {
+                        let _ = gs.unregister(old);
+                    }
+                    return Err(format!("não foi possível registrar a tecla do knob {sc} (em uso por outro programa?): {e}"));
+                }
+                done.push((sc, input));
+            }
+            Ok(done)
+        })
+    };
+    let mut reg = REGISTERED.lock_ok();
+    match result {
+        Ok(keys) => {
+            reg.keys = keys;
+            reg.error = None;
+            Ok(())
+        }
         Err(e) => {
             reg.error = Some(e.clone());
-            return Err(e);
+            Err(e)
         }
-    };
-    for (sc, input) in wanted {
-        if let Err(e) = gs.register(sc) {
-            let msg = format!("não foi possível registrar a tecla do knob {sc} (em uso por outro programa?): {e}");
-            reg.error = Some(msg.clone());
-            for (old, _) in reg.keys.drain(..) {
-                let _ = gs.unregister(old);
-            }
-            return Err(msg);
-        }
-        reg.keys.push((sc, input));
     }
-    Ok(())
 }
 
 /// Erro do último registro (mostrado nas Configurações).
@@ -111,15 +121,23 @@ pub fn error() -> Option<String> {
 }
 
 /// Pausa junto com o atalho do menu (ex.: enquanto as Configurações gravam uma tecla,
-/// para o "Detectar" receber as teclas do knob).
+/// para o "Detectar" receber as teclas do knob). Falha ao retomar vai para `error()`.
 pub fn set_paused(app: &AppHandle, paused: bool) {
     let gs = app.global_shortcut();
-    for (sc, _) in REGISTERED.lock_ok().keys.iter() {
+    let keys: Vec<Shortcut> = REGISTERED.lock_ok().keys.iter().map(|(sc, _)| *sc).collect();
+    let mut failed = None;
+    for sc in keys {
         if paused {
-            let _ = gs.unregister(*sc);
-        } else if !gs.is_registered(*sc) {
-            let _ = gs.register(*sc);
+            let _ = gs.unregister(sc);
+        } else if !gs.is_registered(sc) {
+            if let Err(e) = gs.register(sc) {
+                failed = Some(format!("a tecla do knob {sc} não voltou a funcionar (em uso por outro programa?): {e}"));
+            }
         }
+    }
+    if let Some(e) = failed {
+        crate::perf::log_level(crate::perf::Level::Warn, "rust", &format!("knob: {e}"));
+        REGISTERED.lock_ok().error = Some(e);
     }
 }
 

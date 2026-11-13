@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.22.1
+
+- **Ícone que "não aparecia":** depois de esconder o ícone (botão direito ou bandeja), trocar o modo de abertura para "Ícone" ou "Ícone + atalho" não fazia nada visível. Agora, ao escolher um modo com ícone vindo de um modo sem ícone, o ícone volta a aparecer. Esconder de propósito, com o ícone já ativo, continua valendo.
+- **Knob:**
+  - se uma tecla do knob não voltar a funcionar depois de gravar um atalho nas Configurações, o erro agora aparece na página, em vez de falhar em silêncio;
+  - o registro das teclas não segura mais a trava interna durante a chamada ao Windows, o que evita um travamento possível no futuro.
+
 ## 0.22.0
 
 - **Controle com knob (teclado macro):** o knob de um teclado macro, como os de 3 teclas + knob com o programa "MINI KeyBoard", vira um controle dedicado da Kira.

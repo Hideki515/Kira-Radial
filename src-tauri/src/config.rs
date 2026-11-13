@@ -68,6 +68,12 @@ pub enum LauncherMode {
     Both,
 }
 
+/// Ícone escondido (botão direito / bandeja) depois de salvar: ao passar de um modo sem
+/// ícone para um com ícone, ele volta a aparecer — senão a troca de modo "não faz nada".
+pub fn orb_hidden_after_mode_change(old: LauncherMode, new: LauncherMode, hidden: bool) -> bool {
+    hidden && !(new.wants_orb() && !old.wants_orb())
+}
+
 impl LauncherMode {
     pub fn wants_hotkey(self) -> bool {
         matches!(self, LauncherMode::Hotkey | LauncherMode::Both)
@@ -493,6 +499,18 @@ mod lenient_when_tests {
 #[cfg(test)]
 mod knob_config_tests {
     use super::*;
+
+    #[test]
+    fn escolher_modo_com_icone_mostra_o_icone_escondido() {
+        use LauncherMode::*;
+        assert!(!orb_hidden_after_mode_change(Hotkey, Orb, true));
+        assert!(!orb_hidden_after_mode_change(Hotkey, Both, true));
+        // Já tinha ícone (o usuário escondeu de propósito): continua escondido.
+        assert!(orb_hidden_after_mode_change(Both, Orb, true));
+        assert!(orb_hidden_after_mode_change(Orb, Orb, true));
+        assert!(orb_hidden_after_mode_change(Orb, Hotkey, true));
+        assert!(!orb_hidden_after_mode_change(Hotkey, Orb, false));
+    }
 
     #[test]
     fn knob_ausente_ou_quebrado_vira_desligado_sem_derrubar_a_config() {
