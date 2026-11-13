@@ -84,6 +84,11 @@ export async function saveConfig(config: Config): Promise<void> {
   window.dispatchEvent(new CustomEvent("kira:config-changed"));
 }
 
+/** Erro ao registrar as teclas do knob (controle dedicado), ou null. */
+export async function getKnobError(): Promise<string | null> {
+  return isTauri() ? invoke<string | null>("knob_error") : null;
+}
+
 /** Erro ao registrar o atalho global (ex.: já usado por outro programa), ou null. */
 export async function getHotkeyError(): Promise<string | null> {
   return isTauri() ? invoke<string | null>("hotkey_error") : null;

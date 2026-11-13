@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.22.0
+
+- **Controle com knob (teclado macro):** o knob de um teclado macro, como os de 3 teclas + knob com o programa "MINI KeyBoard", vira um controle dedicado da Kira.
+  - Apertar com a Kira fechada **abre o menu**.
+  - Girar com o menu aberto **passa pelas fatias**.
+  - Apertar de novo **executa a fatia escolhida**, ou abre o submenu já no 1º item.
+  - No submenu, o giro inclui a posição **Voltar** (o centro), porque o knob não tem toque longo.
+  - Opcional: girar com o menu fechado ajusta o volume.
+- **Configurações → Atalho → "Controle com knob":**
+  - liga e desliga o controle;
+  - tem três caixas com detecção da tecla (gire e aperte o knob);
+  - avisa sobre teclas repetidas, iguais ao atalho do menu ou já em uso por outro programa.
+- **Teclas:** configure o knob para enviar F13, F14 e F15 (o padrão), que nenhum teclado comum tem. Se o programa do teclado não oferecer F13–F24, use combinações raras.
+
 ## 0.21.0
 
 - **Controle do Discord** pelo RPC local do próprio Discord:

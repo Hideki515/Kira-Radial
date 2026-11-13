@@ -28,6 +28,12 @@ pub fn save_config(app: AppHandle, state: State<'_, AppState>, mut config: Confi
     if old.hotkey.accelerator != config.hotkey.accelerator || old.launcher.mode != config.launcher.mode {
         menu::apply_hotkey(&app, &config)?;
     }
+    // Teclas do knob: falha ao registrar não impede salvar (aparece nas Configurações).
+    if old.knob != config.knob || old.hotkey.accelerator != config.hotkey.accelerator || old.launcher.mode != config.launcher.mode {
+        if let Err(e) = crate::knob::apply(&app, &config) {
+            crate::perf::log_level(crate::perf::Level::Warn, "rust", &format!("knob: {e}"));
+        }
+    }
     if old.behavior.clipboard_history != config.behavior.clipboard_history {
         crate::clipboard::set_enabled(config.behavior.clipboard_history);
     }
@@ -285,6 +291,13 @@ pub fn hide_menu(app: AppHandle) {
 #[tauri::command]
 pub fn set_hotkey_paused(app: AppHandle, paused: bool) {
     menu::set_paused(&app, paused);
+    crate::knob::set_paused(&app, paused);
+}
+
+/// Erro ao registrar as teclas do knob (None = registradas ou desligado).
+#[tauri::command]
+pub fn knob_error() -> Option<String> {
+    crate::knob::error()
 }
 
 #[tauri::command]

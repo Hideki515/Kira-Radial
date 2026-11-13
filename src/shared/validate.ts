@@ -1,12 +1,35 @@
 import { MAX_CUSTOM_THEMES, customThemeErrors, findCustom } from "./customTheme";
 import { DISCORD_LABEL } from "./describe";
-import { parseCombo } from "./keys";
+import { formatCombo, parseCombo } from "./keys";
 import { hasCriteria, whenErrors } from "./schedule";
-import { DYNAMIC_KINDS, LAUNCHER_MODES, LIMITS, ORB_ANIMATIONS, ORB_LIMITS, SCALE_LIMITS, THEMES, wantsHotkey, type Action, type Theme, type Config, type MenuItem } from "./types";
+import { DYNAMIC_KINDS, LAUNCHER_MODES, LIMITS, ORB_ANIMATIONS, ORB_LIMITS, SCALE_LIMITS, THEMES, knobOf, wantsHotkey, type Action, type Theme, type Config, type MenuItem } from "./types";
+
+/** Teclas do knob: válidas, diferentes entre si e do atalho do menu. */
+export function knobErrors(c: Config): string[] {
+  const k = knobOf(c);
+  if (!k.enabled) return [];
+  const errors: string[] = [];
+  const names: [string, string][] = [["apertar", k.press], ["girar para a direita", k.right], ["girar para a esquerda", k.left]];
+  const seen = new Map<string, string>();
+  for (const [what, combo] of names) {
+    const parsed = parseCombo(combo);
+    if (!parsed) {
+      errors.push(`Knob: tecla de "${what}" inválida.`);
+      continue;
+    }
+    const key = formatCombo(parsed).toLowerCase();
+    if (seen.has(key)) errors.push(`Knob: a tecla ${combo} está em "${seen.get(key)}" e em "${what}".`);
+    seen.set(key, what);
+  }
+  const menu = parseCombo(c.hotkey.accelerator);
+  if (wantsHotkey(c.launcher?.mode ?? "hotkey") && menu && seen.has(formatCombo(menu).toLowerCase()))
+    errors.push(`Knob: ${c.hotkey.accelerator} já é o atalho que abre o menu.`);
+  return errors;
+}
 
 /** Valida a configuração inteira. Retorna mensagens legíveis; lista vazia = válida. */
 export function validateConfig(c: Config): string[] {
-  const errors: string[] = [];
+  const errors: string[] = [...knobErrors(c)];
   const mode = c.launcher?.mode ?? "hotkey";
   if (!LAUNCHER_MODES.includes(mode)) errors.push(`Modo de abertura desconhecido: "${mode}".`);
   // No modo "só ícone" o atalho fica desligado: não bloqueia salvar.

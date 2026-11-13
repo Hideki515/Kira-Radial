@@ -21,7 +21,42 @@ pub struct Config {
     /// Como o menu é aberto (atalho, ícone flutuante ou ambos). Ausente em configs antigas.
     #[serde(default)]
     pub launcher: Launcher,
+    /// Controle dedicado (knob de teclado macro). Ausente/inválido = desligado.
+    #[serde(default, deserialize_with = "lenient_knob")]
+    pub knob: Knob,
     pub profiles: Vec<Profile>,
+}
+
+/// O que girar o knob faz com o menu fechado.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum ClosedTurn {
+    #[default]
+    #[serde(rename = "none")]
+    Ignore,
+    #[serde(rename = "volume")]
+    Volume,
+}
+
+/// Teclas que o teclado macro envia (configuradas no próprio teclado).
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase", default)]
+pub struct Knob {
+    pub enabled: bool,
+    pub press: String,
+    pub right: String,
+    pub left: String,
+    pub closed_turn: ClosedTurn,
+}
+
+impl Default for Knob {
+    fn default() -> Self {
+        Knob { enabled: false, press: "F13".into(), right: "F14".into(), left: "F15".into(), closed_turn: ClosedTurn::Ignore }
+    }
+}
+
+fn lenient_knob<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Knob, D::Error> {
+    let v = Value::deserialize(d)?;
+    Ok(serde_json::from_value(v).unwrap_or_default())
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -452,5 +487,24 @@ mod lenient_when_tests {
         v["profiles"][0]["when"] = serde_json::json!({ "days": [1, 2], "from": "08:00", "to": "12:00" });
         let c: Config = serde_json::from_value(v).unwrap();
         assert_eq!(c.profiles[0].when.as_ref().unwrap().days, vec![1, 2]);
+    }
+}
+
+#[cfg(test)]
+mod knob_config_tests {
+    use super::*;
+
+    #[test]
+    fn knob_ausente_ou_quebrado_vira_desligado_sem_derrubar_a_config() {
+        let mut v: Value = serde_json::to_value(Config::default_config()).unwrap();
+        v.as_object_mut().unwrap().remove("knob");
+        let c: Config = serde_json::from_value(v.clone()).expect("config antiga carrega");
+        assert_eq!(c.knob, Knob::default());
+        v["knob"] = serde_json::json!({ "enabled": "sim", "press": 13 });
+        let c: Config = serde_json::from_value(v.clone()).expect("knob quebrado não derruba a config");
+        assert!(!c.knob.enabled);
+        v["knob"] = serde_json::json!({ "enabled": true, "press": "Ctrl+Alt+Shift+F10", "closedTurn": "volume" });
+        let c: Config = serde_json::from_value(v).unwrap();
+        assert_eq!((c.knob.enabled, c.knob.press.as_str(), c.knob.right.as_str(), c.knob.closed_turn), (true, "Ctrl+Alt+Shift+F10", "F14", ClosedTurn::Volume));
     }
 }

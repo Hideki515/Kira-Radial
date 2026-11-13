@@ -10,7 +10,7 @@ import { invalidateDynamic, kindChangedBy, useDynamicSources } from "./useDynami
 import { LAYOUT, hitTest, sliceAngle, type Hit } from "./geometry";
 import { RadialCanvas } from "./RadialCanvas";
 import { useNowPlaying, useOpenDiagnostics, useToast, useVolumeNudge } from "./menuHooks";
-import { digitIndex, stepIndex, wheelIndex } from "./navigation";
+import { digitIndex, knobPress, knobStep, stepIndex, wheelIndex, type RingState } from "./navigation";
 
 export { MEDIA_POLL_MS, TOAST_MS, VOLUME_SHOW_MS } from "./menuHooks";
 
@@ -226,6 +226,37 @@ function RadialMenu({ config }: { config: Config }) {
     ];
     return () => offs.forEach((p) => p.then((off) => off()));
   }, [cancelClosing, close, executeSelection, markShow, reset, showAt]);
+
+  // --- Knob (controle dedicado de teclado macro): girar passa, apertar escolhe ---
+  useEffect(() => {
+    const ring = (): RingState => {
+      const s = state.current;
+      return { openMain: s.openMain, activeMain: s.activeMain, activeSub: s.activeSub, mainCount: s.items.length, subCount: s.children.length };
+    };
+    const offs = [
+      onEvent<number>("knob:step", (d) => {
+        if (!state.current.open) return;
+        const r = ring();
+        const next = knobStep(r, d > 0 ? 1 : -1);
+        setActiveMain(next.activeMain);
+        setActiveSub(next.activeSub);
+        // No sub-anel, a posição "Voltar" é o centro: fica destacado.
+        setHubHovered(r.openMain !== null && r.subCount > 0 && next.activeSub === null);
+      }),
+      onEvent<null>("knob:press", () => {
+        const s = state.current;
+        if (!s.open) return;
+        const main = s.activeMain !== null ? s.items[s.activeMain] : undefined;
+        const p = knobPress(ring(), !!main?.children?.length);
+        setHubHovered(false);
+        if (p.kind === "close") close();
+        else if (p.kind === "back") closeSub();
+        else if (p.kind === "openSub") openSub(p.index, true);
+        else executeSelection(false);
+      }),
+    ];
+    return () => offs.forEach((p) => p.then((off) => off()));
+  }, [close, closeSub, executeSelection, openSub]);
 
   // --- Mouse / teclado / roda ---
   useEffect(() => {

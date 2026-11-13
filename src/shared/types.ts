@@ -114,8 +114,27 @@ export interface Profile {
 export type OrbAnimation = "full" | "hover" | "off";
 export const ORB_ANIMATIONS: readonly OrbAnimation[] = ["full", "hover", "off"];
 
+/** Controle dedicado: teclas que o knob de um teclado macro envia (F13–F15 por padrão). */
+export interface KnobConfig {
+  enabled: boolean;
+  press: string;
+  right: string;
+  left: string;
+  /** Girar com o menu fechado: nada ou volume do Windows. */
+  closedTurn: "none" | "volume";
+}
+
+export const DEFAULT_KNOB: KnobConfig = { enabled: false, press: "F13", right: "F14", left: "F15", closedTurn: "none" };
+
+/** Knob da config, com o padrão para o que faltar (configs antigas não têm). */
+export function knobOf(c: Pick<Config, "knob">): KnobConfig {
+  return { ...DEFAULT_KNOB, ...(c.knob ?? {}) };
+}
+
 export interface Config {
   version: 1;
+  /** Ausente em configs antigas (= desligado). */
+  knob?: KnobConfig;
   hotkey: { accelerator: string; mode: "toggle" | "hold" };
   behavior: {
     openAt: "cursor" | "center";

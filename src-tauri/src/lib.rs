@@ -13,6 +13,7 @@ mod discord;
 mod foreground;
 mod icons;
 mod keycapture;
+mod knob;
 mod lock;
 mod menu;
 mod monitors;
@@ -46,7 +47,7 @@ macro_rules! handlers {
 #[cfg(feature = "qa")]
 macro_rules! handlers {
     ($($cmd:path),* $(,)?) => {
-        tauri::generate_handler![$($cmd,)* qa::commands::qa_show_menu, qa::commands::qa_open_settings, qa::commands::qa_close_settings, qa::commands::qa_state]
+        tauri::generate_handler![$($cmd,)* qa::commands::qa_show_menu, qa::commands::qa_open_settings, qa::commands::qa_close_settings, qa::commands::qa_state, qa::commands::qa_knob]
     };
 }
 
@@ -59,7 +60,12 @@ pub fn run() {
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| menu::open_settings(app)))
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
-                .with_handler(|app, _shortcut, event| menu::on_shortcut(app, event.state()))
+                .with_handler(|app, shortcut, event| {
+                    // As teclas do knob têm tratamento próprio; o resto é o atalho do menu.
+                    if !knob::on_shortcut(app, shortcut, event.state()) {
+                        menu::on_shortcut(app, event.state());
+                    }
+                })
                 .build(),
         )
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, None))
@@ -83,6 +89,10 @@ pub fn run() {
                 *handle.state::<AppState>().hotkey_error.lock_ok() = Some(e);
                 // Sem atalho o app ainda é usável pela bandeja; abre as configurações para corrigir.
                 menu::open_settings(&handle);
+            }
+            // Depois do atalho do menu (as teclas do knob não podem repetir o atalho).
+            if let Err(e) = knob::apply(&handle, &cfg) {
+                perf::log_level(perf::Level::Warn, "rust", &format!("knob: {e}"));
             }
 
             // Mantém o registro do Windows coerente com a configuração.
@@ -153,6 +163,7 @@ pub fn run() {
             commands::discord_status,
             commands::discord_connect,
             commands::discord_disconnect,
+            commands::knob_error,
             commands::list_recent_files,
             commands::clipboard_list,
             commands::clipboard_clear,

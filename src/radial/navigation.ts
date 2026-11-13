@@ -18,3 +18,35 @@ export function digitIndex(e: Pick<KeyboardEvent, "code" | "ctrlKey" | "altKey" 
   const d = /^(Digit|Numpad)([1-9])$/.exec(e.code)?.[2];
   return d ? Number(d) - 1 : null;
 }
+
+/** Onde o menu está, para o knob (controle dedicado) decidir o próximo passo. */
+export interface RingState {
+  openMain: number | null;
+  activeMain: number | null;
+  activeSub: number | null;
+  mainCount: number;
+  subCount: number;
+}
+
+/**
+ * Girar o knob. No sub-anel há uma posição a mais, "Voltar" (activeSub = null, o centro),
+ * porque o knob não tem toque longo para sair do submenu.
+ */
+export function knobStep(s: RingState, d: number): { activeMain: number | null; activeSub: number | null } {
+  if (s.openMain !== null && s.subCount > 0) {
+    const size = s.subCount + 1;
+    const cur = s.activeSub === null ? 0 : s.activeSub + 1;
+    const next = (((cur + d) % size) + size) % size;
+    return { activeMain: s.activeMain, activeSub: next === 0 ? null : next - 1 };
+  }
+  return { activeMain: s.mainCount > 0 ? stepIndex(s.activeMain, d, s.mainCount) : null, activeSub: null };
+}
+
+export type KnobPress = { kind: "close" } | { kind: "back" } | { kind: "openSub"; index: number } | { kind: "execute" };
+
+/** Apertar o knob com o menu aberto. */
+export function knobPress(s: RingState, mainHasChildren: boolean): KnobPress {
+  if (s.openMain !== null && s.subCount > 0) return s.activeSub === null ? { kind: "back" } : { kind: "execute" };
+  if (s.activeMain === null) return { kind: "close" };
+  return mainHasChildren ? { kind: "openSub", index: s.activeMain } : { kind: "execute" };
+}

@@ -74,6 +74,19 @@ pub mod commands {
         }
     }
 
+    /// Simula o knob ("press", "right" ou "left") sem teclado do Windows.
+    #[tauri::command]
+    pub fn qa_knob(app: AppHandle, input: String) -> Result<(), String> {
+        let i = match input.as_str() {
+            "press" => crate::knob::Input::Press,
+            "right" => crate::knob::Input::Right,
+            "left" => crate::knob::Input::Left,
+            _ => return Err(format!("movimento desconhecido: {input}")),
+        };
+        crate::knob::handle(&app, i);
+        Ok(())
+    }
+
     #[tauri::command]
     pub fn qa_open_settings(app: AppHandle) {
         menu::open_settings(&app);

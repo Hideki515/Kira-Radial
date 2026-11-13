@@ -10,6 +10,7 @@ import { BrowserFields } from "../BrowserFields";
 import { ThemeEditor, addCustomTheme } from "./ThemeEditor";
 import { MAX_CUSTOM_THEMES, customRef, isCustomRef } from "../../shared/customTheme";
 import { BackupHistory } from "./BackupHistory";
+import { KnobSection } from "./KnobSection";
 import { clipboardClear } from "../../shared/ipc";
 
 interface PageProps {
@@ -120,6 +121,7 @@ export function HotkeyPage({ config, update }: PageProps) {
       <p className="muted">Sugestões: Ctrl+Alt+Q, Alt+Q, Ctrl+Shift+Q, Win+Shift+Z. (Alt+Space costuma ser capturado pelo PowerToys.)</p>
     </Section>
     )}
+    <KnobSection config={config} update={update} />
     </>
   );
 }

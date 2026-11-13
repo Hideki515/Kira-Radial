@@ -371,4 +371,26 @@ describe("Kira de teste — ponta a ponta", () => {
     expect(v.status).toBe("ok");
     expect(v.voice.deaf).toBe(false);
   });
+  it("12. knob (simulado por qa_knob): apertar abre, girar escolhe, apertar abre o submenu e executa", async () => {
+    // Usa a fatia do Discord FALSO do cenário 11 (perfil ativo, fatia 1): executar é seguro.
+    await toWindow("settings.html");
+    await invoke("hide_menu");
+    await browser.waitUntil(async () => !(await qaState()).menuVisible, { timeoutMsg: "menu não fechou" });
+    const before = (await invoke("discord_voice")).voice.mute;
+    await invoke("qa_knob", { input: "press" });
+    await browser.waitUntil(async () => (await qaState()).menuVisible, { timeoutMsg: "apertar o knob não abriu o menu" });
+    await toWindow("");
+    await invoke("qa_knob", { input: "right" });
+    await browser.waitUntil(async () => (await $$(".main-slice.is-active")).length === 1, { timeoutMsg: "girar não escolheu fatia" });
+    await invoke("qa_knob", { input: "press" }); // fatia com submenu → abre o sub-anel no 1º item
+    await browser.waitUntil(
+      async () => {
+        const a = await $$(".sub-slice.is-active");
+        return a.length === 1 && /^Microfone/.test(await a[0].getAttribute("aria-label"));
+      },
+      { timeoutMsg: "apertar não abriu o submenu com o 1º item escolhido" },
+    );
+    await invoke("qa_knob", { input: "press" }); // executa: alterna o mudo no Discord falso
+    await browser.waitUntil(async () => (await invoke("discord_voice")).voice.mute === !before, { timeoutMsg: "apertar não executou a fatia" });
+  });
 });
