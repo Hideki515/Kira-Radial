@@ -8,6 +8,7 @@ import "../styles/tokens.css";
 import "../styles/radial.css";
 import "../styles/themes2.css";
 import "../styles/themes3.css";
+import "../styles/themes4.css";
 import "../styles/settings.css";
 import "../styles/orb.css";
 

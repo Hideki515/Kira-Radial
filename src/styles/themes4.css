@@ -1,0 +1,189 @@
+/* Temas tecnológicos: Circuito, Radar, Quântico, Blueprint, Data Center e Rede Neural.
+   A cor de destaque (--active) continua valendo. Poucas animações por tema (agrupadas). */
+
+.circuit, .radar, .quantum, .blueprint, .dc, .neural { pointer-events: none; }
+
+/* Base comum: fonte técnica nos rótulos e no centro. */
+.theme-circuit, .theme-radar, .theme-quantum, .theme-blueprint, .theme-datacenter, .theme-neural {
+  --font-tech: "Cascadia Mono", "Consolas", monospace;
+}
+.theme-circuit .slice-label, .theme-radar .slice-label, .theme-blueprint .slice-label,
+.theme-datacenter .slice-label { font-family: var(--font-tech); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.theme-circuit .hub-time, .theme-radar .hub-time, .theme-blueprint .hub-time, .theme-datacenter .hub-time,
+.theme-circuit .hub-cpu, .theme-radar .hub-cpu, .theme-blueprint .hub-cpu, .theme-datacenter .hub-cpu { font-family: var(--font-tech); }
+
+/* ======================================================================
+   Circuito — placa verde, trilhas douradas, vias acendendo.
+   ====================================================================== */
+.circuit-board { fill: #04140c; opacity: 0.85; }
+.circuit-traces path { fill: none; stroke: #c9a94a; stroke-width: 3; stroke-linejoin: round; opacity: 0.55; }
+.circuit-vias circle { fill: #04140c; stroke: #e6c766; stroke-width: 2.5; }
+.circuit-vias { animation: circuit-via 2.7s steps(8) infinite; }
+@keyframes circuit-via { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+.circuit-pad-ring { fill: none; stroke: #c9a94a; stroke-width: 2; stroke-dasharray: 10 6; opacity: 0.6; }
+
+.theme-circuit .ring-backing { fill: #031009; fill-opacity: 0.96; }
+.theme-circuit .main-slice .slice-shape { fill: #082318; stroke: rgba(201, 169, 74, 0.5); stroke-width: 1.4; }
+.theme-circuit .main-slice .slice-icon, .theme-circuit .sub-slice .slice-icon { color: #e6f5ea; }
+.theme-circuit .slice-label { fill: #d7efe0; }
+.theme-circuit .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 28%, #082318); stroke: var(--active); stroke-width: 2.2; }
+.theme-circuit .main-slice.is-active .slice-icon { color: #fff; }
+.theme-circuit .main-slice.is-active .slice-label { fill: #fff; }
+.theme-circuit .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 30%, transparent); }
+.theme-circuit .sub-slice .slice-shape { fill: #082318; }
+.theme-circuit .hub-disc { fill: #082318; stroke: #c9a94a; stroke-opacity: 0.7; }
+.theme-circuit .hub-well { fill: #020a06; stroke: rgba(201, 169, 74, 0.25); }
+.theme-circuit .hub-time, .theme-circuit .hub-np-title { fill: #eafaf0; }
+.theme-circuit .hub-date, .theme-circuit .hub-pill-text, .theme-circuit .hub-np-artist { fill: #9bbf8a; }
+.theme-circuit .hub-cpu { fill: var(--active); }
+.theme-circuit .hub-gauge { stroke: var(--active); stroke-linecap: butt; }
+.theme-circuit .hub-track { stroke: rgba(201, 169, 74, 0.18); }
+
+/* ======================================================================
+   Radar — escopo escuro, varredura girando, alvos piscando.
+   ====================================================================== */
+.radar-scope { fill: #011410; opacity: 0.9; }
+.radar-grid { fill: none; stroke: #2cf5c0; stroke-width: 1; opacity: 0.22; }
+.radar-beam { stroke: #2cf5c0; stroke-width: 2; opacity: 0.9; }
+.radar-spin { transform-box: view-box; transform-origin: 450px 450px; animation: holo-spin 4s steps(120) infinite; }
+.radar-blips circle { fill: #b8ffe9; }
+.radar-blips { animation: radar-blip 3s steps(6) infinite; }
+@keyframes radar-blip { 0% { opacity: 1; } 70%, 100% { opacity: 0.1; } }
+
+.theme-radar .ring-backing { fill: #010c09; fill-opacity: 0.96; }
+.theme-radar .main-slice .slice-shape { fill: #03201a; stroke: rgba(44, 245, 192, 0.35); stroke-width: 1.2; }
+.theme-radar .main-slice .slice-icon, .theme-radar .sub-slice .slice-icon { color: #b8ffe9; }
+.theme-radar .slice-label { fill: #b8ffe9; }
+.theme-radar .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 26%, #03201a); stroke: var(--active); stroke-width: 2; }
+.theme-radar .main-slice.is-active .slice-icon { color: #fff; }
+.theme-radar .main-slice.is-active .slice-label { fill: #fff; }
+.theme-radar .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 28%, transparent); }
+.theme-radar .sub-slice .slice-shape { fill: #03201a; }
+.theme-radar .hub-disc { fill: #03201a; stroke: #2cf5c0; stroke-opacity: 0.5; }
+.theme-radar .hub-well { fill: #010a07; stroke: rgba(44, 245, 192, 0.2); }
+.theme-radar .hub-time, .theme-radar .hub-np-title { fill: #dcfff4; }
+.theme-radar .hub-date, .theme-radar .hub-pill-text, .theme-radar .hub-np-artist { fill: #5fbf9f; }
+.theme-radar .hub-cpu { fill: #2cf5c0; }
+.theme-radar .hub-gauge { stroke: #2cf5c0; }
+.theme-radar .hub-track { stroke: rgba(44, 245, 192, 0.14); }
+
+/* ======================================================================
+   Quântico — campo violeta, órbitas elípticas com "elétrons" de luz.
+   ====================================================================== */
+.quantum-field { fill: none; stroke: #b388ff; stroke-width: 40; opacity: 0.07; }
+.quantum-orbit { fill: none; stroke: #b388ff; stroke-width: 1.2; opacity: 0.4; }
+.quantum-electron { fill: #7df9ff; }
+.quantum-electron--b { fill: #e4d8ff; }
+/* Giro lento do átomo: 30 s por volta, a ~15 quadros/s (suave nessa velocidade). */
+.quantum-spin { transform-box: view-box; transform-origin: 450px 450px; animation: holo-spin 30s steps(450) infinite; }
+
+.theme-quantum .ring-backing { fill: #0a0618; fill-opacity: 0.95; }
+.theme-quantum .main-slice .slice-shape { fill: #150d2e; stroke: rgba(179, 136, 255, 0.35); stroke-width: 1.2; }
+.theme-quantum .main-slice .slice-icon, .theme-quantum .sub-slice .slice-icon { color: #e4d8ff; }
+.theme-quantum .slice-label { font-family: "Bahnschrift", "Segoe UI", sans-serif; fill: #e4d8ff; letter-spacing: 0.12em; }
+.theme-quantum .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 26%, #150d2e); stroke: var(--active); stroke-width: 2; }
+.theme-quantum .main-slice.is-active .slice-icon { color: #fff; }
+.theme-quantum .main-slice.is-active .slice-label { fill: #fff; }
+.theme-quantum .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 32%, transparent); }
+.theme-quantum .sub-slice .slice-shape { fill: #150d2e; }
+.theme-quantum .hub-disc { fill: #150d2e; stroke: #7df9ff; stroke-opacity: 0.5; }
+.theme-quantum .hub-well { fill: #070412; stroke: rgba(179, 136, 255, 0.25); }
+.theme-quantum .hub-time, .theme-quantum .hub-np-title { font-family: "Bahnschrift", sans-serif; fill: #f3eeff; }
+.theme-quantum .hub-date, .theme-quantum .hub-pill-text, .theme-quantum .hub-np-artist { fill: #9d8ad1; }
+.theme-quantum .hub-cpu { font-family: "Bahnschrift", sans-serif; fill: #7df9ff; }
+.theme-quantum .hub-gauge { stroke: #7df9ff; }
+.theme-quantum .hub-track { stroke: rgba(179, 136, 255, 0.16); }
+
+/* ======================================================================
+   Blueprint — planta técnica azul, traço branco, sem animação.
+   ====================================================================== */
+.bp-sheet { fill: #0b3a7a; opacity: 0.95; }
+.bp-grid-line { fill: none; stroke: rgba(255, 255, 255, 0.09); stroke-width: 1; }
+.bp-edge { fill: none; stroke: rgba(255, 255, 255, 0.55); stroke-width: 2; }
+.bp-construction { fill: none; stroke: rgba(255, 255, 255, 0.3); stroke-width: 1; stroke-dasharray: 12 4 2 4; }
+.bp-dim line { stroke: rgba(255, 255, 255, 0.7); stroke-width: 1; }
+.bp-arrow { fill: rgba(255, 255, 255, 0.85); }
+.bp-text { font-family: "Cascadia Mono", "Consolas", monospace; font-size: 11px; fill: rgba(255, 255, 255, 0.75); letter-spacing: 0.08em; }
+.bp-title { font-weight: 700; fill: #fff; }
+
+.theme-blueprint .ring-backing { fill: #0b3a7a; fill-opacity: 0.9; }
+.theme-blueprint .main-slice .slice-shape { fill: #0d4590; fill-opacity: 0.92; stroke: rgba(255, 255, 255, 0.75); stroke-width: 1.2; }
+.theme-blueprint .main-slice .slice-icon, .theme-blueprint .sub-slice .slice-icon { color: #ffffff; }
+.theme-blueprint .slice-label { fill: #ffffff; }
+.theme-blueprint .main-slice.is-active .slice-shape { fill: #12509f; stroke: var(--active); stroke-width: 2.4; }
+.theme-blueprint .main-slice.is-active .slice-icon { color: var(--active); }
+.theme-blueprint .main-slice.is-active .slice-label { fill: var(--active); }
+.theme-blueprint .main-slice .slice-halo, .theme-blueprint .sub-slice .slice-halo { stroke: none; }
+.theme-blueprint .slice-marker { fill: var(--active); }
+.theme-blueprint .sub-slice .slice-shape { fill: #0d4590; stroke: rgba(255, 255, 255, 0.6); }
+.theme-blueprint .sub-slice .slice-label { fill: #fff; }
+.theme-blueprint .hub-disc { fill: #0d4590; stroke: rgba(255, 255, 255, 0.75); stroke-dasharray: 6 3; }
+.theme-blueprint .hub-well { fill: #082d60; stroke: none; }
+.theme-blueprint .hub-time, .theme-blueprint .hub-np-title { fill: #ffffff; }
+.theme-blueprint .hub-date, .theme-blueprint .hub-pill-text, .theme-blueprint .hub-np-artist { fill: #b9d1f2; }
+.theme-blueprint .hub-cpu { fill: var(--active); }
+.theme-blueprint .hub-pill { fill: none; stroke: rgba(255, 255, 255, 0.4); }
+.theme-blueprint .hub-gauge { stroke: var(--active); stroke-linecap: butt; }
+.theme-blueprint .hub-track { stroke: rgba(255, 255, 255, 0.15); stroke-linecap: butt; }
+
+/* ======================================================================
+   Data Center — grafite, trilho de rack, LEDs verdes/âmbar/azuis.
+   ====================================================================== */
+.dc-panel { fill: #14171b; opacity: 0.94; }
+.dc-vent { fill: none; stroke: #2a2f36; stroke-width: 8; stroke-dasharray: 3 5; }
+.dc-rail { fill: none; stroke: #3a414a; stroke-width: 3; }
+.dc-leds rect { shape-rendering: crispEdges; }
+.dc-leds--0 rect { fill: #36d399; }
+.dc-leds--1 rect { fill: #fbbf24; }
+.dc-leds--2 rect { fill: #38bdf8; }
+.dc-leds--0 { animation: dc-blink 1.3s steps(2) infinite; }
+.dc-leds--1 { animation: dc-blink 2.1s steps(2) infinite; }
+.dc-leds--2 { animation: dc-blink 0.9s steps(2) infinite; }
+@keyframes dc-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+.theme-datacenter .ring-backing { fill: #0e1013; fill-opacity: 0.96; }
+.theme-datacenter .main-slice .slice-shape { fill: #1b1f25; stroke: #3a414a; stroke-width: 1.4; }
+.theme-datacenter .main-slice .slice-icon, .theme-datacenter .sub-slice .slice-icon { color: #e5e9ef; }
+.theme-datacenter .slice-label { fill: #d5dbe3; }
+.theme-datacenter .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 22%, #1b1f25); stroke: var(--active); stroke-width: 2; }
+.theme-datacenter .main-slice.is-active .slice-icon { color: #fff; }
+.theme-datacenter .main-slice.is-active .slice-label { fill: #fff; }
+.theme-datacenter .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 25%, transparent); }
+.theme-datacenter .sub-slice .slice-shape { fill: #1b1f25; }
+.theme-datacenter .hub-disc { fill: #1b1f25; stroke: #3a414a; stroke-width: 2; }
+.theme-datacenter .hub-well { fill: #0a0c0e; stroke: none; }
+.theme-datacenter .hub-time, .theme-datacenter .hub-np-title { fill: #f1f4f8; }
+.theme-datacenter .hub-date, .theme-datacenter .hub-pill-text, .theme-datacenter .hub-np-artist { fill: #8b95a3; }
+.theme-datacenter .hub-cpu { fill: var(--active); }
+.theme-datacenter .hub-gauge { stroke: var(--active); stroke-linecap: butt; }
+.theme-datacenter .hub-track { stroke: rgba(255, 255, 255, 0.08); stroke-linecap: butt; }
+
+/* ======================================================================
+   Rede Neural — nós e ligações magenta/azul com pulsos.
+   ====================================================================== */
+.neural-edges path { fill: none; stroke: #6f8cff; stroke-width: 1.2; }
+.neural-edges { animation: neural-pulse 2.2s steps(8) infinite; }
+.neural-nodes circle { fill: #0a0718; stroke: #ff3d9a; stroke-width: 2; }
+.neural-nodes { animation: neural-pulse 2.2s steps(8) infinite; }
+@keyframes neural-pulse { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.9; } }
+
+.theme-neural .ring-backing { fill: #0a0718; fill-opacity: 0.95; }
+.theme-neural .main-slice .slice-shape { fill: #140f2c; stroke: rgba(111, 140, 255, 0.35); stroke-width: 1.2; }
+.theme-neural .main-slice .slice-icon, .theme-neural .sub-slice .slice-icon { color: #e3e8ff; }
+.theme-neural .slice-label { fill: #e3e8ff; letter-spacing: 0.05em; }
+.theme-neural .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 26%, #140f2c); stroke: var(--active); stroke-width: 2; }
+.theme-neural .main-slice.is-active .slice-icon { color: #fff; }
+.theme-neural .main-slice.is-active .slice-label { fill: #fff; }
+.theme-neural .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 30%, transparent); }
+.theme-neural .sub-slice .slice-shape { fill: #140f2c; }
+.theme-neural .hub-disc { fill: #140f2c; stroke: #ff3d9a; stroke-opacity: 0.55; }
+.theme-neural .hub-well { fill: #07050f; stroke: rgba(111, 140, 255, 0.2); }
+.theme-neural .hub-time, .theme-neural .hub-np-title { fill: #f4f5ff; }
+.theme-neural .hub-date, .theme-neural .hub-pill-text, .theme-neural .hub-np-artist { fill: #8f97d6; }
+.theme-neural .hub-cpu { fill: #ff3d9a; }
+.theme-neural .hub-gauge { stroke: #ff3d9a; }
+.theme-neural .hub-track { stroke: rgba(111, 140, 255, 0.15); }
+
+@media (prefers-reduced-motion: reduce) {
+  .circuit-vias, .radar-spin, .radar-blips, .quantum-spin, .dc-leds--0, .dc-leds--1, .dc-leds--2, .neural-edges, .neural-nodes { animation: none; }
+}

@@ -157,6 +157,12 @@ const THEME_INFO: Record<Theme, { label: string; hint: string }> = {
   magma: { label: "Magma", hint: "Preto vulcânico com rachaduras de lava pulsando e brasas." },
   pixel: { label: "Pixel", hint: "Retrô 8-bit: bordas em degrau, fonte monoespaçada e brilhos piscando." },
   paper: { label: "Papel", hint: "Claro, folha de caderno e letra à mão, com tinta azul." },
+  circuit: { label: "Circuito", hint: "Placa de circuito: trilhas douradas saindo do anel e vias acendendo." },
+  radar: { label: "Radar", hint: "Escopo de radar com grade polar, varredura girando e alvos piscando." },
+  quantum: { label: "Quântico", hint: "Órbitas atômicas em volta do centro, com elétrons de luz correndo." },
+  blueprint: { label: "Blueprint", hint: "Planta técnica azul com grade, cotas e carimbo. Sem animação." },
+  datacenter: { label: "Data Center", hint: "Painel de rack grafite com LEDs de status verdes, âmbar e azuis." },
+  neural: { label: "Rede Neural", hint: "Camadas de neurônios ligados, com pulsos de ativação." },
 };
 
 /** Cartões com miniatura (estática) de cada tema. */

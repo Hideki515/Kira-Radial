@@ -9,7 +9,7 @@ const C = LAYOUT.size / 2;
 const OUT = LAYOUT.subOuter;
 
 /** Pseudoaleatório fixo (mesma sequência sempre): espalha pétalas, bolhas e estrelas. */
-function seq(n: number, seed: number): number[] {
+export function seq(n: number, seed: number): number[] {
   let x = seed;
   return Array.from({ length: n }, () => {
     x = (x * 9301 + 49297) % 233280;

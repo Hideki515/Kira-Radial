@@ -225,10 +225,12 @@ export type ThemeRef = Theme | `custom:${string}`;
 
 export type Theme =
   | "glass" | "holo" | "reactor" | "terminal" | "neon" | "cyber" | "steam" | "fluent" | "minimal"
-  | "sakura" | "ocean" | "aurora" | "magma" | "pixel" | "paper";
+  | "sakura" | "ocean" | "aurora" | "magma" | "pixel" | "paper"
+  | "circuit" | "radar" | "quantum" | "blueprint" | "datacenter" | "neural";
 export const THEMES: readonly Theme[] = [
   "glass", "holo", "reactor", "terminal", "neon", "cyber", "steam", "fluent", "minimal",
   "sakura", "ocean", "aurora", "magma", "pixel", "paper",
+  "circuit", "radar", "quantum", "blueprint", "datacenter", "neural",
 ];
 /** Cor de destaque sugerida ao escolher o tema holográfico. */
 export const HOLO_ACCENT = "#ffb03a";
@@ -249,6 +251,12 @@ export const THEME_ACCENT: Record<Theme, string> = {
   magma: "#ff6a1f",
   pixel: "#ffe14d",
   paper: "#2f6fd6",
+  circuit: "#3ddc84",
+  radar: "#2cf5c0",
+  quantum: "#b388ff",
+  blueprint: "#ffd23f",
+  datacenter: "#36d399",
+  neural: "#ff3d9a",
 };
 
 export const LIMITS = { minSlices: 3, maxSlices: 10, maxChildren: 8 } as const;

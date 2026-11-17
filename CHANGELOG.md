@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.24.0
+
+**6 temas tecnológicos novos** (agora são 21). Cada um tem poucas animações agrupadas, para gastar pouco com o menu aberto.
+
+| Tema | Visual |
+|---|---|
+| Circuito | placa verde com trilhas douradas saindo do anel e vias acendendo |
+| Radar | escopo com grade polar, varredura girando e alvos piscando |
+| Quântico | órbitas atômicas em volta do centro, com elétrons de luz correndo |
+| Blueprint | planta técnica azul com grade, cotas e carimbo, sem animação |
+| Data Center | painel de rack grafite com LEDs de status verdes, âmbar e azuis |
+| Rede Neural | camadas de neurônios ligados, com pulsos de ativação |
+
 ## 0.23.0
 
 **6 temas novos** (agora são 15). Todos seguem a cor de destaque, servem de base para temas personalizados e respeitam "reduzir movimento" do Windows.
