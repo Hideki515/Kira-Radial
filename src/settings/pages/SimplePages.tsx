@@ -11,6 +11,7 @@ import { ThemeEditor, addCustomTheme } from "./ThemeEditor";
 import { MAX_CUSTOM_THEMES, customRef, isCustomRef } from "../../shared/customTheme";
 import { BackupHistory } from "./BackupHistory";
 import { KnobSection } from "./KnobSection";
+import { ScreenshotSection } from "./ScreenshotSection";
 import { clipboardClear } from "../../shared/ipc";
 
 interface PageProps {
@@ -21,6 +22,7 @@ interface PageProps {
 export function GeneralPage({ config, update }: PageProps) {
   const b = config.behavior;
   return (
+    <>
     <Section title="Geral">
       <Field label="Onde abrir o menu">
         <Segmented
@@ -62,6 +64,8 @@ export function GeneralPage({ config, update }: PageProps) {
         <input type="range" min={60} max={140} step={5} value={b.deadZonePx} onChange={(e) => update((c) => void (c.behavior.deadZonePx = Number(e.target.value)))} />
       </Field>
     </Section>
+    <ScreenshotSection config={config} update={update} />
+    </>
   );
 }
 

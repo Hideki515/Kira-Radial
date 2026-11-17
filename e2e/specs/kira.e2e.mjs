@@ -393,4 +393,35 @@ describe("Kira de teste — ponta a ponta", () => {
     await invoke("qa_knob", { input: "press" }); // executa: alterna o mudo no Discord falso
     await browser.waitUntil(async () => (await invoke("discord_voice")).voice.mute === !before, { timeoutMsg: "apertar não executou a fatia" });
   });
+  it("13. preview de print (qa_fake_shot): aparece, fixa na tela e fecha — sem tocar na área de transferência", async () => {
+    await toWindow("settings.html");
+    const id = await invoke("qa_fake_shot", { width: 1600, height: 900 });
+    await toWindow("shot.html");
+    await $('[data-testid="shot-preview"]').waitForExist({ timeout: 10000 });
+    expect(await $(".shot-title").getText()).toBe("Print · 1600×900");
+    // WebdriverIO 10: $$().map já é assíncrono e devolve uma Promise do array.
+    const labels = await $$(".shot-btn").map((b) => b.getAttribute("aria-label"));
+    expect(labels).toEqual(["Copiar", "Salvar como…", "Editar", "Fixar na tela"]);
+    const info = await invoke("shot_current");
+    expect(info.id).toBe(id);
+    expect(info.thumb.startsWith("data:image/png;base64,")).toBe(true);
+    // Fixar: abre a janela do print fixado com a imagem inteira.
+    await $('button[aria-label="Fixar na tela"]').click();
+    await browser.waitUntil(
+      async () => {
+        for (const h of await browser.getWindowHandles()) {
+          await browser.switchToWindow(h);
+          if ((await browser.getUrl()).includes("pin=1") && (await $('[data-testid="shot-pin"] img').isExisting())) return true;
+        }
+        return false;
+      },
+      { timeout: 10000, timeoutMsg: "print fixado não apareceu" },
+    );
+    expect(await $('[data-testid="shot-pin"] img').getAttribute("alt")).toBe("Print fixado de 1600×900");
+    expect((await invoke("shot_pin_image")).width).toBe(1600);
+    await $('[data-testid="shot-pin"] button[aria-label="Fechar"]').click();
+    // A janela do fixado agora está escondida e suspensa (não roda script): consulta pelas Configurações.
+    await toWindow("settings.html");
+    await browser.waitUntil(async () => (await invoke("shot_pin_image")) === null, { timeoutMsg: "print fixado não fechou" });
+  });
 });

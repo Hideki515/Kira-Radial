@@ -33,7 +33,14 @@ export type Action =
       /** Pasta do perfil (Chrome, Edge, Brave, Vivaldi), ex.: "Profile 1". */
       profile?: string;
     }
-  | { type: "keys"; combo: string; /** Espera (ms) após o menu sumir, antes de enviar. */ delayMs?: number }
+  | {
+      type: "keys";
+      combo: string;
+      /** Espera (ms) após o menu sumir, antes de enviar. */
+      delayMs?: number;
+      /** Abre uma ferramenta de print (ex.: ShareX): mostra o preview. PrtSc e Win+Shift+S já contam. */
+      capture?: boolean;
+    }
   | { type: "media"; cmd: MediaCmd }
   | { type: "system"; cmd: SystemCmd }
   | { type: "script"; shell: "powershell" | "cmd"; command: string; hidden: boolean }
@@ -124,6 +131,26 @@ export interface KnobConfig {
   closedTurn: "none" | "volume";
 }
 
+export type ShotCorner = "bottomRight" | "bottomLeft" | "topRight" | "topLeft";
+
+/** Preview das capturas tiradas pela Kira. */
+export interface ScreenshotConfig {
+  preview: boolean;
+  /** Tempo na tela (s). */
+  seconds: number;
+  corner: ShotCorner;
+  /** Pastas extras observadas (ex.: a do Lightshot). A de capturas do Windows já entra. */
+  folders: string[];
+  /** Quanto tempo esperar pelo print depois da ação (s). */
+  armSeconds: number;
+}
+
+export const DEFAULT_SCREENSHOT: ScreenshotConfig = { preview: true, seconds: 6, corner: "bottomRight", folders: [], armSeconds: 60 };
+
+export function screenshotOf(c: Pick<Config, "screenshot">): ScreenshotConfig {
+  return { ...DEFAULT_SCREENSHOT, ...(c.screenshot ?? {}) };
+}
+
 export const DEFAULT_KNOB: KnobConfig = { enabled: false, press: "F13", right: "F14", left: "F15", closedTurn: "none" };
 
 /** Knob da config, com o padrão para o que faltar (configs antigas não têm). */
@@ -135,6 +162,8 @@ export interface Config {
   version: 1;
   /** Ausente em configs antigas (= desligado). */
   knob?: KnobConfig;
+  /** Ausente em configs antigas (= padrão: ligado). */
+  screenshot?: ScreenshotConfig;
   hotkey: { accelerator: string; mode: "toggle" | "hold" };
   behavior: {
     openAt: "cursor" | "center";

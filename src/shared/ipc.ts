@@ -2,7 +2,7 @@
 // o que permite desenvolver o visual e a tela de configuração sem Rust.
 import { cloneConfig, defaultConfig, withDefaults } from "./defaults";
 import type { OpenStats } from "./describe";
-import type { Action, Config } from "./types";
+import type { Action, Config, ShotCorner } from "./types";
 
 export { DISCORD_LABEL, WINDOW_LABEL, describeAction, describeOpenStats, openTimeMs } from "./describe";
 export type { OpenStats } from "./describe";
@@ -507,6 +507,73 @@ export async function pickImage(): Promise<string | null> {
   const { open } = await import("@tauri-apps/plugin-dialog");
   const r = await open({ multiple: false, filters: [{ name: "Imagem animada", extensions: ["gif", "webp", "png", "apng"] }] });
   return typeof r === "string" ? r : null;
+}
+
+// --- Preview de capturas ---
+
+export interface ShotInfo {
+  id: number;
+  width: number;
+  height: number;
+  /** Miniatura (data URL PNG). */
+  thumb: string;
+  /** Arquivo, quando o print foi salvo pela ferramenta. */
+  path?: string | null;
+  source: "clipboard" | "file";
+  seconds: number;
+  corner: ShotCorner;
+}
+
+export interface PinImage {
+  id: number;
+  width: number;
+  height: number;
+  src: string;
+}
+
+const DEMO_SHOT: ShotInfo = {
+  id: 1,
+  width: 1280,
+  height: 720,
+  thumb: "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180"><rect width="320" height="180" fill="#2b3a55"/><rect x="20" y="20" width="180" height="24" rx="4" fill="#9fb4d9"/></svg>'),
+  path: null,
+  source: "clipboard",
+  seconds: 6,
+  corner: "bottomRight",
+};
+
+export async function shotCurrent(): Promise<ShotInfo | null> {
+  return isTauri() ? invoke<ShotInfo | null>("shot_current") : DEMO_SHOT;
+}
+export async function shotCopy(id: number): Promise<void> {
+  if (isTauri()) await invoke("shot_copy", { id });
+}
+/** Pergunta onde salvar e grava em PNG. Devolve o caminho final ou null (cancelado). */
+export async function shotSaveAs(id: number): Promise<string | null> {
+  if (!isTauri()) return null;
+  const { save } = await import("@tauri-apps/plugin-dialog");
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, "-");
+  const path = await save({ defaultPath: `print-${stamp}.png`, filters: [{ name: "Imagem PNG", extensions: ["png"] }] });
+  if (!path) return null;
+  return invoke<string>("shot_save", { id, path });
+}
+export async function shotOpenFolder(id: number): Promise<void> {
+  if (isTauri()) await invoke("shot_open_folder", { id });
+}
+export async function shotEdit(id: number): Promise<void> {
+  if (isTauri()) await invoke("shot_edit", { id });
+}
+export async function shotPin(id: number): Promise<void> {
+  if (isTauri()) await invoke("shot_pin", { id });
+}
+export async function shotDismiss(): Promise<void> {
+  if (isTauri()) await invoke("shot_dismiss");
+}
+export async function shotPinImage(): Promise<PinImage | null> {
+  return isTauri() ? invoke<PinImage | null>("shot_pin_image") : { ...DEMO_SHOT, src: DEMO_SHOT.thumb };
+}
+export async function shotUnpin(): Promise<void> {
+  if (isTauri()) await invoke("shot_unpin");
 }
 
 /** Arrasta a janela atual (ícone) com o mouse, até soltar o botão. */

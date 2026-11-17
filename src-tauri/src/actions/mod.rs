@@ -52,6 +52,9 @@ pub enum Action {
         /// Espera extra (ms) depois que o menu sumiu, antes de enviar as teclas.
         #[serde(default, rename = "delayMs")]
         delay_ms: Option<u64>,
+        /// Abre uma ferramenta de print (ex.: atalho do ShareX): mostra o preview do print.
+        #[serde(default)]
+        capture: bool,
     },
     Media { cmd: MediaCmd },
     System { cmd: SystemCmd },

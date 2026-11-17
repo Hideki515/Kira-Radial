@@ -61,6 +61,14 @@ export function parseCombo(input: string): Combo | null {
   return { mods: MODIFIERS.filter((m) => mods.has(m)), key };
 }
 
+/** Abre uma ferramenta de print? Mesma regra do Rust (shot::detect): PrtSc com qualquer modificador ou Win+Shift+S. */
+export function comboIsCapture(combo: string): boolean {
+  const c = parseCombo(combo);
+  if (!c) return false;
+  if (c.key === "PrintScreen") return true;
+  return c.key === "S" && c.mods.includes("Win") && c.mods.includes("Shift");
+}
+
 export function formatCombo(c: Combo): string {
   return [...c.mods, c.key].join("+");
 }

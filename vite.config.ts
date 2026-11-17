@@ -17,6 +17,7 @@ export default defineConfig({
         main: resolve(import.meta.dirname, "index.html"),
         settings: resolve(import.meta.dirname, "settings.html"),
         orb: resolve(import.meta.dirname, "orb.html"),
+        shot: resolve(import.meta.dirname, "shot.html"),
       },
     },
   },

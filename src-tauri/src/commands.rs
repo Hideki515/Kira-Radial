@@ -277,7 +277,13 @@ pub async fn run_action(app: AppHandle, mut action: Action) -> Result<(), String
         if let Action::Window { cmd } = &action {
             return crate::winops::run(*cmd, prev);
         }
-        actions::execute(&action)
+        // Ferramenta de print: foto de antes (área de transferência e pastas) e, depois, espera o print.
+        let base = if crate::shot::detect::is_capture(&action) { crate::shot::baseline(&app) } else { None };
+        let r = actions::execute(&action);
+        if let (Ok(()), Some(b)) = (&r, base) {
+            crate::shot::arm(&app, b);
+        }
+        r
     })
     .await
     .map_err(|e| e.to_string())?

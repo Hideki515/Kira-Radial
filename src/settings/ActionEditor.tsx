@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { DISCORD_LABEL, WINDOW_LABEL, discordVoice, listAudioOutputs, pickPath, runAction, type AudioDevice, type DiscordVoiceState } from "../shared/ipc";
 import type { Action, DiscordCmd, MediaCmd, SystemCmd, WindowCmd } from "../shared/types";
 import { validateAction } from "../shared/validate";
+import { comboIsCapture } from "../shared/keys";
 import { Field, Segmented, Toggle } from "./controls";
 import { HotkeyRecorder } from "./HotkeyRecorder";
 import { BrowserFields, type BrowserChoice } from "./BrowserFields";
@@ -324,6 +325,20 @@ export function ActionEditor({ action, onChange }: { action: Action; onChange: (
           </div>
         </Field>
       )}
+
+      {action.type === "keys" &&
+        (comboIsCapture(action.combo) ? (
+          <p className="field-hint" data-testid="capture-auto">
+            Atalho de print reconhecido (PrtSc / Win+Shift+S): a Kira mostra o preview do print (Configurações → Geral).
+          </p>
+        ) : (
+          <Toggle
+            label="É uma ferramenta de print"
+            hint="Marque se este atalho abre uma ferramenta de print (ex.: ShareX, Greenshot): a Kira mostra o preview do print."
+            checked={!!action.capture}
+            onChange={(v) => onChange({ ...action, capture: v || undefined })}
+          />
+        ))}
 
       {action.type === "media" && (
         <Field label="Comando">

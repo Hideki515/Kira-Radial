@@ -1,0 +1,63 @@
+/* Janelas do preview de capturas (preview no canto e print fixado). */
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+body { background: #0b0f16; font-family: var(--font-ui); color: var(--text-primary, #eef2f7); user-select: none; }
+html.is-tauri body { background: transparent; }
+
+.shot-card {
+  position: absolute; inset: 6px;
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 10px; border-radius: 12px;
+  background: rgba(16, 21, 30, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  animation: shot-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.corner-bottomRight, .corner-topRight { --shot-from: 24px; }
+.corner-bottomLeft, .corner-topLeft { --shot-from: -24px; }
+@keyframes shot-in { from { opacity: 0; transform: translateX(var(--shot-from, 24px)); } to { opacity: 1; transform: none; } }
+
+.shot-head { display: flex; align-items: center; justify-content: space-between; }
+.shot-title { font-size: 12px; font-weight: 600; color: #aeb8c8; letter-spacing: 0.02em; }
+.shot-icon-btn {
+  display: inline-grid; place-items: center; width: 26px; height: 26px;
+  border: 0; border-radius: 6px; background: transparent; color: #c9d2df; cursor: pointer;
+}
+.shot-icon-btn:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+
+.shot-thumb {
+  flex: 1; min-height: 0; width: 100%; object-fit: contain;
+  border-radius: 8px; background: #05070b; border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.shot-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 4px; }
+.shot-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 2px; border: 1px solid transparent; border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05); color: #e6ebf2; cursor: pointer; font: inherit; font-size: 10.5px;
+}
+.shot-btn span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.shot-btn:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.14); }
+.shot-btn:focus-visible, .shot-icon-btn:focus-visible { outline: 2px solid #4ade9b; outline-offset: 1px; }
+
+.shot-note { margin: 0; min-height: 15px; font-size: 11px; color: #8f9aab; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shot-note.is-ok { color: #4ade9b; }
+.shot-note.is-error { color: #ff7a7a; }
+
+/* Barra de tempo: encolhe até o preview sumir (some com o mouse em cima). */
+.shot-timer {
+  position: absolute; left: 0; bottom: 0; height: 3px; width: 100%;
+  background: #4ade9b; transform-origin: left; animation: shot-timer linear both;
+}
+@keyframes shot-timer { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* Print fixado: ocupa a janela inteira; × aparece com o mouse em cima. */
+.shot-pin { position: absolute; inset: 0; background: #05070b; cursor: move; }
+.shot-pin img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.shot-pin-close { position: absolute; top: 6px; right: 6px; background: rgba(0, 0, 0, 0.6); opacity: 0; transition: opacity 120ms; }
+.shot-pin:hover .shot-pin-close, .shot-pin-close:focus-visible { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .shot-card { animation: none; }
+}

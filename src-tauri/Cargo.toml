@@ -1,6 +1,6 @@
 [package]
 name = "kira-radial"
-version = "0.24.0"
+version = "0.25.0"
 description = "Menu radial para controle do Windows"
 license = "MIT"
 edition = "2021"
@@ -43,6 +43,7 @@ windows = { version = "0.61", features = [
   "Win32_Foundation",
   "Win32_Graphics_Dwm",
   "Win32_Graphics_Gdi",
+  "Win32_Graphics_Imaging",
   "Win32_Media_Audio",
   "Win32_Media_Audio_Endpoints",
   "Win32_Networking_WinHttp",

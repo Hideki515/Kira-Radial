@@ -5,11 +5,14 @@
   "windows": [
     "radial",
     "settings",
-    "orb"
+    "orb",
+    "shot",
+    "shot-pin"
   ],
   "permissions": [
     "core:default",
     "dialog:allow-open",
+    "dialog:allow-save",
     "core:window:allow-start-dragging"
   ]
 }

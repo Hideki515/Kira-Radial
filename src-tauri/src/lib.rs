@@ -24,6 +24,7 @@ mod positioning;
 mod qa;
 mod radios;
 mod schedule;
+mod shot;
 mod recent;
 mod power;
 mod stats;
@@ -47,7 +48,7 @@ macro_rules! handlers {
 #[cfg(feature = "qa")]
 macro_rules! handlers {
     ($($cmd:path),* $(,)?) => {
-        tauri::generate_handler![$($cmd,)* qa::commands::qa_show_menu, qa::commands::qa_open_settings, qa::commands::qa_close_settings, qa::commands::qa_state, qa::commands::qa_knob]
+        tauri::generate_handler![$($cmd,)* qa::commands::qa_show_menu, qa::commands::qa_open_settings, qa::commands::qa_close_settings, qa::commands::qa_state, qa::commands::qa_knob, shot::qa_fake_shot]
     };
 }
 
@@ -164,6 +165,15 @@ pub fn run() {
             commands::discord_connect,
             commands::discord_disconnect,
             commands::knob_error,
+            shot::shot_current,
+            shot::shot_copy,
+            shot::shot_save,
+            shot::shot_open_folder,
+            shot::shot_edit,
+            shot::shot_dismiss,
+            shot::shot_pin,
+            shot::shot_pin_image,
+            shot::shot_unpin,
             commands::list_recent_files,
             commands::clipboard_list,
             commands::clipboard_clear,

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.25.0
+
+- **Preview do print.** Depois de uma fatia que tira print (Captura de tela / Win+Shift+S, PrtSc do Lightshot e outros), a Kira mostra o print num canto da tela.
+  - **Botões:** Copiar, Salvar como (PNG), Abrir pasta, Editar (Paint) e Fixar na tela. Abrir pasta só aparece quando o print foi salvo em arquivo.
+  - **Fixar na tela:** janela "sempre no topo" com o print inteiro; arraste para mover, Esc ou × para fechar.
+  - **Comportamento:**
+    - some sozinho depois de 6 s, mas não enquanto o mouse estiver em cima;
+    - um print novo substitui o anterior.
+  - **Como o print é reconhecido:** a Kira espera até 1 min pelo print, que pode chegar pela área de transferência (Win+Shift+S, Ctrl+C do Lightshot) ou como arquivo novo na pasta de capturas do Windows e nas pastas que você adicionar. Fora desse intervalo nada é observado, e prints tirados fora da Kira não geram preview.
+  - **Privacidade:** o print fica só na memória, até o próximo ou até fechar.
+- **Configurações → Geral → "Preview de capturas":** liga e desliga, tempo na tela, canto, tempo de espera e pastas de prints.
+- **Ação "Enviar atalho":** opção nova "É uma ferramenta de print", para atalhos próprios como o do ShareX. PrtSc e Win+Shift+S já são reconhecidos.
+
 ## 0.24.0
 
 **6 temas tecnológicos novos** (agora são 21). Cada um tem poucas animações agrupadas, para gastar pouco com o menu aberto.

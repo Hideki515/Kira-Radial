@@ -331,3 +331,8 @@ input[type="number"]:focus-visible { border-color: var(--active); }
 /* Passo a passo (página Discord). */
 .steps { margin: 0 0 12px; padding-left: 20px; display: grid; gap: 8px; color: var(--text); font-size: 13px; line-height: 1.5; }
 .steps code { font-size: 12px; padding: 1px 5px; border-radius: 4px; background: var(--surface-2, rgba(127, 127, 127, 0.15)); }
+
+/* Lista de pastas (preview de capturas). */
+.folder-list { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 4px; }
+.folder-list li { display: flex; align-items: center; gap: 8px; font-size: 12.5px; min-height: 28px; }
+.folder-path { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

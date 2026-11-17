@@ -24,6 +24,9 @@ pub struct Config {
     /// Controle dedicado (knob de teclado macro). Ausente/inválido = desligado.
     #[serde(default, deserialize_with = "lenient_knob")]
     pub knob: Knob,
+    /// Preview das capturas tiradas pela Kira. Ausente/inválido = padrão (ligado).
+    #[serde(default, deserialize_with = "lenient_screenshot")]
+    pub screenshot: Screenshot,
     pub profiles: Vec<Profile>,
 }
 
@@ -52,6 +55,41 @@ impl Default for Knob {
     fn default() -> Self {
         Knob { enabled: false, press: "F13".into(), right: "F14".into(), left: "F15".into(), closed_turn: ClosedTurn::Ignore }
     }
+}
+
+/// Canto da tela onde o preview do print aparece.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum ShotCorner {
+    #[default]
+    BottomRight,
+    BottomLeft,
+    TopRight,
+    TopLeft,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase", default)]
+pub struct Screenshot {
+    pub preview: bool,
+    /// Tempo do preview na tela (s).
+    pub seconds: u32,
+    pub corner: ShotCorner,
+    /// Pastas extras observadas (ex.: a do Lightshot). A de capturas do Windows já entra.
+    pub folders: Vec<String>,
+    /// Quanto tempo esperar pelo print depois da ação (s).
+    pub arm_seconds: u32,
+}
+
+impl Default for Screenshot {
+    fn default() -> Self {
+        Screenshot { preview: true, seconds: 6, corner: ShotCorner::BottomRight, folders: Vec::new(), arm_seconds: 60 }
+    }
+}
+
+fn lenient_screenshot<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Screenshot, D::Error> {
+    let v = Value::deserialize(d)?;
+    Ok(serde_json::from_value(v).unwrap_or_default())
 }
 
 fn lenient_knob<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Knob, D::Error> {
@@ -499,6 +537,21 @@ mod lenient_when_tests {
 #[cfg(test)]
 mod knob_config_tests {
     use super::*;
+
+    #[test]
+    fn screenshot_ausente_ou_quebrado_vira_padrao_ligado() {
+        let mut v: Value = serde_json::to_value(Config::default_config()).unwrap();
+        v.as_object_mut().unwrap().remove("screenshot");
+        let c: Config = serde_json::from_value(v.clone()).unwrap();
+        assert_eq!(c.screenshot, Screenshot::default());
+        assert!(c.screenshot.preview);
+        v["screenshot"] = serde_json::json!({ "seconds": "muito", "corner": 3 });
+        let c: Config = serde_json::from_value(v.clone()).expect("screenshot quebrado não derruba a config");
+        assert_eq!(c.screenshot, Screenshot::default());
+        v["screenshot"] = serde_json::json!({ "preview": false, "corner": "topLeft", "folders": ["C:/Prints"] });
+        let c: Config = serde_json::from_value(v).unwrap();
+        assert_eq!((c.screenshot.preview, c.screenshot.corner, c.screenshot.seconds), (false, ShotCorner::TopLeft, 6));
+    }
 
     #[test]
     fn escolher_modo_com_icone_mostra_o_icone_escondido() {
