@@ -473,3 +473,41 @@ html.is-tauri body { background: transparent; }
 @media (prefers-reduced-motion: reduce) {
   .reactor-spin, .term-sweep, .theme-terminal .slice-marker { animation: none; }
 }
+
+/* --- confirmação (desligar / reiniciar / encerrar sessão) --- */
+.confirm-backdrop { position: fixed; inset: 0; z-index: 20; }
+.confirm-card {
+  position: absolute;
+  width: 300px;
+  transform: translate(-50%, -50%);
+  padding: 18px 16px 16px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  border-radius: 14px;
+  background: rgba(38, 38, 40, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.4);
+  font-family: var(--font-ui);
+  text-align: center;
+  animation: confirm-in 160ms var(--ease-out) both;
+}
+@keyframes confirm-in { from { opacity: 0; transform: translate(-50%, -50%) scale(0.94); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+.confirm-icon {
+  width: 34px; height: 34px; margin-bottom: 4px;
+  display: grid; place-items: center; border-radius: 9px;
+  color: #fff; background: linear-gradient(180deg, #ff7a59, #f04a3a);
+  box-shadow: 0 2px 8px rgba(240, 74, 58, 0.35);
+}
+.confirm-title { margin: 0; font-size: 15px; font-weight: 700; color: #f5f5f7; }
+.confirm-message { margin: 0 0 10px; font-size: 13px; color: #a1a1a6; }
+.confirm-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+.confirm-btn {
+  height: 36px; border-radius: 8px; border: 1px solid transparent; cursor: pointer;
+  font: inherit; font-size: 13.5px; font-weight: 600;
+  background: rgba(255, 255, 255, 0.09); color: #e5e5ea;
+  transition: background var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out);
+}
+.confirm-btn.is-danger { background: rgba(255, 69, 58, 0.16); color: #ff6b5e; }
+.confirm-btn.is-selected { border-color: rgba(255, 255, 255, 0.28); background: rgba(255, 255, 255, 0.14); }
+.confirm-btn.is-danger.is-selected { border-color: rgba(255, 107, 94, 0.7); background: rgba(255, 69, 58, 0.28); }
+.confirm-btn:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.6); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .confirm-card { animation: none; } }

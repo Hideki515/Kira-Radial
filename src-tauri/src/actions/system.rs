@@ -56,7 +56,16 @@ pub fn privilege_result(last_error: u32) -> Result<(), String> {
     }
 }
 
+/// Na Kira de teste, nada que tire o usuário da sessão ou da máquina roda de verdade.
+pub fn blocked_in_qa(cmd: SystemCmd) -> bool {
+    crate::qa::ENABLED
+        && matches!(cmd, SystemCmd::Shutdown | SystemCmd::Restart | SystemCmd::SignOut | SystemCmd::Sleep | SystemCmd::Lock)
+}
+
 pub(super) fn system(cmd: SystemCmd) -> Result<(), String> {
+    if blocked_in_qa(cmd) {
+        return Err(format!("{cmd:?} bloqueado na Kira de teste"));
+    }
     match cmd {
         SystemCmd::Lock => unsafe { LockWorkStation().map_err(|e| e.to_string()) },
         SystemCmd::Sleep => {
@@ -73,5 +82,21 @@ pub(super) fn system(cmd: SystemCmd) -> Result<(), String> {
         SystemCmd::Screenshot => keys::send_combo("Win+Shift+S"),
         SystemCmd::TaskMgr => shell_execute("taskmgr.exe", None, None, "open"),
         SystemCmd::Settings => shell_execute("ms-settings:", None, None, "open"),
+    }
+}
+
+#[cfg(test)]
+mod qa_guard_tests {
+    use super::*;
+
+    #[test]
+    fn kira_de_teste_nao_desliga_reinicia_nem_bloqueia() {
+        for cmd in [SystemCmd::Shutdown, SystemCmd::Restart, SystemCmd::SignOut, SystemCmd::Sleep, SystemCmd::Lock] {
+            assert_eq!(blocked_in_qa(cmd), crate::qa::ENABLED, "{cmd:?}");
+            if crate::qa::ENABLED {
+                assert!(system(cmd).unwrap_err().contains("bloqueado"));
+            }
+        }
+        assert!(!blocked_in_qa(SystemCmd::TaskMgr));
     }
 }

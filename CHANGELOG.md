@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.25.1
+
+- **Confirmação de desligar, reiniciar e encerrar sessão:** em vez da caixa padrão do Windows, aparece um diálogo próprio sobre o menu, com ícone, título, pergunta e os botões **Desligar** (vermelho) e **Cancelar**.
+  - **Mouse:** clicar fora cancela.
+  - **Teclado:** Enter confirma o botão destacado, Esc cancela, e as setas ou o Tab trocam de botão. Segurar o Enter que escolheu a fatia não confirma sozinho.
+  - **Knob:** girar troca o botão; apertar escolhe.
+  - Com o diálogo aberto, o resto do menu não reage.
+  - **Contra cliques acidentais:** nos primeiros 400 ms o diálogo ignora confirmações, para que o 2º clique de um duplo clique na fatia não desligue. O destaque dos botões só muda quando o mouse se move.
+- **Segurança da Kira de teste:** desligar, reiniciar, encerrar sessão, suspender e bloquear nunca rodam de verdade na variante de testes.
+
 ## 0.25.0
 
 - **Preview do print.** Depois de uma fatia que tira print (Captura de tela / Win+Shift+S, PrtSc do Lightshot e outros), a Kira mostra o print num canto da tela.

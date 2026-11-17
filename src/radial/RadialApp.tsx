@@ -11,14 +11,10 @@ import { LAYOUT, hitTest, sliceAngle, type Hit } from "./geometry";
 import { RadialCanvas } from "./RadialCanvas";
 import { useNowPlaying, useOpenDiagnostics, useToast, useVolumeNudge } from "./menuHooks";
 import { digitIndex, knobPress, knobStep, stepIndex, wheelIndex, type RingState } from "./navigation";
+import { CONFIRM, CONFIRM_GUARD_MS, ConfirmDialog, type ConfirmChoice } from "./ConfirmDialog";
 
 export { MEDIA_POLL_MS, TOAST_MS, VOLUME_SHOW_MS } from "./menuHooks";
 
-const CONFIRM: Record<string, string> = {
-  shutdown: "Desligar o computador agora?",
-  restart: "Reiniciar o computador agora?",
-  signout: "Encerrar a sessão agora?",
-};
 
 /** Duração da animação de recolher para o ícone (igual a .is-closing em radial.css). */
 export const CLOSE_TO_ORB_MS = 170;
@@ -96,11 +92,21 @@ function RadialMenu({ config }: { config: Config }) {
   const state = useRef({ activeMain, activeSub, openMain, children, center, items, open, origin });
   state.current = { activeMain, activeSub, openMain, children, center, items, open, origin };
 
+  /** Desligar/reiniciar/sair aguardando confirmação (diálogo sobre o menu). */
+  const [confirming, setConfirming] = useState<MenuItem | null>(null);
+  const [confirmChoice, setConfirmChoice] = useState<ConfirmChoice>("confirm");
+  const confirmRef = useRef<{ item: MenuItem | null; choice: ConfirmChoice }>({ item: null, choice: "confirm" });
+  confirmRef.current = { item: confirming, choice: confirmChoice };
+  /** Quando o diálogo abriu (para ignorar confirmações imediatas). */
+  const confirmOpenedAt = useRef(0);
+  const confirmReady = () => performance.now() - confirmOpenedAt.current >= CONFIRM_GUARD_MS;
+
   const reset = useCallback(() => {
     setActiveMain(null);
     setActiveSub(null);
     setOpenMain(null);
     setHubHovered(false);
+    setConfirming(null);
   }, []);
 
   const openSub = useCallback((index: number, selectFirst: boolean) => {
@@ -151,10 +157,17 @@ function RadialMenu({ config }: { config: Config }) {
   }, [reset]);
 
   const execute = useCallback(
-    async (item: MenuItem | undefined) => {
+    async (item: MenuItem | undefined, confirmed = false) => {
       const action = item?.action;
       if (!item || !action) return;
-      if (action.type === "system" && CONFIRM[action.cmd] && !window.confirm(CONFIRM[action.cmd])) return;
+      if (action.type === "system" && CONFIRM[action.cmd] && !confirmed) {
+        // Pede confirmação no próprio menu; o botão perigoso começa destacado (Enter confirma).
+        setConfirmChoice("confirm");
+        confirmOpenedAt.current = performance.now();
+        setConfirming(item);
+        return;
+      }
+      setConfirming(null);
       void playSound("execute", soundsRef.current);
       try {
         // No Tauri o backend esconde o menu antes de agir (e devolve o foco ao app anterior).
@@ -217,6 +230,7 @@ function RadialMenu({ config }: { config: Config }) {
       }),
       // Modo "segurar": soltar o atalho executa a fatia sob o cursor.
       onEvent<null>("menu:release", () => {
+        if (confirmRef.current.item) return;
         // Já executou a seleção atual com clique (ex.: volume +): soltar o atalho só fecha.
         const st = state.current;
         const sel = st.activeSub !== null ? st.children[st.activeSub] : st.activeMain !== null ? st.items[st.activeMain] : undefined;
@@ -236,6 +250,8 @@ function RadialMenu({ config }: { config: Config }) {
     const offs = [
       onEvent<number>("knob:step", (d) => {
         if (!state.current.open) return;
+        // Diálogo de confirmação: girar troca o botão destacado.
+        if (confirmRef.current.item) return setConfirmChoice((c) => (c === "confirm" ? "cancel" : "confirm"));
         const r = ring();
         const next = knobStep(r, d > 0 ? 1 : -1);
         setActiveMain(next.activeMain);
@@ -246,6 +262,12 @@ function RadialMenu({ config }: { config: Config }) {
       onEvent<null>("knob:press", () => {
         const s = state.current;
         if (!s.open) return;
+        const pending = confirmRef.current;
+        if (pending.item) {
+          if (pending.choice !== "confirm") setConfirming(null);
+          else if (confirmReady()) void execute(pending.item, true);
+          return;
+        }
         const main = s.activeMain !== null ? s.items[s.activeMain] : undefined;
         const p = knobPress(ring(), !!main?.children?.length);
         setHubHovered(false);
@@ -256,12 +278,12 @@ function RadialMenu({ config }: { config: Config }) {
       }),
     ];
     return () => offs.forEach((p) => p.then((off) => off()));
-  }, [close, closeSub, executeSelection, openSub]);
+  }, [close, closeSub, execute, executeSelection, openSub]);
 
   // --- Mouse / teclado / roda ---
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
-      if (!state.current.open) return;
+      if (!state.current.open || confirmRef.current.item) return;
       const hit = computeHit(e.clientX, e.clientY);
       setHubHovered(hit.ring === "center");
       if (hit.ring === "main") {
@@ -273,7 +295,8 @@ function RadialMenu({ config }: { config: Config }) {
     };
 
     const onUp = (e: PointerEvent) => {
-      if (e.button !== 0 || !state.current.open) return;
+      // Com o diálogo aberto, os cliques são dele (botões e fundo).
+      if (e.button !== 0 || !state.current.open || confirmRef.current.item) return;
       const s = state.current;
       const hit = computeHit(e.clientX, e.clientY);
       if (hit.r > OUTSIDE_RADIUS) return close();
@@ -299,6 +322,21 @@ function RadialMenu({ config }: { config: Config }) {
     const onKey = (e: KeyboardEvent) => {
       const s = state.current;
       if (!s.open) return;
+      const pending = confirmRef.current;
+      if (pending.item) {
+        e.preventDefault();
+        if (e.key === "Escape") setConfirming(null);
+        // Setas seguem a posição dos botões (Desligar à esquerda, Cancelar à direita); Tab alterna.
+        else if (e.key === "ArrowLeft" || e.key === "ArrowUp") setConfirmChoice("confirm");
+        else if (e.key === "ArrowRight" || e.key === "ArrowDown") setConfirmChoice("cancel");
+        else if (e.key === "Tab") setConfirmChoice((c) => (c === "confirm" ? "cancel" : "confirm"));
+        // Tecla segurada (ex.: o Enter que escolheu a fatia) ou apressada não confirma sozinha.
+        else if ((e.key === "Enter" || e.key === " ") && !e.repeat) {
+          if (pending.choice !== "confirm") setConfirming(null);
+          else if (confirmReady()) void execute(pending.item, true);
+        }
+        return;
+      }
       // 1–9 (linha de números ou teclado numérico): escolhe a fatia/subitem direto.
       const n = digitIndex(e);
       if (n !== null) {
@@ -342,7 +380,7 @@ function RadialMenu({ config }: { config: Config }) {
 
     const onWheel = (e: WheelEvent) => {
       const s = state.current;
-      if (!s.open) return;
+      if (!s.open || confirmRef.current.item) return;
       const d = e.deltaY > 0 ? 1 : -1;
       // Roda sobre o centro: volume (para cima = aumenta), em vez de girar a seleção.
       if (computeHit(e.clientX, e.clientY).ring === "center") return void nudgeVolume(d < 0);
@@ -411,6 +449,17 @@ function RadialMenu({ config }: { config: Config }) {
             appearance={config.appearance}
           />
         </div>
+      )}
+      {confirming?.action?.type === "system" && (
+        <ConfirmDialog
+          cmd={confirming.action.cmd}
+          choice={confirmChoice}
+          onChoice={setConfirmChoice}
+          onConfirm={() => confirmReady() && void execute(confirming, true)}
+          onCancel={() => setConfirming(null)}
+          x={center.x}
+          y={center.y}
+        />
       )}
       {toast && (
         <div className={`toast${toast.error ? " is-error" : ""}`} style={{ left: center.x, top: center.y + (LAYOUT.subOuter + 30) * scale }}>
