@@ -7,6 +7,7 @@ import { isTauri } from "./shared/ipc";
 import "./styles/tokens.css";
 import "./styles/radial.css";
 import "./styles/themes2.css";
+import "./styles/themes3.css";
 
 if (isTauri()) document.documentElement.classList.add("is-tauri");
 installErrorLogging("radial");

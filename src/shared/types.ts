@@ -223,8 +223,13 @@ export interface SoundsConfig {
 /** Tema embutido ou personalizado ("custom:<id>"). */
 export type ThemeRef = Theme | `custom:${string}`;
 
-export type Theme = "glass" | "holo" | "reactor" | "terminal" | "neon" | "cyber" | "steam" | "fluent" | "minimal";
-export const THEMES: readonly Theme[] = ["glass", "holo", "reactor", "terminal", "neon", "cyber", "steam", "fluent", "minimal"];
+export type Theme =
+  | "glass" | "holo" | "reactor" | "terminal" | "neon" | "cyber" | "steam" | "fluent" | "minimal"
+  | "sakura" | "ocean" | "aurora" | "magma" | "pixel" | "paper";
+export const THEMES: readonly Theme[] = [
+  "glass", "holo", "reactor", "terminal", "neon", "cyber", "steam", "fluent", "minimal",
+  "sakura", "ocean", "aurora", "magma", "pixel", "paper",
+];
 /** Cor de destaque sugerida ao escolher o tema holográfico. */
 export const HOLO_ACCENT = "#ffb03a";
 /** Cor sugerida para cada tema (aplicada ao trocar, se a cor atual for a sugerida do tema anterior). */
@@ -238,6 +243,12 @@ export const THEME_ACCENT: Record<Theme, string> = {
   steam: "#d4a24c",
   fluent: "#0067c0",
   minimal: "#f2f2f2",
+  sakura: "#ff8fb5",
+  ocean: "#4fd1e8",
+  aurora: "#3dffb0",
+  magma: "#ff6a1f",
+  pixel: "#ffe14d",
+  paper: "#2f6fd6",
 };
 
 export const LIMITS = { minSlices: 3, maxSlices: 10, maxChildren: 8 } as const;

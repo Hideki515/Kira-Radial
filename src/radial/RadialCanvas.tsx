@@ -4,6 +4,7 @@ import { CenterHub } from "./CenterHub";
 import { HoloBack, HoloFront, HoloScan } from "./HoloLayer";
 import { ReactorBack, ReactorFront, TerminalBack, TerminalFront } from "./ThemeLayers";
 import { CyberBack, NeonBack, SteamBack, SteamFront } from "./ThemeLayers2";
+import { AuroraBack, MagmaBack, OceanBack, PaperBack, PixelBack, SakuraBack } from "./ThemeLayers3";
 import { THEMES, type Theme } from "../shared/types";
 import { findCustom, themeVars } from "../shared/customTheme";
 import type { CSSProperties } from "react";
@@ -93,6 +94,18 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
         <CyberBack />
       ) : theme === "steam" ? (
         <SteamBack />
+      ) : theme === "sakura" ? (
+        <SakuraBack />
+      ) : theme === "ocean" ? (
+        <OceanBack />
+      ) : theme === "aurora" ? (
+        <AuroraBack />
+      ) : theme === "magma" ? (
+        <MagmaBack />
+      ) : theme === "pixel" ? (
+        <PixelBack />
+      ) : theme === "paper" ? (
+        <PaperBack />
       ) : theme === "fluent" || theme === "minimal" ? (
         // Fluent Claro e Minimalista: sem decoração atrás do anel (só a sombra suave do Fluent).
         theme === "fluent" ? <circle cx={C} cy={C} r={LAYOUT.mainOuter + 14} className="fluent-shadow" /> : null

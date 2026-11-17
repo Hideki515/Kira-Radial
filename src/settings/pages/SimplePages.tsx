@@ -151,6 +151,12 @@ const THEME_INFO: Record<Theme, { label: string; hint: string }> = {
   steam: { label: "Steampunk", hint: "Latão e cobre, engrenagens girando, rebites e letras serifadas." },
   fluent: { label: "Fluent Claro", hint: "Claro e translúcido, no estilo do Windows 11." },
   minimal: { label: "Minimalista", hint: "Preto e branco, traços finos, nada de enfeite." },
+  sakura: { label: "Sakura", hint: "Ameixa escuro e rosa-cerejeira, com flores e pétalas caindo." },
+  ocean: { label: "Oceano", hint: "Azul profundo, ondas saindo do anel e bolhas subindo." },
+  aurora: { label: "Aurora", hint: "Noite estrelada com faixas de aurora verde e roxa ondulando." },
+  magma: { label: "Magma", hint: "Preto vulcânico com rachaduras de lava pulsando e brasas." },
+  pixel: { label: "Pixel", hint: "Retrô 8-bit: bordas em degrau, fonte monoespaçada e brilhos piscando." },
+  paper: { label: "Papel", hint: "Claro, folha de caderno e letra à mão, com tinta azul." },
 };
 
 /** Cartões com miniatura (estática) de cada tema. */

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.23.0
+
+**6 temas novos** (agora são 15). Todos seguem a cor de destaque, servem de base para temas personalizados e respeitam "reduzir movimento" do Windows.
+
+| Tema | Visual |
+|---|---|
+| Sakura | ameixa escuro e rosa-cerejeira, com flores e pétalas caindo |
+| Oceano | azul profundo, ondas saindo do anel e bolhas subindo |
+| Aurora | noite estrelada com faixas de aurora verde e roxa ondulando |
+| Magma | preto vulcânico com rachaduras de lava pulsando e brasas subindo |
+| Pixel | retrô 8-bit, com moldura em degraus, fonte monoespaçada e brilhos piscando |
+| Papel | claro, folha de caderno com margem e letra à mão |
+
 ## 0.22.1
 
 - **Ícone que "não aparecia":** depois de esconder o ícone (botão direito ou bandeja), trocar o modo de abertura para "Ícone" ou "Ícone + atalho" não fazia nada visível. Agora, ao escolher um modo com ícone vindo de um modo sem ícone, o ícone volta a aparecer. Esconder de propósito, com o ícone já ativo, continua valendo.

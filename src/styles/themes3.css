@@ -1,0 +1,195 @@
+/* Temas: Sakura, Oceano, Aurora, Magma, Pixel e Papel.
+   A cor de destaque (--active) continua valendo em todos. Animações só em transform/opacity. */
+
+.sakura, .ocean, .aurora, .magma, .pixel, .paper { pointer-events: none; }
+
+/* ======================================================================
+   Sakura — ameixa escuro, rosa-cerejeira, pétalas caindo.
+   ====================================================================== */
+.sakura-branch { fill: none; stroke: #4a2a35; stroke-width: 7; stroke-linecap: round; }
+.sakura-ring { fill: none; stroke: #f7a8c4; stroke-width: 1.2; stroke-dasharray: 2 7; opacity: 0.7; }
+.sakura-blossom path { fill: #ffc4d8; opacity: 0.92; }
+.sakura-blossom-core { fill: #e05583; }
+.sakura-petal { fill: #ffb7cf; opacity: 0.8; }
+.sakura-fall { animation: sakura-fall 14s linear infinite; }
+@keyframes sakura-fall {
+  from { transform: translate(0, -40px) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.9; }
+  90% { opacity: 0.9; }
+  to { transform: translate(60px, 940px) rotate(200deg); opacity: 0; }
+}
+
+.theme-sakura .ring-backing { fill: #1f0d16; fill-opacity: 0.95; }
+.theme-sakura .main-slice .slice-shape { fill: #2b1220; stroke: rgba(247, 168, 196, 0.35); stroke-width: 1.2; }
+.theme-sakura .main-slice .slice-icon, .theme-sakura .sub-slice .slice-icon { color: #ffd1e0; }
+.theme-sakura .slice-label { font-family: "Yu Gothic UI", "Segoe UI", sans-serif; font-weight: 600; fill: #ffd1e0; letter-spacing: 0.08em; }
+.theme-sakura .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 32%, #2b1220); stroke: var(--active); stroke-width: 2; }
+.theme-sakura .main-slice.is-active .slice-icon { color: #fff; }
+.theme-sakura .main-slice.is-active .slice-label { fill: #fff; }
+.theme-sakura .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 30%, transparent); }
+.theme-sakura .sub-slice .slice-shape { fill: #2b1220; }
+.theme-sakura .hub-disc { fill: #2b1220; stroke: #f7a8c4; stroke-opacity: 0.5; }
+.theme-sakura .hub-well { fill: #170a10; stroke: rgba(247, 168, 196, 0.2); }
+.theme-sakura .hub-time, .theme-sakura .hub-np-title { font-family: "Yu Gothic UI", "Segoe UI", sans-serif; fill: #ffe6ee; }
+.theme-sakura .hub-date, .theme-sakura .hub-pill-text, .theme-sakura .hub-np-artist { fill: #d98aa8; }
+.theme-sakura .hub-cpu { fill: #ff8fb5; }
+.theme-sakura .hub-gauge { stroke: #ff8fb5; }
+.theme-sakura .hub-track { stroke: rgba(255, 143, 181, 0.15); }
+
+/* ======================================================================
+   Oceano — azul profundo, ondas saindo do anel e bolhas subindo.
+   ====================================================================== */
+.ocean-wave {
+  fill: none; stroke: #4fd1e8; stroke-width: 1.5; opacity: 0;
+  transform-box: view-box; transform-origin: 450px 450px;
+  animation: ocean-wave 6s ease-out infinite;
+}
+@keyframes ocean-wave { from { transform: scale(1); opacity: 0.55; } to { transform: scale(1.15); opacity: 0; } }
+.ocean-bubble { fill: none; stroke: #a5f0ff; stroke-width: 1.2; opacity: 0; animation: ocean-bubble 9s ease-in infinite; }
+@keyframes ocean-bubble {
+  from { transform: translateY(0); opacity: 0; }
+  15% { opacity: 0.7; }
+  to { transform: translateY(-640px); opacity: 0; }
+}
+
+.theme-ocean .ring-backing { fill: #031522; fill-opacity: 0.95; }
+.theme-ocean .main-slice .slice-shape { fill: #062638; stroke: rgba(79, 209, 232, 0.35); stroke-width: 1.2; }
+.theme-ocean .main-slice .slice-icon, .theme-ocean .sub-slice .slice-icon { color: #bdf3ff; }
+.theme-ocean .slice-label { fill: #bdf3ff; letter-spacing: 0.05em; }
+.theme-ocean .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 28%, #062638); stroke: var(--active); stroke-width: 2; }
+.theme-ocean .main-slice.is-active .slice-icon { color: #fff; }
+.theme-ocean .main-slice.is-active .slice-label { fill: #fff; }
+.theme-ocean .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 28%, transparent); }
+.theme-ocean .sub-slice .slice-shape { fill: #062638; }
+.theme-ocean .hub-disc { fill: #062638; stroke: #4fd1e8; stroke-opacity: 0.45; }
+.theme-ocean .hub-well { fill: #021019; stroke: rgba(79, 209, 232, 0.15); }
+.theme-ocean .hub-time, .theme-ocean .hub-np-title { fill: #e6fbff; }
+.theme-ocean .hub-date, .theme-ocean .hub-pill-text, .theme-ocean .hub-np-artist { fill: #6fb7c9; }
+.theme-ocean .hub-cpu { fill: #4fd1e8; }
+.theme-ocean .hub-gauge { stroke: #4fd1e8; }
+.theme-ocean .hub-track { stroke: rgba(79, 209, 232, 0.14); }
+
+/* ======================================================================
+   Aurora — noite estrelada com faixas verde/roxo ondulando.
+   ====================================================================== */
+.aurora-sky { fill: #050a18; opacity: 0.7; }
+.aurora-star { fill: #e8f2ff; }
+.aurora-twinkle { animation: aurora-twinkle 4s ease-in-out infinite; }
+@keyframes aurora-twinkle { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.9; } }
+.aurora-band { fill: none; stroke-width: 34; stroke-linecap: round; opacity: 0.45; animation: aurora-wave 9s ease-in-out infinite alternate; }
+.aurora-band--b { stroke-width: 22; opacity: 0.35; animation-duration: 12s; animation-direction: alternate-reverse; }
+@keyframes aurora-wave { from { transform: translate(-30px, 0) scaleY(0.9); opacity: 0.25; } to { transform: translate(30px, 12px) scaleY(1.1); opacity: 0.55; } }
+.aurora-ring { fill: none; stroke: #3dffb0; stroke-width: 1; opacity: 0.4; }
+
+.theme-aurora .ring-backing { fill: #050a18; fill-opacity: 0.95; }
+.theme-aurora .main-slice .slice-shape { fill: #0b1428; stroke: rgba(61, 255, 176, 0.25); stroke-width: 1.1; }
+.theme-aurora .main-slice .slice-icon, .theme-aurora .sub-slice .slice-icon { color: #d6fff0; }
+.theme-aurora .slice-label { fill: #d6fff0; letter-spacing: 0.06em; }
+.theme-aurora .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 26%, #0b1428); stroke: var(--active); stroke-width: 2; }
+.theme-aurora .main-slice.is-active .slice-icon { color: #fff; }
+.theme-aurora .main-slice.is-active .slice-label { fill: #fff; }
+.theme-aurora .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 30%, transparent); }
+.theme-aurora .sub-slice .slice-shape { fill: #0b1428; }
+.theme-aurora .hub-disc { fill: #0b1428; stroke: #8a5cff; stroke-opacity: 0.55; }
+.theme-aurora .hub-well { fill: #040814; stroke: rgba(138, 92, 255, 0.2); }
+.theme-aurora .hub-time, .theme-aurora .hub-np-title { fill: #f0fff9; }
+.theme-aurora .hub-date, .theme-aurora .hub-pill-text, .theme-aurora .hub-np-artist { fill: #9b8bd6; }
+.theme-aurora .hub-cpu { fill: #3dffb0; }
+.theme-aurora .hub-gauge { stroke: #3dffb0; }
+.theme-aurora .hub-track { stroke: rgba(138, 92, 255, 0.18); }
+
+/* ======================================================================
+   Magma — preto vulcânico, rachaduras de lava pulsando, brasas.
+   ====================================================================== */
+.magma-glow { fill: none; stroke: #ff5a1f; stroke-width: 14; opacity: 0.16; animation: magma-glow 3.2s ease-in-out infinite; }
+@keyframes magma-glow { 0%, 100% { opacity: 0.1; } 50% { opacity: 0.26; } }
+.magma-cracks path { fill: none; stroke: #ff7a1a; stroke-width: 2.4; stroke-linejoin: round; animation: magma-pulse 2.6s ease-in-out infinite; }
+@keyframes magma-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.95; } }
+.magma-ember { fill: #ffb347; opacity: 0; animation: magma-ember 6s ease-out infinite; }
+@keyframes magma-ember {
+  from { transform: translateY(0); opacity: 0; }
+  20% { opacity: 0.9; }
+  to { transform: translate(14px, -520px); opacity: 0; }
+}
+
+.theme-magma .ring-backing { fill: #0c0605; fill-opacity: 0.96; }
+.theme-magma .main-slice .slice-shape { fill: #1a0d0a; stroke: rgba(255, 106, 31, 0.35); stroke-width: 1.2; }
+.theme-magma .main-slice .slice-icon, .theme-magma .sub-slice .slice-icon { color: #ffd2b0; }
+.theme-magma .slice-label { font-family: "Bahnschrift", "Segoe UI", sans-serif; font-weight: 700; fill: #ffd2b0; letter-spacing: 0.1em; }
+.theme-magma .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 34%, #1a0d0a); stroke: var(--active); stroke-width: 2.2; }
+.theme-magma .main-slice.is-active .slice-icon { color: #fff4e6; }
+.theme-magma .main-slice.is-active .slice-label { fill: #fff4e6; }
+.theme-magma .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 35%, transparent); }
+.theme-magma .sub-slice .slice-shape { fill: #1a0d0a; }
+.theme-magma .hub-disc { fill: #1a0d0a; stroke: #ff6a1f; stroke-opacity: 0.6; }
+.theme-magma .hub-well { fill: #080302; stroke: rgba(255, 106, 31, 0.2); }
+.theme-magma .hub-time, .theme-magma .hub-np-title { font-family: "Bahnschrift", sans-serif; fill: #fff0e0; }
+.theme-magma .hub-date, .theme-magma .hub-pill-text, .theme-magma .hub-np-artist { fill: #c27a52; }
+.theme-magma .hub-cpu { font-family: "Bahnschrift", sans-serif; fill: #ff7a1a; }
+.theme-magma .hub-gauge { stroke: #ff7a1a; }
+.theme-magma .hub-track { stroke: rgba(255, 122, 26, 0.15); }
+
+/* ======================================================================
+   Pixel — retrô 8-bit: bordas retas, fonte monoespaçada, paleta limitada.
+   ====================================================================== */
+.pixel-ring { fill: #5b3bd6; opacity: 0.85; shape-rendering: crispEdges; }
+.pixel-spark { fill: #ffe14d; shape-rendering: crispEdges; animation: pixel-blink 1.6s steps(2) infinite; }
+@keyframes pixel-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.1; } }
+
+.theme-pixel .ring-backing { fill: #140f2b; fill-opacity: 0.97; }
+.theme-pixel .slice-shape, .theme-pixel .hub-disc, .theme-pixel .hub-well { shape-rendering: crispEdges; }
+.theme-pixel .main-slice .slice-shape { fill: #221a4a; stroke: #5b3bd6; stroke-width: 3; stroke-linejoin: miter; }
+.theme-pixel .main-slice .slice-icon, .theme-pixel .sub-slice .slice-icon { color: #f4f1ff; }
+.theme-pixel .slice-label { font-family: "Consolas", "Cascadia Mono", monospace; font-weight: 700; fill: #f4f1ff; letter-spacing: 0.04em; text-transform: uppercase; }
+.theme-pixel .main-slice.is-active .slice-shape { fill: var(--active); stroke: #f4f1ff; stroke-width: 3; }
+.theme-pixel .main-slice.is-active .slice-icon { color: #140f2b; }
+.theme-pixel .main-slice.is-active .slice-label { fill: #140f2b; }
+.theme-pixel .main-slice .slice-halo, .theme-pixel .sub-slice .slice-halo { stroke: none; }
+.theme-pixel .sub-slice .slice-shape { fill: #221a4a; stroke-width: 3; }
+.theme-pixel .sub-slice.is-active .slice-shape { fill: var(--item-color); }
+.theme-pixel .sub-slice.is-active .slice-icon, .theme-pixel .sub-slice.is-active .slice-label { color: #140f2b; fill: #140f2b; }
+.theme-pixel .hub-disc { fill: #221a4a; stroke: #5b3bd6; stroke-width: 3; }
+.theme-pixel .hub-well { fill: #0d0a1e; stroke: none; }
+.theme-pixel .hub-time, .theme-pixel .hub-cpu, .theme-pixel .hub-np-title { font-family: "Consolas", "Cascadia Mono", monospace; fill: #f4f1ff; }
+.theme-pixel .hub-cpu { fill: var(--active); }
+.theme-pixel .hub-date, .theme-pixel .hub-pill-text, .theme-pixel .hub-np-artist { font-family: "Consolas", monospace; fill: #a99be8; }
+.theme-pixel .hub-gauge { stroke: var(--active); stroke-linecap: butt; stroke-dasharray: 6 3; }
+.theme-pixel .hub-track { stroke: rgba(91, 59, 214, 0.35); stroke-linecap: butt; }
+
+/* ======================================================================
+   Papel — claro, creme, linhas de caderno, tinta azul.
+   ====================================================================== */
+.paper-shadow { fill: rgba(60, 40, 10, 0.18); }
+.paper-sheet { fill: #fbf6ea; stroke: rgba(80, 60, 30, 0.15); }
+.paper-line { stroke: #b9cbe6; stroke-width: 1; }
+.paper-margin { stroke: #e9a3a3; stroke-width: 1.4; }
+
+.theme-paper .ring-backing { fill: #fbf6ea; fill-opacity: 0.9; }
+.theme-paper .main-slice .slice-shape { fill: #fffdf7; fill-opacity: 0.94; stroke: rgba(60, 50, 30, 0.35); stroke-width: 1.2; stroke-dasharray: 5 3; }
+.theme-paper .main-slice .slice-icon, .theme-paper .sub-slice .slice-icon { color: #2b2a33; }
+.theme-paper .slice-label { font-family: "Segoe Print", "Comic Sans MS", "Segoe UI", sans-serif; font-weight: 700; fill: #2b2a33; letter-spacing: 0; }
+.theme-paper .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 18%, #fffdf7); stroke: var(--active); stroke-width: 2; stroke-dasharray: none; }
+.theme-paper .main-slice.is-active .slice-icon { color: color-mix(in srgb, var(--active) 62%, #000); }
+.theme-paper .main-slice.is-active .slice-label { fill: color-mix(in srgb, var(--active) 62%, #000); }
+.theme-paper .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 15%, transparent); }
+.theme-paper .sub-slice .slice-shape { fill: #fffdf7; stroke: color-mix(in srgb, var(--item-color) 60%, #3c321e); }
+.theme-paper .sub-slice .slice-label { fill: #2b2a33; }
+.theme-paper .sub-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--item-color) 16%, #fffdf7); }
+.theme-paper .hub-disc { fill: #fffdf7; stroke: rgba(60, 50, 30, 0.3); }
+.theme-paper .hub-well { fill: #f1ead8; stroke: none; }
+.theme-paper .hub-time, .theme-paper .hub-np-title { font-family: "Segoe Print", "Segoe UI", sans-serif; fill: #2b2a33; }
+.theme-paper .hub-date, .theme-paper .hub-pill-text, .theme-paper .hub-np-artist, .theme-paper .hub-np-time { fill: #6d6656; }
+.theme-paper .hub-cpu { font-family: "Segoe Print", "Segoe UI", sans-serif; fill: var(--active); }
+.theme-paper .hub-pill { fill: #f6efdd; stroke: rgba(60, 50, 30, 0.2); }
+.theme-paper .hub-gauge { stroke: var(--active); }
+.theme-paper .hub-gauge-halo { stroke: none; }
+.theme-paper .hub-track { stroke: rgba(60, 50, 30, 0.1); }
+.theme-paper .slice-num { fill: #8c8470; }
+
+.is-thumb .sakura-fall, .is-thumb .ocean-bubble, .is-thumb .magma-ember { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-twinkle,
+  .sakura-fall, .ocean-wave, .ocean-bubble, .aurora-band, .magma-glow, .magma-cracks path, .magma-ember, .pixel-spark { animation: none; }
+  .sakura-fall, .ocean-bubble, .magma-ember { display: none; }
+}
