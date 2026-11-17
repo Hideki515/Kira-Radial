@@ -134,3 +134,69 @@ export function hitTest(
   const rel = normalizeAngle(angle - layout.startAngle + span / 2);
   return { ring: "main", index: Math.floor(rel / span) % mainCount };
 }
+
+/** Fatia em forma de anel (para medir o espaço livre dos rótulos). */
+export interface Sector {
+  cx: number;
+  cy: number;
+  rIn: number;
+  rOut: number;
+  /** Ângulos das bordas (graus), a0 < a1. */
+  a0: number;
+  a1: number;
+  /** Espaço entre fatias (px), como em donutSlicePath. */
+  gap: number;
+}
+
+/** O ponto está dentro da fatia, com `pad` px de folga das bordas? */
+export function insideSector(s: Sector, x: number, y: number, pad: number): boolean {
+  const dx = x - s.cx;
+  const dy = y - s.cy;
+  const r = Math.hypot(dx, dy);
+  if (r < s.rIn + pad || r > s.rOut - pad) return false;
+  const ang = Math.atan2(dy, dx) / DEG;
+  const d0 = angleDiff(s.a0, ang);
+  const d1 = angleDiff(ang, s.a1);
+  if (d0 < 0 || d1 < 0) return false;
+  // Distância até a borda reta (raio) mais próxima.
+  return r * Math.sin(Math.min(d0, d1, 90) * DEG) >= s.gap / 2 + pad;
+}
+
+/**
+ * Trecho horizontal livre na linha `y` dentro da fatia, a partir de `x`: quanto dá para ir
+ * à esquerda e à direita. Fatias na diagonal têm o trecho deslocado em relação a `x`.
+ */
+export function horizontalSpan(s: Sector, x: number, y: number, pad = 6): { left: number; right: number } {
+  if (!insideSector(s, x, y, pad)) return { left: 0, right: 0 };
+  // Anda de 4 em 4 px até sair e refina de 1 em 1 (mesmo resultado, ~4× menos testes).
+  const reach = (dir: -1 | 1) => {
+    let d = 0;
+    while (d < 450 && insideSector(s, x + dir * (d + 4), y, pad)) d += 4;
+    while (d < 450 && insideSector(s, x + dir * (d + 1), y, pad)) d++;
+    return d;
+  };
+  return { left: reach(-1), right: reach(1) };
+}
+
+/** Largura livre para um texto centrado em `x` (simétrica). 0 se o ponto já está fora. */
+export function horizontalRoom(s: Sector, x: number, y: number, pad = 6): number {
+  const { left, right } = horizontalSpan(s, x, y, pad);
+  return 2 * Math.min(left, right);
+}
+
+/**
+ * Para um texto na faixa entre `yTop` e `yBottom`: largura livre e quanto deslocar o centro
+ * (dx) para aproveitar o trecho todo da fatia (máx. `maxShift` px, para não fugir do ícone).
+ */
+export function textBand(
+  s: Sector, x: number, yTop: number, yBottom: number, maxShift = 18, pad = 4,
+): { width: number; dx: number; left: number; right: number } {
+  const a = horizontalSpan(s, x, yTop, pad);
+  const b = horizontalSpan(s, x, yBottom, pad);
+  const left = Math.min(a.left, b.left);
+  const right = Math.min(a.right, b.right);
+  if (left === 0 && right === 0) return { width: 0, dx: 0, left, right };
+  const dx = Math.max(-maxShift, Math.min(maxShift, (right - left) / 2));
+  // Centrado em x + dx: a largura útil é o dobro do lado mais curto a partir do novo centro.
+  return { width: 2 * Math.min(left + dx, right - dx), dx, left, right };
+}

@@ -10,6 +10,7 @@ import { THEMES, type Theme } from "../shared/types";
 import { findCustom, themeVars } from "../shared/customTheme";
 import type { CSSProperties } from "react";
 import { LAYOUT, polar, sliceAngle } from "./geometry";
+import { themeClassOf } from "./labelLayout";
 import { MainSlice } from "./MainSlice";
 import { SubmenuRing } from "./SubmenuRing";
 
@@ -56,8 +57,10 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
   const wanted = custom ? custom.base : appearance.theme ?? "glass";
   const theme: Theme = THEMES.includes(wanted as Theme) ? (wanted as Theme) : "glass";
   const holo = theme === "holo";
+  // Mesma classe usada como chave dos rótulos pré-calculados (labelLayout.themeClassOf).
+  const themeClass = themeClassOf(appearance);
   return (
-    <svg className={`radial-canvas theme-${theme}${custom ? " theme-custom" : ""}`} style={custom ? (themeVars(custom) as CSSProperties) : undefined} viewBox={`0 0 ${LAYOUT.size} ${LAYOUT.size}`} role="menu" aria-label="Menu radial">
+    <svg className={themeClass} style={custom ? (themeVars(custom) as CSSProperties) : undefined} viewBox={`0 0 ${LAYOUT.size} ${LAYOUT.size}`} role="menu" aria-label="Menu radial">
       <defs>
         <radialGradient id="slice-glass" cx={C} cy={C} r={LAYOUT.subOuter} gradientUnits="userSpaceOnUse">
           <stop offset="0.35" stopColor="#0a0f17" />
@@ -150,6 +153,7 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
             active={activeMain === i}
             dimmed={dimOthers && subParent !== i && activeMain !== i}
             showNumber={!!appearance.showNumbers}
+            themeClass={themeClass}
           />
         ))}
       </g>
@@ -161,6 +165,7 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
           parentAngle={sliceAngle(subParent!, items.length)}
           activeIndex={activeSub}
           showNumbers={!!appearance.showNumbers}
+          themeClass={themeClass}
         />
       )}
 

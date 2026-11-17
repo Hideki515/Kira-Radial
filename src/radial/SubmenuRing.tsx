@@ -8,9 +8,10 @@ interface Props {
   parentAngle: number;
   activeIndex: number | null;
   showNumbers?: boolean;
+  themeClass?: string;
 }
 
-export function SubmenuRing({ items, parentAngle, activeIndex, showNumbers }: Props) {
+export function SubmenuRing({ items, parentAngle, activeIndex, showNumbers, themeClass }: Props) {
   const c = LAYOUT.size / 2;
   const span = submenuItemSpan(items.length);
   const centers = submenuAngles(parentAngle, items.length);
@@ -34,7 +35,16 @@ export function SubmenuRing({ items, parentAngle, activeIndex, showNumbers }: Pr
           >
             {activeIndex === i && <path d={d} className="slice-halo" />}
             <path d={d} className="slice-shape" />
-            <SliceContent x={mid.x} y={mid.y} icon={item.icon} label={item.label} size="sub" iconSrc={item.iconSrc} />
+            <SliceContent
+              x={mid.x}
+              y={mid.y}
+              icon={item.icon}
+              label={item.label}
+              size="sub"
+              iconSrc={item.iconSrc}
+              themeClass={themeClass}
+              sector={{ cx: c, cy: c, rIn: LAYOUT.subInner, rOut: LAYOUT.subOuter, a0: a - span / 2, a1: a + span / 2, gap: LAYOUT.subGap }}
+            />
             {showNumbers && <SliceNumber c={c} r={LAYOUT.subOuter - 10} angle={a} n={i + 1} />}
           </g>
         );

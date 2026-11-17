@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.25.2
+
+- **Nomes que não cabiam na fatia** (ex.: "MICROFONE MUTADO" e "ENSURDECIDO" no sub-anel) agora se ajustam ao formato da fatia.
+  - Cada rótulo é medido com a fonte real do tema contra o espaço livre dentro da fatia, na altura do texto. Nas fatias inclinadas, o texto se desloca para o trecho mais largo.
+  - **Ordem dos ajustes:**
+    1. se cabe, fica como está;
+    2. senão, a fonte diminui um pouco;
+    3. senão, o nome quebra em duas linhas e o ícone sobe para compensar;
+    4. em último caso, o nome é cortado com "…", e o nome inteiro continua na dica do mouse.
+  - A medida é feita uma vez por tema e nome e fica guardada, então reabrir o menu não mede de novo.
+
 ## 0.25.1
 
 - **Confirmação de desligar, reiniciar e encerrar sessão:** em vez da caixa padrão do Windows, aparece um diálogo próprio sobre o menu, com ícone, título, pergunta e os botões **Desligar** (vermelho) e **Cancelar**.

@@ -12,6 +12,7 @@ import { RadialCanvas } from "./RadialCanvas";
 import { useNowPlaying, useOpenDiagnostics, useToast, useVolumeNudge } from "./menuHooks";
 import { digitIndex, knobPress, knobStep, stepIndex, wheelIndex, type RingState } from "./navigation";
 import { CONFIRM, CONFIRM_GUARD_MS, ConfirmDialog, type ConfirmChoice } from "./ConfirmDialog";
+import { prewarmLabels, themeClassOf } from "./labelLayout";
 
 export { MEDIA_POLL_MS, TOAST_MS, VOLUME_SHOW_MS } from "./menuHooks";
 
@@ -213,6 +214,19 @@ function RadialMenu({ config }: { config: Config }) {
   useEffect(() => {
     if (open && (activeMain !== null || activeSub !== null)) void playSound("hover", soundsRef.current);
   }, [open, activeMain, activeSub]);
+
+  // Rótulos: calcula o ajuste às fatias num momento ocioso (config/tema mudou), para a
+  // abertura do menu já encontrar tudo pronto.
+  useEffect(() => {
+    const run = () => prewarmLabels(themeClassOf(config.appearance), config.profiles);
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    if (w.requestIdleCallback && w.cancelIdleCallback) {
+      const id = w.requestIdleCallback(run, { timeout: 2000 });
+      return () => w.cancelIdleCallback!(id);
+    }
+    const t = window.setTimeout(run, 300);
+    return () => window.clearTimeout(t);
+  }, [config]);
 
   // --- Eventos do backend (Tauri) ---
   useEffect(() => {

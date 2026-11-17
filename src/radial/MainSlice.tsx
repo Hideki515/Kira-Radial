@@ -11,9 +11,10 @@ interface Props {
   dimmed: boolean;
   /** Mostra o número da tecla de atalho (1–9). */
   showNumber?: boolean;
+  themeClass?: string;
 }
 
-export function MainSlice({ item, index, count, active, dimmed, showNumber }: Props) {
+export function MainSlice({ item, index, count, active, dimmed, showNumber, themeClass }: Props) {
   const c = LAYOUT.size / 2;
   const angle = sliceAngle(index, count);
   const span = sliceSpan(count);
@@ -27,7 +28,17 @@ export function MainSlice({ item, index, count, active, dimmed, showNumber }: Pr
       {/* Halo: traço largo e translúcido sob a borda (substitui filter: drop-shadow, caro). */}
       {active && <path d={d} className="slice-halo" />}
       <path d={d} className="slice-shape" />
-      <SliceContent x={mid.x} y={mid.y} icon={item.icon} label={item.label} size="main" active={active} iconSrc={item.iconSrc} />
+      <SliceContent
+        x={mid.x}
+        y={mid.y}
+        icon={item.icon}
+        label={item.label}
+        size="main"
+        active={active}
+        iconSrc={item.iconSrc}
+        themeClass={themeClass}
+        sector={{ cx: c, cy: c, rIn: LAYOUT.mainInner, rOut: LAYOUT.mainOuter, a0: angle - span / 2, a1: angle + span / 2, gap: LAYOUT.mainGap }}
+      />
       {showNumber && index < 9 && <SliceNumber c={c} r={LAYOUT.mainOuter - 18} angle={angle} n={index + 1} />}
     </g>
   );
