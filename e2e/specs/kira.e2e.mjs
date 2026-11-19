@@ -492,4 +492,62 @@ describe("Kira de teste — ponta a ponta", () => {
       timeoutMsg: "o Desligar não chegou à trava da Kira de teste",
     });
   });
+  it("16. sequência: os passos rodam em ordem (Discord FALSO) e desligar não entra numa sequência", async () => {
+    await toWindow("settings.html");
+    const call = (action) =>
+      browser.execute((a) => window.__TAURI_INTERNALS__.invoke("run_action", { action: a }).then(() => "ok", (e) => String(e)), action);
+    // Estado conhecido: tudo ligado.
+    expect(await call({ type: "discord", cmd: "unmute" })).toBe("ok");
+    expect(await call({ type: "sequence", delayMs: 0, steps: [{ type: "discord", cmd: "mute" }, { type: "discord", cmd: "deafen" }] })).toBe("ok");
+    const v = (await invoke("discord_voice")).voice;
+    expect(v.mute && v.deaf).toBe(true);
+    // Passo inválido para o Rust: nem chega a rodar.
+    const bad = await call({ type: "sequence", steps: [{ type: "discord", cmd: "unmute" }, { type: "system", cmd: "shutdown" }] });
+    expect(bad).toContain("desligar");
+    expect((await invoke("discord_voice")).voice.deaf).toBe(true);
+  });
+  it("16b. (QA) sequência montada pela UI: passos, ordem e intervalo vão para o config.json", async () => {
+    await nav("Itens do menu");
+    await $(".profile-picker select").selectByIndex(0);
+    await $$(".tree-row:not(.is-child)")[1].click();
+    await pickRadio("Executar ação");
+    await $('.item-editor select:has(option[value="sequence"])').selectByAttribute("value", "sequence");
+    await $('[data-testid="step-1"]').waitForExist();
+    // Passo 1: site (não abre nada; só grava).
+    await $('[data-testid="step-0"] select:has(option[value="url"])').selectByAttribute("value", "url");
+    await $$('[data-testid="step-0"] input')[0].setValue("https://example.com");
+    // Passo novo (Adicionar) vira "Bloquear" e sobe para a posição 2.
+    await $("button*=Adicionar passo").click();
+    await $('[data-testid="step-2"] select:has(option[value="system"])').selectByAttribute("value", "system");
+    expect(await $$('[data-testid="step-0"] option[value="sequence"]').length).toBe(0);
+    expect(await browser.execute(() => [...document.querySelectorAll('[data-testid="step-0"] button')].some((b) => b.textContent.includes("Testar")))).toBe(false);
+    await $('[data-testid="step-2"] select:has(option[value="lock"])').selectByAttribute("value", "lock");
+    // Clique de verdade (o botão precisa estar visível — ver 16c).
+    await $('button[aria-label="Subir passo 3"]').click();
+    // Intervalo 1000 ms pelo slider (evento de input do React, dentro da página).
+    await browser.execute(() => {
+      const r = document.querySelector('.item-editor input[type="range"]');
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(r, "1000");
+      r.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await save();
+    const item = qaConfig().profiles[0].items.find((i) => i.action?.type === "sequence");
+    expect(item.action).toEqual({
+      type: "sequence",
+      delayMs: 1000,
+      steps: [{ type: "url", url: "https://example.com" }, { type: "system", cmd: "lock" }, { type: "media", cmd: "playpause" }],
+    });
+    // Desligar num passo: erro na tela e o Testar fica desabilitado (nada é executado).
+    await $('[data-testid="step-1"] select:has(option[value="shutdown"])').selectByAttribute("value", "shutdown");
+    await browser.waitUntil(() => browser.execute(() => [...document.querySelectorAll(".item-editor .inline-error")].some((e) => e.textContent.includes("desligar"))), { timeoutMsg: "sem erro de desligar" });
+    expect(await $("button*=Testar ação").isEnabled()).toBe(false);
+  });
+  it("16c. (QA) botões subir/descer/remover dos passos aparecem na tela (CSS real)", async () => {
+    await toWindow("settings.html");
+    const shown = await browser.execute(() =>
+      [...document.querySelectorAll(".sequence-step .row-tools")].map((t) => getComputedStyle(t).display),
+    );
+    expect(shown.length).toBeGreaterThan(0);
+    expect(shown.filter((d) => d === "none")).toEqual([]);
+  });
 });

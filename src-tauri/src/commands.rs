@@ -231,26 +231,67 @@ pub fn apply_autostart(app: &AppHandle, enabled: bool) -> Result<(), String> {
     r.map_err(|e| format!("falha ao configurar inicialização com o Windows: {e}"))
 }
 
+/// Site sem navegador próprio: usa o navegador geral (Configurações → Geral). Vale também
+/// para os passos de uma sequência. Endereço que o navegador não aceitaria como argumento único
+/// (espaço, aspas, muito longo) continua indo pelo padrão do Windows.
+fn apply_default_browser(action: &mut Action, cfg: &Config) {
+    match action {
+        Action::Url { url, browser: b @ None, browser_name, .. } => {
+            if crate::browsers::url_ok(url.trim()) {
+                *b = cfg.behavior.browser.clone();
+                *browser_name = cfg.behavior.browser_name.clone();
+            }
+        }
+        Action::Sequence { steps, .. } => steps.iter_mut().for_each(|s| apply_default_browser(s, cfg)),
+        _ => {}
+    }
+}
+
+/// Executa UMA ação já com o menu escondido: devolve o foco ao app anterior se preciso,
+/// espera o atraso dela, trata janela/configurações e arma o preview de print.
+fn run_step(app: &AppHandle, action: &Action, prev: isize) -> Result<(), String> {
+    if matches!(action, Action::OpenSettings) {
+        menu::open_settings(app);
+        return Ok(());
+    }
+    if action.needs_previous_focus() {
+        // Teclas vão para a janela em foco: devolve o foco ao app anterior primeiro.
+        foreground::restore(prev);
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    // Atraso extra configurado na ação (ex.: apps de print mais lentos).
+    std::thread::sleep(action.delay());
+    if let Action::Window { cmd } = action {
+        return crate::winops::run(*cmd, prev);
+    }
+    // Ferramenta de print: foto de antes (área de transferência e pastas) e, depois, espera o print.
+    let base = if crate::shot::detect::is_capture(action) { crate::shot::baseline(app) } else { None };
+    let r = actions::execute(action);
+    if let (Ok(()), Some(b)) = (&r, base) {
+        crate::shot::arm(app, b);
+    }
+    r
+}
+
 #[tauri::command]
 pub async fn run_action(app: AppHandle, mut action: Action) -> Result<(), String> {
     if matches!(action, Action::OpenSettings) {
         menu::open_settings(&app);
         return Ok(());
     }
+    if let Action::Sequence { steps, .. } = &action {
+        if let Some(e) = actions::sequence_error(steps) {
+            return Err(e);
+        }
+    }
+    let is_sequence = matches!(action, Action::Sequence { .. });
     let (close, prev) = {
         let state = tauri::Manager::state::<AppState>(&app);
         let cfg = state.config.lock_ok();
-        // Site sem navegador próprio: usa o navegador geral (Configurações → Geral).
-        // Endereço que o navegador não aceitaria como argumento único (espaço, aspas, muito longo)
-        // continua indo pelo padrão do Windows, como antes do navegador geral existir.
-        if let Action::Url { url, browser: b @ None, browser_name, .. } = &mut action {
-            if crate::browsers::url_ok(url.trim()) {
-                *b = cfg.behavior.browser.clone();
-                *browser_name = cfg.behavior.browser_name.clone();
-            }
-        }
+        apply_default_browser(&mut action, &cfg);
         (
-            !action.keeps_menu_open() && (cfg.behavior.close_on_action || action.needs_previous_focus()),
+            // Sequência sempre fecha o menu (os passos agem nos apps, não no menu).
+            is_sequence || (!action.keeps_menu_open() && (cfg.behavior.close_on_action || action.needs_previous_focus())),
             state.prev_hwnd.load(Ordering::SeqCst),
         )
     };
@@ -261,29 +302,25 @@ pub async fn run_action(app: AppHandle, mut action: Action) -> Result<(), String
     if close {
         menu::hide(&app);
     }
-    let needs_focus = action.needs_previous_focus();
     tauri::async_runtime::spawn_blocking(move || {
         if close {
             // Garante que o menu já sumiu da tela (ex.: atalhos de print não o capturam).
             foreground::wait_hidden(radial_hwnd, 500);
         }
-        if needs_focus {
-            // Teclas vão para a janela em foco: devolve o foco ao app anterior primeiro.
-            foreground::restore(prev);
-            std::thread::sleep(Duration::from_millis(50));
+        match &action {
+            Action::Sequence { steps, .. } => {
+                let pause = action.step_delay();
+                for (i, step) in steps.iter().enumerate() {
+                    if i > 0 {
+                        std::thread::sleep(pause);
+                    }
+                    // Um passo que falha interrompe o resto (e o aviso diz qual foi).
+                    run_step(&app, step, prev).map_err(|e| format!("passo {} de {}: {e}", i + 1, steps.len()))?;
+                }
+                Ok(())
+            }
+            single => run_step(&app, single, prev),
         }
-        // Atraso extra configurado na ação (ex.: apps de print mais lentos).
-        std::thread::sleep(action.delay());
-        if let Action::Window { cmd } = &action {
-            return crate::winops::run(*cmd, prev);
-        }
-        // Ferramenta de print: foto de antes (área de transferência e pastas) e, depois, espera o print.
-        let base = if crate::shot::detect::is_capture(&action) { crate::shot::baseline(&app) } else { None };
-        let r = actions::execute(&action);
-        if let (Ok(()), Some(b)) = (&r, base) {
-            crate::shot::arm(&app, b);
-        }
-        r
     })
     .await
     .map_err(|e| e.to_string())?

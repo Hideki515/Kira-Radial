@@ -166,8 +166,10 @@ function RadialMenu({ config }: { config: Config }) {
         // No Tauri o backend esconde o menu antes de agir (e devolve o foco ao app anterior).
         await runAction(action);
         // Brilho/plano/rádio mudaram: a próxima abertura relê (não usa o que estava guardado).
-        const stale = kindChangedBy(action);
-        if (stale) invalidateDynamic(stale);
+        for (const a of action.type === "sequence" ? action.steps : [action]) {
+          const stale = kindChangedBy(a);
+          if (stale) invalidateDynamic(stale);
+        }
         // Mídia mantém o menu aberto (backend não o esconde): mostra um retorno rápido.
         if (!isTauri() || action.type === "media") flash(`${item.label}: ${describeAction(action)}`);
       } catch (e) {

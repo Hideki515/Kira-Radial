@@ -1,7 +1,7 @@
 import { Play } from "lucide-react";
 import { useState } from "react";
 import { runAction } from "../shared/ipc";
-import type { Action } from "../shared/types";
+import { DANGEROUS_SYSTEM, type Action } from "../shared/types";
 import { validateAction } from "../shared/validate";
 import { Field } from "./controls";
 import { AudioOutputFields } from "./actions/AudioOutputFields";
@@ -11,6 +11,7 @@ import { MediaFields, RadioFields, ScriptFields, SystemFields, WindowFields } fr
 import { DiscordFields } from "./actions/DiscordFields";
 import { KeysFields } from "./actions/KeysFields";
 import { FolderFields, LaunchFields, UrlFields } from "./actions/PathFields";
+import { SequenceFields } from "./actions/SequenceFields";
 
 // Quem já importava daqui continua funcionando.
 export { ACTION_TYPES, defaultAction } from "./actions/catalog";
@@ -31,19 +32,35 @@ function TypeFields({ action, onChange }: { action: Action; onChange: (a: Action
     case "script": return <ScriptFields action={action} onChange={onChange} />;
     case "audioOutput": return <AudioOutputFields action={action} onChange={onChange} />;
     case "discord": return <DiscordFields action={action} onChange={onChange} />;
+    case "sequence": return <SequenceFields action={action} onChange={onChange} />;
     default: return null;
   }
 }
 
-export function ActionEditor({ action, onChange }: { action: Action; onChange: (a: Action) => void }) {
+interface EditorProps {
+  action: Action;
+  onChange: (a: Action) => void;
+  /** Dentro de uma sequência: sem o tipo "sequência" e sem o botão Testar. */
+  asStep?: boolean;
+}
+
+/** Desligar/reiniciar/sair (sozinho ou dentro de uma sequência): o "Testar" executaria de verdade. */
+export function untestable(a: Action): boolean {
+  if (a.type === "system") return DANGEROUS_SYSTEM.includes(a.cmd);
+  if (a.type === "sequence") return a.steps.some(untestable);
+  return false;
+}
+
+export function ActionEditor({ action, onChange, asStep }: EditorProps) {
   const [testError, setTestError] = useState<string | null>(null);
   const error = validateAction(action);
+  const types = asStep ? ACTION_TYPES.filter((t) => t.value !== "sequence") : ACTION_TYPES;
 
   return (
     <div className="action-editor">
       <Field label="Tipo de ação">
         <select value={action.type} onChange={(e) => onChange(defaultAction(e.target.value as ActionType))}>
-          {ACTION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+          {types.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
         </select>
       </Field>
 
@@ -51,11 +68,13 @@ export function ActionEditor({ action, onChange }: { action: Action; onChange: (
 
       {error && <p className="inline-error">{error}</p>}
 
+      {!asStep && (
       <div className="action-test">
         <button
           type="button"
           className="btn"
-          disabled={!!error}
+          disabled={!!error || untestable(action)}
+          title={untestable(action) ? "Desligar, reiniciar e encerrar sessão não são testados por aqui" : undefined}
           onClick={() => {
             setTestError(null);
             runAction(action).catch((e) => setTestError(String(e)));
@@ -65,6 +84,7 @@ export function ActionEditor({ action, onChange }: { action: Action; onChange: (
         </button>
         {testError && <span className="inline-error">{testError}</span>}
       </div>
+      )}
     </div>
   );
 }

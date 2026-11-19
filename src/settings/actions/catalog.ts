@@ -17,6 +17,7 @@ export const ACTION_TYPES: { value: ActionType; label: string }[] = [
   { value: "brightness", label: "Brilho da tela" },
   { value: "radio", label: "Wi-Fi / Bluetooth" },
   { value: "discord", label: "Discord (microfone, fone, dispositivos)" },
+  { value: "sequence", label: "Várias ações em sequência" },
   { value: "openSettings", label: "Abrir estas configurações" },
 ];
 
@@ -55,5 +56,6 @@ export function defaultAction(type: ActionType): Action {
     case "brightness": return { type, mode: "up" };
     case "radio": return { type, kind: "wifi", mode: "toggle" };
     case "discord": return { type, cmd: "toggleMute" };
+    case "sequence": return { type, steps: [{ type: "launch", path: "" }, { type: "media", cmd: "playpause" }] };
   }
 }

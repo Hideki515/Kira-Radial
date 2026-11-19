@@ -67,6 +67,8 @@ export function describeAction(a: Action): string {
       return a.cmd === "setInput" || a.cmd === "setOutput"
         ? `Discord: ${a.cmd === "setInput" ? "entrada" : "saída"} ${a.deviceName ?? a.deviceId ?? "?"}`
         : `Discord: ${(DISCORD_LABEL[a.cmd] ?? a.cmd).toLowerCase()}`;
+    case "sequence":
+      return `Sequência: ${a.steps.length} ${a.steps.length === 1 ? "ação" : "ações"}`;
     case "audioOutput":
       return a.mode === "cycle" ? "Alternar saída de áudio" : `Saída de áudio: ${a.deviceName ?? a.deviceId ?? "?"}`;
   }

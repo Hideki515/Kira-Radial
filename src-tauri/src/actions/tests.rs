@@ -181,3 +181,51 @@ mod brightness_target_tests {
         assert!(matches!(a, Action::Brightness { target_name: None, .. }));
     }
 }
+
+mod sequence_tests {
+    use crate::actions::*;
+    use serde_json::json;
+
+    fn seq(steps: serde_json::Value) -> Action {
+        serde_json::from_value(json!({"type": "sequence", "steps": steps})).unwrap()
+    }
+
+    #[test]
+    fn le_da_config_com_passos_e_atraso() {
+        let a: Action = serde_json::from_value(json!({
+            "type": "sequence", "delayMs": 800,
+            "steps": [{"type": "launch", "path": "code"}, {"type": "media", "cmd": "mute"}]
+        }))
+        .unwrap();
+        let Action::Sequence { steps, .. } = &a else { panic!("não é sequência") };
+        assert_eq!(steps.len(), 2);
+        assert_eq!(a.step_delay(), std::time::Duration::from_millis(800));
+        assert_eq!(seq(json!([])).step_delay(), std::time::Duration::from_millis(SEQUENCE_DEFAULT_DELAY_MS));
+        let long: Action = serde_json::from_value(json!({"type": "sequence", "delayMs": 99999, "steps": []})).unwrap();
+        assert_eq!(long.step_delay(), std::time::Duration::from_millis(SEQUENCE_MAX_DELAY_MS));
+    }
+
+    #[test]
+    fn limites_aninhamento_e_desligar() {
+        let ok = [json!({"type": "openSettings"}), json!({"type": "media", "cmd": "mute"})];
+        let Action::Sequence { steps, .. } = seq(json!(ok)) else { unreachable!() };
+        assert_eq!(sequence_error(&steps), None);
+        let Action::Sequence { steps, .. } = seq(json!([ok[0]])) else { unreachable!() };
+        assert!(sequence_error(&steps).unwrap().contains("2 a 10"));
+        let Action::Sequence { steps, .. } = seq(json!(vec![ok[0].clone(); 11])) else { unreachable!() };
+        assert!(sequence_error(&steps).is_some());
+        let Action::Sequence { steps, .. } = seq(json!([ok[0], {"type": "sequence", "steps": []}])) else { unreachable!() };
+        assert!(sequence_error(&steps).unwrap().contains("passo 2"));
+        for cmd in ["shutdown", "restart", "signout"] {
+            let Action::Sequence { steps, .. } = seq(json!([ok[0], {"type": "system", "cmd": cmd}])) else { unreachable!() };
+            assert!(sequence_error(&steps).unwrap().contains("desligar"), "{cmd}");
+        }
+        let Action::Sequence { steps, .. } = seq(json!([ok[0], {"type": "system", "cmd": "lock"}])) else { unreachable!() };
+        assert_eq!(sequence_error(&steps), None);
+    }
+
+    #[test]
+    fn execute_direto_recusa_sequencia() {
+        assert!(execute(&seq(json!([]))).is_err());
+    }
+}

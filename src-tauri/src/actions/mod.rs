@@ -94,6 +94,13 @@ pub enum Action {
     Radio { kind: crate::radios::Kind, mode: crate::radios::Mode },
     /// Cola o item `index` do histórico da área de transferência no app anterior.
     Paste { index: usize },
+    /// Várias ações em ordem (ex.: abrir o VS Code, o terminal e mutar o Discord).
+    Sequence {
+        steps: Vec<Action>,
+        /// Espera entre um passo e o próximo (padrão 300 ms, máx. 5 s).
+        #[serde(default, rename = "delayMs")]
+        delay_ms: Option<u64>,
+    },
     /// Discord: mudo, ensurdecer e dispositivos de entrada/saída (pelo RPC local).
     Discord {
         cmd: crate::discord::DiscordCmd,
@@ -150,7 +157,41 @@ pub enum Shell {
     Cmd,
 }
 
+/// Limites da sequência.
+pub const SEQUENCE_MIN: usize = 2;
+pub const SEQUENCE_MAX: usize = 10;
+pub const SEQUENCE_DEFAULT_DELAY_MS: u64 = 300;
+pub const SEQUENCE_MAX_DELAY_MS: u64 = 5_000;
+
+/// Sequência inválida? Tamanho 2–10, sem sequência dentro de sequência e sem
+/// desligar/reiniciar/encerrar sessão (esses pedem confirmação e não rodam encadeados).
+pub fn sequence_error(steps: &[Action]) -> Option<String> {
+    if !(SEQUENCE_MIN..=SEQUENCE_MAX).contains(&steps.len()) {
+        return Some(format!("a sequência precisa de {SEQUENCE_MIN} a {SEQUENCE_MAX} ações"));
+    }
+    for (i, s) in steps.iter().enumerate() {
+        match s {
+            Action::Sequence { .. } => return Some(format!("passo {}: sequência dentro de sequência não é permitida", i + 1)),
+            Action::System { cmd: SystemCmd::Shutdown | SystemCmd::Restart | SystemCmd::SignOut } => {
+                return Some(format!("passo {}: desligar, reiniciar e encerrar sessão não entram numa sequência", i + 1))
+            }
+            _ => {}
+        }
+    }
+    None
+}
+
 impl Action {
+    /// Espera entre os passos de uma sequência.
+    pub fn step_delay(&self) -> Duration {
+        match self {
+            Action::Sequence { delay_ms, .. } => {
+                Duration::from_millis(delay_ms.unwrap_or(SEQUENCE_DEFAULT_DELAY_MS).min(SEQUENCE_MAX_DELAY_MS))
+            }
+            _ => Duration::ZERO,
+        }
+    }
+
     /// Ações que enviam teclas precisam que o foco volte ao app anterior antes de rodar.
     pub fn needs_previous_focus(&self) -> bool {
         matches!(self, Action::Keys { .. } | Action::Paste { .. } | Action::System { cmd: SystemCmd::Screenshot })
@@ -258,6 +299,8 @@ pub fn execute(action: &Action) -> Result<(), String> {
         }
         // Precisa da janela anterior: executado por run_action (commands.rs).
         Action::Window { .. } => Err("ação de janela sem janela-alvo".into()),
+        // Passo a passo (foco, atrasos, janela) em commands::run_action.
+        Action::Sequence { .. } => Err("sequência só pode rodar pelo menu".into()),
     }
 }
 

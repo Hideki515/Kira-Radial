@@ -336,3 +336,10 @@ input[type="number"]:focus-visible { border-color: var(--active); }
 .folder-list { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 4px; }
 .folder-list li { display: flex; align-items: center; gap: 8px; font-size: 12.5px; min-height: 28px; }
 .folder-path { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Passos de uma sequência (ação "Várias ações em sequência"). */
+.sequence-steps { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 10px; }
+.sequence-step { border: 1px solid var(--line, rgba(255, 255, 255, 0.12)); border-radius: 10px; padding: 8px 10px 4px; }
+.sequence-step-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.sequence-step-num { font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase; }
+.sequence-step .row-tools { display: inline-flex; opacity: 1; }

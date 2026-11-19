@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.26.0
+
+- **Ação nova "Várias ações em sequência":** uma fatia faz várias coisas de uma vez, por exemplo abrir o VS Code, depois o terminal e mutar o Discord.
+  - De 2 a 10 passos, cada um com o tipo e os campos de sempre. Dá para subir, descer, remover e adicionar passos.
+  - Intervalo ajustável entre os passos (padrão 300 ms), para dar tempo de um app abrir antes do próximo.
+  - Cada passo se comporta como sozinho: atalhos e colar devolvem o foco ao app anterior, o preview do print arma e o navegador geral vale para os sites.
+  - Se um passo falha, os seguintes não rodam, e o aviso diz qual passo foi.
+  - Desligar, reiniciar e encerrar sessão não entram numa sequência, e não dá para pôr sequência dentro de sequência.
+- **Segurança:** o botão "Testar ação" das Configurações fica desabilitado para desligar, reiniciar e encerrar sessão. Antes ele executava esses comandos sem pedir confirmação.
+
 ## 0.25.3
 
 Versão de manutenção, sem mudanças visíveis.

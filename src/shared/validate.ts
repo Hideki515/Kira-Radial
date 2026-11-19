@@ -2,7 +2,7 @@ import { MAX_CUSTOM_THEMES, customThemeErrors, findCustom } from "./customTheme"
 import { DISCORD_LABEL } from "./describe";
 import { formatCombo, parseCombo } from "./keys";
 import { hasCriteria, whenErrors } from "./schedule";
-import { DYNAMIC_KINDS, LAUNCHER_MODES, LIMITS, ORB_ANIMATIONS, ORB_LIMITS, SCALE_LIMITS, THEMES, knobOf, wantsHotkey, type Action, type Theme, type Config, type MenuItem } from "./types";
+import { DYNAMIC_KINDS, LAUNCHER_MODES, LIMITS, ORB_ANIMATIONS, ORB_LIMITS, SCALE_LIMITS, THEMES, DANGEROUS_SYSTEM, SEQUENCE_LIMITS, knobOf, wantsHotkey, type Action, type Theme, type Config, type MenuItem } from "./types";
 
 /** Teclas do knob: válidas, diferentes entre si e do atalho do menu. */
 export function knobErrors(c: Config): string[] {
@@ -130,6 +130,20 @@ export function validateAction(a: Action): string | null {
     case "audioOutput":
       if (a.mode === "set" && !a.deviceId?.trim() && !a.deviceName?.trim()) return "escolha o dispositivo de saída.";
       return null;
+    case "sequence": {
+      if (!Array.isArray(a.steps) || a.steps.length < SEQUENCE_LIMITS.min || a.steps.length > SEQUENCE_LIMITS.max)
+        return `a sequência precisa de ${SEQUENCE_LIMITS.min} a ${SEQUENCE_LIMITS.max} ações.`;
+      if (a.delayMs !== undefined && (!Number.isInteger(a.delayMs) || a.delayMs < 0 || a.delayMs > SEQUENCE_LIMITS.maxDelayMs))
+        return `o intervalo entre as ações deve ser de 0 a ${SEQUENCE_LIMITS.maxDelayMs} ms.`;
+      for (const [i, s] of a.steps.entries()) {
+        if (s.type === "sequence") return `passo ${i + 1}: sequência dentro de sequência não é permitida.`;
+        if (s.type === "system" && DANGEROUS_SYSTEM.includes(s.cmd))
+          return `passo ${i + 1}: desligar, reiniciar e encerrar sessão não entram numa sequência.`;
+        const e = validateAction(s);
+        if (e) return `passo ${i + 1}: ${e}`;
+      }
+      return null;
+    }
     case "discord":
       if (!Object.prototype.hasOwnProperty.call(DISCORD_LABEL, a.cmd)) return "comando do Discord inválido.";
       if ((a.cmd === "setInput" || a.cmd === "setOutput") && !a.deviceId?.trim() && !a.deviceName?.trim())

@@ -75,7 +75,13 @@ export type Action =
   /** Cola um item do histórico da área de transferência (gerada pelo submenu; não aparece no editor). */
   | { type: "paste"; index: number; preview?: string }
   /** Discord: setInput/setOutput usam o id do dispositivo no Discord (nome = reserva se o id mudar). */
-  | { type: "discord"; cmd: DiscordCmd; deviceId?: string; deviceName?: string };
+  | { type: "discord"; cmd: DiscordCmd; deviceId?: string; deviceName?: string }
+  /** Várias ações em ordem (2–10; sem sequência dentro de sequência nem desligar/reiniciar/sair). */
+  | { type: "sequence"; steps: Action[]; /** Espera entre os passos (padrão 300, máx. 5000). */ delayMs?: number };
+
+export const SEQUENCE_LIMITS = { min: 2, max: 10, defaultDelayMs: 300, maxDelayMs: 5000 } as const;
+/** Comandos que pedem confirmação: não rodam encadeados nem pelo "Testar ação". */
+export const DANGEROUS_SYSTEM: readonly SystemCmd[] = ["shutdown", "restart", "signout"];
 
 export interface MenuItem {
   id: string;
