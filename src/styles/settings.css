@@ -343,3 +343,6 @@ input[type="number"]:focus-visible { border-color: var(--active); }
 .sequence-step-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
 .sequence-step-num { font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase; }
 .sequence-step .row-tools { display: inline-flex; opacity: 1; }
+
+/* Selo do atalho global na lista de itens. */
+.tree-hotkey { margin-left: auto; padding: 1px 5px; border-radius: 4px; font-size: 10.5px; line-height: 1.4; color: var(--text-muted); border: 1px solid var(--line, rgba(255, 255, 255, 0.14)); white-space: nowrap; }

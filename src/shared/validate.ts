@@ -27,9 +27,46 @@ export function knobErrors(c: Config): string[] {
   return errors;
 }
 
+/** Pode ser atalho global sozinho? Precisa de Ctrl/Alt/Shift/Win, exceto F1–F24 (não digitam texto). */
+export function hotkeyComboOk(combo: string): boolean {
+  const p = parseCombo(combo);
+  return !!p && (p.mods.length > 0 || /^F([1-9]|1[0-9]|2[0-4])$/.test(p.key));
+}
+
+/** Atalhos de fatia: válidos, sem repetir e sem bater com o atalho do menu ou do knob. */
+export function itemHotkeyErrors(c: Config): string[] {
+  const errors: string[] = [];
+  const taken = new Map<string, string>();
+  const norm = (s: string) => {
+    const p = parseCombo(s);
+    return p ? formatCombo(p).toLowerCase() : s.toLowerCase();
+  };
+  if (wantsHotkey(c.launcher?.mode ?? "hotkey") && parseCombo(c.hotkey.accelerator)) taken.set(norm(c.hotkey.accelerator), "o atalho do menu");
+  const k = knobOf(c);
+  if (k.enabled) for (const key of [k.press, k.right, k.left]) if (parseCombo(key)) taken.set(norm(key), "as teclas do knob");
+  const visit = (it: MenuItem) => {
+    const hk = it.hotkey?.trim();
+    if (!hk) return;
+    const name = `Atalho de "${it.label || "?"}"`;
+    if (!hotkeyComboOk(hk)) return void errors.push(`${name}: "${hk}" inválido (use Ctrl, Alt, Shift ou Win, ou uma tecla F).`);
+    if (!it.action || it.children || it.dynamic) return void errors.push(`${name}: só fatias que executam uma ação aceitam atalho.`);
+    if (it.action.type === "system" && DANGEROUS_SYSTEM.includes(it.action.cmd))
+      return void errors.push(`${name}: desligar, reiniciar e encerrar sessão não aceitam atalho global.`);
+    const n = norm(hk);
+    const other = taken.get(n);
+    if (other) return void errors.push(`${name}: ${hk} já é usado por ${other}.`);
+    taken.set(n, `"${it.label}"`);
+  };
+  for (const p of c.profiles ?? []) for (const it of p.items ?? []) {
+    visit(it);
+    (it.children ?? []).forEach(visit);
+  }
+  return errors;
+}
+
 /** Valida a configuração inteira. Retorna mensagens legíveis; lista vazia = válida. */
 export function validateConfig(c: Config): string[] {
-  const errors: string[] = [...knobErrors(c)];
+  const errors: string[] = [...knobErrors(c), ...itemHotkeyErrors(c)];
   const mode = c.launcher?.mode ?? "hotkey";
   if (!LAUNCHER_MODES.includes(mode)) errors.push(`Modo de abertura desconhecido: "${mode}".`);
   // No modo "só ícone" o atalho fica desligado: não bloqueia salvar.

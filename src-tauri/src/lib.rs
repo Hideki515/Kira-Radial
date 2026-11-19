@@ -11,6 +11,7 @@ mod commands;
 mod config;
 mod discord;
 mod foreground;
+mod hotkeys;
 mod icons;
 mod keycapture;
 mod knob;
@@ -48,7 +49,7 @@ macro_rules! handlers {
 #[cfg(feature = "qa")]
 macro_rules! handlers {
     ($($cmd:path),* $(,)?) => {
-        tauri::generate_handler![$($cmd,)* qa::commands::qa_show_menu, qa::commands::qa_open_settings, qa::commands::qa_close_settings, qa::commands::qa_state, qa::commands::qa_knob, shot::qa_fake_shot]
+        tauri::generate_handler![$($cmd,)* qa::commands::qa_show_menu, qa::commands::qa_open_settings, qa::commands::qa_close_settings, qa::commands::qa_state, qa::commands::qa_knob, shot::qa_fake_shot, hotkeys::qa_hotkey]
     };
 }
 
@@ -62,8 +63,8 @@ pub fn run() {
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(|app, shortcut, event| {
-                    // As teclas do knob têm tratamento próprio; o resto é o atalho do menu.
-                    if !knob::on_shortcut(app, shortcut, event.state()) {
+                    // Atalhos de fatia e teclas do knob têm tratamento próprio; o resto é o do menu.
+                    if !hotkeys::on_shortcut(app, shortcut, event.state()) && !knob::on_shortcut(app, shortcut, event.state()) {
                         menu::on_shortcut(app, event.state());
                     }
                 })
@@ -94,6 +95,9 @@ pub fn run() {
             // Depois do atalho do menu (as teclas do knob não podem repetir o atalho).
             if let Err(e) = knob::apply(&handle, &cfg) {
                 perf::log_level(perf::Level::Warn, "rust", &format!("knob: {e}"));
+            }
+            if let Err(e) = hotkeys::apply(&handle, &cfg) {
+                perf::log_level(perf::Level::Warn, "rust", &format!("atalhos de fatia: {e}"));
             }
 
             // Mantém o registro do Windows coerente com a configuração.
@@ -165,6 +169,7 @@ pub fn run() {
             commands::discord_connect,
             commands::discord_disconnect,
             commands::knob_error,
+            commands::hotkeys_error,
             shot::shot_current,
             shot::shot_copy,
             shot::shot_save,

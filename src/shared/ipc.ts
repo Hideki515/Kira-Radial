@@ -84,6 +84,11 @@ export async function saveConfig(config: Config): Promise<void> {
   window.dispatchEvent(new CustomEvent("kira:config-changed"));
 }
 
+/** Erro ao registrar os atalhos de fatia, ou null. */
+export async function getHotkeysError(): Promise<string | null> {
+  return isTauri() ? invoke<string | null>("hotkeys_error") : null;
+}
+
 /** Erro ao registrar as teclas do knob (controle dedicado), ou null. */
 export async function getKnobError(): Promise<string | null> {
   return isTauri() ? invoke<string | null>("knob_error") : null;

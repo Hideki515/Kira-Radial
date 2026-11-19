@@ -101,6 +101,8 @@ export interface MenuItem {
   /** Submenu "Brilho": tela alvo (como `target` da ação). Ausente = onde o menu abriu. */
   dynamicTarget?: string;
   dynamicTargetName?: string;
+  /** Atalho global que executa a ação direto, sem abrir o menu (vale em qualquer perfil). */
+  hotkey?: string;
 }
 
 export type DynamicKind = "audioOutputs" | "windows" | "powerPlans" | "brightness" | "radios" | "recentFiles" | "clipboard" | "discordVoice" | "discordInput" | "discordOutput";

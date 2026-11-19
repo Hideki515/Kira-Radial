@@ -75,6 +75,7 @@ export function ItemTree({ items, selection, onSelect, addMain, addChild, remove
               <DragHandle onStart={() => setDrag({ mi, ci: null, over: null })} />
               <Icon size={16} />
               <span className="tree-label">{it.label || "(sem nome)"}</span>
+                {it.hotkey && <kbd className="tree-hotkey" title="Atalho global">{it.hotkey}</kbd>}
               {it.dynamic ? (
                 <span className="tree-badge" title="Submenu automático"><Sparkles size={11} /></span>
               ) : it.children?.length ? (
@@ -106,6 +107,7 @@ export function ItemTree({ items, selection, onSelect, addMain, addChild, remove
                         <CornerDownRight size={13} className="tree-elbow" />
                         <CIcon size={15} />
                         <span className="tree-label">{ch.label || "(sem nome)"}</span>
+                          {ch.hotkey && <kbd className="tree-hotkey" title="Atalho global">{ch.hotkey}</kbd>}
                         <RowTools onUp={() => reorder(mi, ci, -1)} onDown={() => reorder(mi, ci, 1)} onDelete={() => remove(mi, ci)} />
                       </div>
                     </li>

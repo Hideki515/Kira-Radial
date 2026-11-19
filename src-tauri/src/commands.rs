@@ -34,6 +34,10 @@ pub fn save_config(app: AppHandle, state: State<'_, AppState>, mut config: Confi
             crate::perf::log_level(crate::perf::Level::Warn, "rust", &format!("knob: {e}"));
         }
     }
+    // Atalhos de fatia: reaplica sempre (dependem de itens, atalho do menu e knob).
+    if let Err(e) = crate::hotkeys::apply(&app, &config) {
+        crate::perf::log_level(crate::perf::Level::Warn, "rust", &format!("atalhos de fatia: {e}"));
+    }
     if old.behavior.clipboard_history != config.behavior.clipboard_history {
         crate::clipboard::set_enabled(config.behavior.clipboard_history);
     }
@@ -335,6 +339,13 @@ pub fn hide_menu(app: AppHandle) {
 pub fn set_hotkey_paused(app: AppHandle, paused: bool) {
     menu::set_paused(&app, paused);
     crate::knob::set_paused(&app, paused);
+    crate::hotkeys::set_paused(&app, paused);
+}
+
+/// Erro ao registrar os atalhos de fatia (None = registrados ou nenhum).
+#[tauri::command]
+pub fn hotkeys_error() -> Option<String> {
+    crate::hotkeys::error()
 }
 
 /// Erro ao registrar as teclas do knob (None = registradas ou desligado).

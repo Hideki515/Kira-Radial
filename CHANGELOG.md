@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.27.0
+
+- **Atalho global por fatia:** uma fatia (ou subitem) pode ter um atalho de teclado próprio, que executa a ação dela **sem abrir o menu**, de qualquer lugar do Windows e em qualquer perfil.
+  - Fica no editor do item, em "Atalho global (opcional)", e a lista mostra um selo com o atalho.
+  - Combina com as teclas livres de um teclado macro (ex.: F13–F24, que não digitam texto).
+  - Atalhos de teclado, colar e "Controlar a janela" agem no app que está em foco na hora.
+  - **Validação:**
+    - o atalho precisa de Ctrl, Alt, Shift ou Win (ou ser uma tecla F);
+    - não pode repetir entre fatias nem bater com o atalho do menu ou com as teclas do knob;
+    - só fatias que executam uma ação aceitam atalho, e desligar, reiniciar e encerrar sessão não aceitam (para não desligar sem perguntar).
+  - Se o Windows não deixar registrar (atalho em uso por outro programa), o erro aparece no editor.
+
 ## 0.26.0
 
 - **Ação nova "Várias ações em sequência":** uma fatia faz várias coisas de uma vez, por exemplo abrir o VS Code, depois o terminal e mutar o Discord.

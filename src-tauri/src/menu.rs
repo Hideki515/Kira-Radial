@@ -199,6 +199,11 @@ pub fn close_settings(app: &AppHandle) {
     }
 }
 
+/// HWND da janela do menu (0 se ainda não existe).
+pub fn radial_hwnd(app: &AppHandle) -> isize {
+    app.get_webview_window(RADIAL).and_then(|w| w.hwnd().ok()).map(|h| h.0 as isize).unwrap_or(0)
+}
+
 /// Handler do atalho global.
 pub fn on_shortcut(app: &AppHandle, event: ShortcutState) {
     let state = app.state::<AppState>();

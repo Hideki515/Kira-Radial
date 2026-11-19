@@ -550,4 +550,21 @@ describe("Kira de teste — ponta a ponta", () => {
     expect(shown.length).toBeGreaterThan(0);
     expect(shown.filter((d) => d === "none")).toEqual([]);
   });
+  it("17. atalho global de fatia (qa_hotkey): executa sem abrir o menu; conflito aparece no erro", async () => {
+    await toWindow("settings.html");
+    const cfg = await invoke("get_config");
+    // Fatia com atalho no 1º perfil: desmutar o Discord FALSO.
+    cfg.profiles[0].items[1] = { id: "e2e-hk", label: "Desmutar", icon: "mic", hotkey: "Ctrl+Alt+Shift+F9", action: { type: "discord", cmd: "unmute" } };
+    await invoke("save_config", { config: cfg });
+    await browser.execute(() => window.__TAURI_INTERNALS__.invoke("run_action", { action: { type: "discord", cmd: "mute" } }));
+    expect((await invoke("discord_voice")).voice.mute).toBe(true);
+    await invoke("qa_hotkey", { accelerator: "Ctrl+Alt+Shift+F9" });
+    await browser.waitUntil(async () => (await invoke("discord_voice")).voice.mute === false, { timeoutMsg: "o atalho não executou a fatia" });
+    expect((await qaState()).menuVisible).toBe(false);
+    expect(await invoke("hotkeys_error")).toBe(null);
+    // Mesmo atalho em duas fatias: o Rust recusa e explica.
+    cfg.profiles[0].items[2] = { id: "e2e-hk2", label: "Outra", icon: "mic", hotkey: "ctrl+alt+shift+f9", action: { type: "discord", cmd: "mute" } };
+    await invoke("save_config", { config: cfg });
+    expect(await invoke("hotkeys_error")).toMatch(/ctrl\+alt\+shift\+f9/i);
+  });
 });

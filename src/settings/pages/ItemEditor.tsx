@@ -3,9 +3,10 @@ import { useEffect, useState } from "react";
 import { DYNAMIC_HINT, DYNAMIC_LABEL } from "../../radial/dynamic";
 import { forgetIconFile, loadIconFile } from "../../shared/iconFiles";
 import { ICONS } from "../../shared/icons";
-import { extractIcon, pickIconImage } from "../../shared/ipc";
+import { extractIcon, getHotkeysError, onEvent, pickIconImage } from "../../shared/ipc";
 import { DYNAMIC_KINDS, LIMITS, type DynamicKind, type MenuItem } from "../../shared/types";
 import { ActionEditor, defaultAction } from "../ActionEditor";
+import { HotkeyRecorder } from "../HotkeyRecorder";
 import { BrightnessTargetField } from "../BrightnessTarget";
 import { Field, Segmented } from "../controls";
 
@@ -23,6 +24,15 @@ interface Props {
 
 /** Edição da fatia/subitem selecionado: rótulo, ícone, cor e o que faz. */
 export function ItemEditor({ selected, isChild, editSelected }: Props) {
+  // Erro do Windows ao registrar os atalhos de fatia (só se sabe depois de salvar).
+  const [hotkeyError, setHotkeyError] = useState<string | null>(null);
+  useEffect(() => {
+    const load = () => void getHotkeysError().then(setHotkeyError, () => setHotkeyError(null));
+    load();
+    const off = onEvent("config:changed", load);
+    return () => void off.then((f) => f());
+  }, []);
+
   // Ícone próprio da fatia selecionada: miniatura no editor + mensagens de erro.
   const [iconPreview, setIconPreview] = useState<string | null>(null);
   const [iconMsg, setIconMsg] = useState<string | null>(null);
@@ -189,10 +199,27 @@ export function ItemEditor({ selected, isChild, editSelected }: Props) {
           Esta fatia abre um sub-anel com {selected.children.length} item(ns). Use “+ Subitem” na lista ao lado.
         </p>
       ) : (
-        <ActionEditor
-          action={selected.action ?? defaultAction("launch")}
-          onChange={(a) => editSelected((it) => void (it.action = a))}
-        />
+        <>
+          <ActionEditor
+            action={selected.action ?? defaultAction("launch")}
+            onChange={(a) => editSelected((it) => void (it.action = a))}
+          />
+          <Field
+            group
+            label="Atalho global (opcional)"
+            hint="Executa esta ação de qualquer lugar do Windows, sem abrir o menu. Clique na caixa e pressione a combinação (com Ctrl, Alt, Shift ou Win, ou uma tecla F)."
+          >
+            <div className="input-row">
+              <HotkeyRecorder value={selected.hotkey ?? ""} pauseGlobal onChange={(v) => editSelected((it) => void (it.hotkey = v || undefined))} />
+              {selected.hotkey && (
+                <button type="button" className="btn btn-ghost" onClick={() => editSelected((it) => void delete it.hotkey)}>
+                  Remover atalho
+                </button>
+              )}
+            </div>
+            {hotkeyError && <span className="inline-error" data-testid="hotkeys-reg-error">{hotkeyError}</span>}
+          </Field>
+        </>
       )}
     </div>
   );
