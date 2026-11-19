@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { t } from "../../shared/i18n";
 import { getKnobError, onEvent } from "../../shared/ipc";
 import { knobOf, type Config, type KnobConfig } from "../../shared/types";
 import { knobErrors } from "../../shared/validate";
@@ -10,10 +11,10 @@ interface Props {
   update: (fn: (c: Config) => void) => void;
 }
 
-const KEYS: { key: "press" | "right" | "left"; label: string }[] = [
-  { key: "press", label: "Apertar o knob" },
-  { key: "right", label: "Girar para a direita" },
-  { key: "left", label: "Girar para a esquerda" },
+const KEYS: { key: "press" | "right" | "left" }[] = [
+  { key: "press" },
+  { key: "right" },
+  { key: "left" },
 ];
 
 /** Controle dedicado: o knob de um teclado macro abre o menu, passa as fatias e executa. */
@@ -33,28 +34,26 @@ export function KnobSection({ config, update }: Props) {
 
   return (
     <Section
-      title="Controle com knob (teclado macro)"
-      description="Use o knob de um teclado macro como controle da Kira: apertar abre o menu; girar passa pelas fatias; apertar de novo executa a fatia escolhida (ou abre o submenu). No submenu, o centro (Voltar) também entra no giro."
+      title={t("knob.title")}
+      description={t("knob.desc")}
     >
-      <Toggle label="Usar o knob" checked={k.enabled} onChange={(enabled) => set({ enabled })} />
+      <Toggle label={t("knob.enable")} checked={k.enabled} onChange={(enabled) => set({ enabled })} />
       {k.enabled && (
         <>
           <p className="field-hint">
-            No programa do teclado (ex.: MINI KeyBoard), configure o knob para enviar teclas que nenhum outro programa usa — o ideal é
-            F13, F14 e F15. Se o programa não tiver F13–F24, use combinações raras, como Ctrl+Alt+Shift+F10. Depois clique na caixa de cada
-            movimento e gire/aperte o knob para a Kira detectar a tecla.
+            {t("knob.setup")}
           </p>
-          {KEYS.map(({ key, label }) => (
-            <Field key={key} group label={label}>
+          {KEYS.map(({ key }) => (
+            <Field key={key} group label={t(`knob.${key}`)}>
               <HotkeyRecorder value={k[key]} pauseGlobal onChange={(v) => set({ [key]: v })} />
             </Field>
           ))}
-          <Field label="Girar com o menu fechado" group>
+          <Field label={t("knob.closedTurn")} group>
             <Segmented
               value={k.closedTurn}
               options={[
-                { value: "none", label: "Não faz nada" },
-                { value: "volume", label: "Ajusta o volume" },
+                { value: "none", label: t("knob.closedTurn.none") },
+                { value: "volume", label: t("knob.closedTurn.volume") },
               ]}
               onChange={(closedTurn) => set({ closedTurn })}
             />

@@ -1,5 +1,6 @@
 // Reorganizar fatias arrastando na pré-visualização (regras puras, testáveis).
 import { LIMITS, type MenuItem, type Profile } from "../shared/types";
+import { t } from "../shared/i18n";
 
 /** Posição de um item: fatia `main` ou o subitem `child` dela. */
 export interface Loc {
@@ -12,28 +13,28 @@ const childrenOf = (p: Profile, main: number): MenuItem[] | undefined => {
   return it && !it.dynamic ? it.children : undefined;
 };
 
-/** Pode mover `from` para `to`? Devolve o motivo em português se não puder (null = pode). */
+/** Pode mover `from` para `to`? Devolve o motivo (no idioma atual) se não puder (null = pode). */
 export function moveError(p: Profile, from: Loc, to: Loc): string | null {
-  if (from.main === to.main && from.child === to.child) return "mesmo lugar";
+  if (from.main === to.main && from.child === to.child) return t("drag.samePlace");
   const src = from.child === null ? p.items[from.main] : childrenOf(p, from.main)?.[from.child];
-  if (!src) return "item não existe";
+  if (!src) return t("drag.noItem");
   if (to.child === null) {
     // Para o anel principal.
-    if (to.main < 0 || to.main >= p.items.length + (from.child === null ? 0 : 1)) return "posição inválida";
-    if (from.child !== null && p.items.length >= LIMITS.maxSlices) return `o anel já tem ${LIMITS.maxSlices} fatias`;
+    if (to.main < 0 || to.main >= p.items.length + (from.child === null ? 0 : 1)) return t("drag.badPos");
+    if (from.child !== null && p.items.length >= LIMITS.maxSlices) return t("drag.ringFull", { max: LIMITS.maxSlices });
     return null;
   }
   // Para dentro de um submenu.
   const kids = childrenOf(p, to.main);
-  if (!kids) return "essa fatia não é um submenu";
+  if (!kids) return t("drag.notSubmenu");
   if (from.child === null) {
-    if (from.main === to.main) return "uma fatia não entra no próprio submenu";
-    if (src.children || src.dynamic) return "submenu dentro de submenu não é permitido";
-    if (p.items.length <= LIMITS.minSlices) return `o anel precisa de pelo menos ${LIMITS.minSlices} fatias`;
+    if (from.main === to.main) return t("drag.ownSubmenu");
+    if (src.children || src.dynamic) return t("drag.nested");
+    if (p.items.length <= LIMITS.minSlices) return t("drag.ringMin", { min: LIMITS.minSlices });
   }
   const sameParent = from.child !== null && from.main === to.main;
-  if (!sameParent && kids.length >= LIMITS.maxChildren) return `o submenu já tem ${LIMITS.maxChildren} itens`;
-  if (to.child < 0 || to.child > kids.length - (sameParent ? 1 : 0)) return "posição inválida";
+  if (!sameParent && kids.length >= LIMITS.maxChildren) return t("drag.subFull", { max: LIMITS.maxChildren });
+  if (to.child < 0 || to.child > kids.length - (sameParent ? 1 : 0)) return t("drag.badPos");
   return null;
 }
 

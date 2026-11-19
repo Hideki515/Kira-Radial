@@ -1,4 +1,5 @@
 // English texts. Same keys as pt.ts (TypeScript fails if one is missing).
+import { enSettings } from "./en.settings";
 import type { Key } from "./pt";
 
 export const en: Record<Key, string> = {
@@ -61,6 +62,8 @@ export const en: Record<Key, string> = {
   "menu.failed": "{label} failed: {error}",
   "menu.devHint": "Browser mode · right-click opens at the cursor · Esc closes · arrows/wheel navigate ·",
   "menu.devSettings": "settings",
+  "menu.aria": "Radial menu",
+  "orb.aria": "Open the Kira menu",
 
   // --- confirmation
   "confirm.shutdown.title": "Shut Down",
@@ -97,8 +100,11 @@ export const en: Record<Key, string> = {
 
   // --- language (Settings → General)
   "lang.label": "Idioma / Language",
-  "lang.hint": "Automatic follows the Windows language.",
+  "lang.hint": "Automatic uses Portuguese if it is in your Windows language list.",
   "lang.auto": "Automatic",
   "lang.pt": "Português",
   "lang.en": "English",
+
+  // --- Settings (en.settings.ts)
+  ...enSettings,
 };

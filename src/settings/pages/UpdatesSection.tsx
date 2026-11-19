@@ -1,4 +1,6 @@
 import { Download, RefreshCw } from "lucide-react";
+import { t } from "../../shared/i18n";
+import { Rich } from "../../shared/i18n/Rich";
 import { useEffect, useState } from "react";
 import { onEvent, updateCheck, updateInstall, updateStatus, type UpdateInfo } from "../../shared/ipc";
 import type { Config } from "../../shared/types";
@@ -12,11 +14,11 @@ interface Props {
 /** "há 5 min", "há 3 h", "ontem"... a partir de segundos desde 1970. */
 export function ago(sec: number, now = Date.now() / 1000): string {
   const d = Math.max(0, now - sec);
-  if (d < 60) return "agora há pouco";
-  if (d < 3600) return `há ${Math.floor(d / 60)} min`;
-  if (d < 86400) return `há ${Math.floor(d / 3600)} h`;
+  if (d < 60) return t("time.justNow");
+  if (d < 3600) return t("time.minAgo", { n: Math.floor(d / 60) });
+  if (d < 86400) return t("time.hAgo", { n: Math.floor(d / 3600) });
   const days = Math.floor(d / 86400);
-  return days === 1 ? "ontem" : `há ${days} dias`;
+  return days === 1 ? t("time.yesterday") : t("time.daysAgo", { n: days });
 }
 
 /** Hook do estado de atualização (também usado pelo aviso no topo das Configurações). */
@@ -51,12 +53,12 @@ export function UpdatesSection({ config, update }: Props) {
 
   return (
     <Section
-      title="Atualizações"
-      description="A Kira procura versões novas no repositório público de releases. Nada é instalado sem você clicar — e só versões assinadas pela chave da Kira são aceitas."
+      title={t("up.title")}
+      description={t("up.desc")}
     >
       <Toggle
-        label="Procurar atualizações automaticamente"
-        hint="Ao iniciar (depois de 30 s) e uma vez por dia."
+        label={t("up.auto")}
+        hint={t("up.auto.hint")}
         checked={enabled}
         onChange={(v) => update((c) => void (v ? delete c.behavior.checkUpdates : (c.behavior.checkUpdates = false)))}
       />
@@ -64,27 +66,27 @@ export function UpdatesSection({ config, update }: Props) {
         {info?.available ? (
           <>
             <p className="update-title">
-              Versão <strong>{info.version}</strong> disponível (você tem a {info.current}).
+              <Rich text={t("up.available", { version: info.version ?? "", current: info.current })} />
             </p>
             {info.notes && (
               <details className="update-notes">
-                <summary>O que mudou</summary>
+                <summary>{t("up.notes")}</summary>
                 <pre>{info.notes}</pre>
               </details>
             )}
             <button type="button" className="btn btn-primary" disabled={!!busy} onClick={install}>
-              <Download size={14} /> {busy === "install" ? "Baixando e instalando…" : "Atualizar e reiniciar"}
+              <Download size={14} /> {busy === "install" ? t("up.installing") : t("up.install")}
             </button>
           </>
         ) : (
           <p className="muted">
-            {info ? `Você tem a versão ${info.current}` : "Versão atual"}
-            {info?.checkedAt ? ` · última busca ${ago(info.checkedAt)}` : ""}
-            {info?.checkedAt && !info.available && !info.error ? " · está atualizada." : "."}
+            {info ? t("up.youHave", { version: info.current }) : t("up.current")}
+            {info?.checkedAt ? t("up.lastCheck", { ago: ago(info.checkedAt) }) : ""}
+            {info?.checkedAt && !info.available && !info.error ? t("up.upToDate") : "."}
           </p>
         )}
         <button type="button" className="btn" disabled={!!busy} onClick={check}>
-          <RefreshCw size={14} /> {busy === "check" ? "Procurando…" : "Procurar agora"}
+          <RefreshCw size={14} /> {busy === "check" ? t("up.checking") : t("up.check")}
         </button>
         {(error || info?.error) && <p className="inline-error">{error ?? info?.error}</p>}
       </div>

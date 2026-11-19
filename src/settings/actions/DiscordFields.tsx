@@ -1,4 +1,5 @@
 import { RefreshCw } from "lucide-react";
+import { t } from "../../shared/i18n";
 import { useCallback, useEffect, useState } from "react";
 import { DISCORD_LABEL, discordVoice, type DiscordVoiceState } from "../../shared/ipc";
 import type { Action, DiscordCmd } from "../../shared/types";
@@ -9,9 +10,9 @@ type DiscordAction = Extract<Action, { type: "discord" }>;
 /** Mensagem curta quando o Discord não está disponível para listar dispositivos. */
 export function discordStateMessage(s: DiscordVoiceState): string | null {
   if (s.status === "ok") return null;
-  if (s.status === "notConnected") return "Conecte o Discord na página Discord (menu à esquerda) para listar os dispositivos.";
-  if (s.status === "closed") return "Abra o Discord para listar os dispositivos.";
-  return s.message || "O Discord não respondeu.";
+  if (s.status === "notConnected") return t("dc.notConnected");
+  if (s.status === "closed") return t("dc.closed");
+  return s.message || t("dc.noAnswer");
 }
 
 export function DiscordFields({ action, onChange }: { action: DiscordAction; onChange: (a: Action) => void }) {
@@ -39,9 +40,9 @@ export function DiscordFields({ action, onChange }: { action: DiscordAction; onC
 
   return (
     <>
-      <Field label="Comando" hint="Vale para o Discord aberto neste PC. Precisa conectar uma vez na página Discord.">
+      <Field label={t("act.command")} hint={t("dc.command.hint")}>
         <select
-          aria-label="Comando do Discord"
+          aria-label={t("dc.command.aria")}
           value={action.cmd}
           onChange={(e) => onChange({ type: "discord", cmd: e.target.value as DiscordCmd })}
         >
@@ -49,10 +50,10 @@ export function DiscordFields({ action, onChange }: { action: DiscordAction; onC
         </select>
       </Field>
       {isDevice && (
-        <Field group label={kind === "input" ? "Microfone do Discord" : "Saída do Discord"} hint="São os dispositivos do Discord (Configurações de voz do Discord), não os do Windows.">
+        <Field group label={kind === "input" ? t("dc.input") : t("dc.output")} hint={t("dc.devices.hint")}>
           <div className="input-row">
             <select
-              aria-label="Dispositivo do Discord"
+              aria-label={t("dc.device.aria")}
               value={value}
               disabled={state === null || !devices.length}
               onChange={(e) => {
@@ -60,16 +61,16 @@ export function DiscordFields({ action, onChange }: { action: DiscordAction; onC
                 if (d) onChange({ ...action, deviceId: d.id, deviceName: d.name });
               }}
             >
-              {state === null && <option value="">Carregando…</option>}
-              {state !== null && !value && <option value="">Selecione…</option>}
-              {missing && <option value={MISSING}>{`${action.deviceName || action.deviceId} (não encontrado)`}</option>}
+              {state === null && <option value="">{t("act.loading")}</option>}
+              {state !== null && !value && <option value="">{t("act.select")}</option>}
+              {missing && <option value={MISSING}>{t("dc.notFound", { name: action.deviceName || action.deviceId || "" })}</option>}
               {devices.map((d) => (
                 <option key={d.id} value={d.id}>
-                  {(d.id === "default" ? "Padrão" : d.name) + (d.id === list?.current ? " (atual)" : "")}
+                  {d.id === list?.current ? t("act.current", { name: d.id === "default" ? t("dc.default") : d.name }) : d.id === "default" ? t("dc.default") : d.name}
                 </option>
               ))}
             </select>
-            <button type="button" className="icon-btn" title="Atualizar lista" aria-label="Atualizar lista" onClick={load}>
+            <button type="button" className="icon-btn" title={t("act.refresh")} aria-label={t("act.refresh")} onClick={load}>
               <RefreshCw size={16} />
             </button>
           </div>

@@ -1,4 +1,5 @@
 import { GitCompare, History, RefreshCw, RotateCcw } from "lucide-react";
+import { t } from "../../shared/i18n";
 import { useCallback, useEffect, useState } from "react";
 import { diffConfigs } from "../../shared/configDiff";
 import { withDefaults } from "../../shared/defaults";
@@ -9,15 +10,15 @@ import { Section } from "../controls";
 /** "há 5 min", "há 2 h", "ontem 14:30", "03/11 09:12". */
 export function relativeTime(ms: number, now = Date.now()): string {
   const s = Math.max(0, (now - ms) / 1000);
-  if (s < 60) return "agora há pouco";
-  if (s < 3600) return `há ${Math.floor(s / 60)} min`;
-  if (s < 6 * 3600) return `há ${Math.floor(s / 3600)} h`;
+  if (s < 60) return t("time.justNow");
+  if (s < 3600) return t("time.minAgo", { n: Math.floor(s / 60) });
+  if (s < 6 * 3600) return t("time.hAgo", { n: Math.floor(s / 3600) });
   const d = new Date(ms);
   const hm = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   const today = new Date(now);
   const yesterday = new Date(now - 86_400_000);
-  if (d.toDateString() === today.toDateString()) return `hoje ${hm}`;
-  if (d.toDateString() === yesterday.toDateString()) return `ontem ${hm}`;
+  if (d.toDateString() === today.toDateString()) return t("time.today", { hm });
+  if (d.toDateString() === yesterday.toDateString()) return t("time.yesterdayAt", { hm });
   return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")} ${hm}`;
 }
 
@@ -48,44 +49,44 @@ export function BackupHistory({ config, replace }: Props) {
     try {
       setOpen({ name, diff: diffConfigs(config, await parse(name)) });
     } catch (e) {
-      setMsg({ ok: false, text: `Não foi possível abrir: ${String(e)}` });
+      setMsg({ ok: false, text: t("bh.openFailed", { error: String(e) }) });
     }
   };
 
   const restore = async (name: string) => {
     try {
       replace(await parse(name));
-      setMsg({ ok: true, text: "Versão carregada no rascunho. Revise e clique em Salvar para aplicar." });
+      setMsg({ ok: true, text: t("bh.loaded") });
     } catch (e) {
-      setMsg({ ok: false, text: `Não foi possível restaurar: ${String(e)}` });
+      setMsg({ ok: false, text: t("bh.restoreFailed", { error: String(e) }) });
     }
   };
 
   return (
     <Section
-      title="Versões anteriores"
-      description="A Kira guarda automaticamente as 10 últimas versões da configuração, sempre que você salva uma mudança. Fica só neste PC."
+      title={t("bh.title")}
+      description={t("bh.desc")}
     >
       <div className="row-actions">
-        <button type="button" className="btn btn-ghost" onClick={load}><RefreshCw size={14} /> Atualizar</button>
+        <button type="button" className="btn btn-ghost" onClick={load}><RefreshCw size={14} /> {t("bh.refresh")}</button>
       </div>
       {list === null ? (
-        <p className="muted">Carregando…</p>
+        <p className="muted">{t("bh.loading")}</p>
       ) : !list.length ? (
-        <p className="muted" data-testid="backups-empty">Ainda não há versões anteriores: elas aparecem depois do próximo salvamento.</p>
+        <p className="muted" data-testid="backups-empty">{t("bh.empty")}</p>
       ) : (
         <ul className="backup-list">
           {list.map((b) => (
             <li key={b.name} className="backup-row" data-testid={`backup-${b.name}`}>
               <History size={14} />
-              <span className="backup-when">{b.name === "config.invalid.json" ? "Config que não carregou" : relativeTime(b.modified)}</span>
+              <span className="backup-when">{b.name === "config.invalid.json" ? t("bh.invalidConfig") : relativeTime(b.modified)}</span>
               <span className="backup-sum muted">
-                {b.valid ? b.profiles.map((p) => `${p.name} (${p.items})`).join(" · ") : "arquivo corrompido"}
+                {b.valid ? b.profiles.map((p) => `${p.name} (${p.items})`).join(" · ") : t("bh.corrupt")}
               </span>
               {b.valid && (
                 <>
-                  <button type="button" className="btn btn-ghost" onClick={() => void showDiff(b.name)}><GitCompare size={13} /> Ver diferenças</button>
-                  <button type="button" className="btn" onClick={() => void restore(b.name)}><RotateCcw size={13} /> Restaurar no rascunho</button>
+                  <button type="button" className="btn btn-ghost" onClick={() => void showDiff(b.name)}><GitCompare size={13} /> {t("bh.diff")}</button>
+                  <button type="button" className="btn" onClick={() => void restore(b.name)}><RotateCcw size={13} /> {t("bh.restore")}</button>
                 </>
               )}
               {open?.name === b.name && (
@@ -93,7 +94,7 @@ export function BackupHistory({ config, replace }: Props) {
                   {open.diff.length ? (
                     <ul>{open.diff.map((d) => <li key={d}>{d}</li>)}</ul>
                   ) : (
-                    <span className="muted">Igual à configuração atual.</span>
+                    <span className="muted">{t("bh.same")}</span>
                   )}
                 </div>
               )}

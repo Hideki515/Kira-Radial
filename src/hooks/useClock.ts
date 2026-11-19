@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+import { useLang } from "../shared/i18n";
 
 export function useClock(): { time: string; date: string } {
+  // Data no idioma da interface; a hora fica sempre em 24 h (cabe no centro do menu).
+  const locale = useLang() === "en" ? "en-US" : "pt-BR";
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     // Alinha ao próximo minuto e depois atualiza a cada minuto.
@@ -15,9 +18,9 @@ export function useClock(): { time: string; date: string } {
     };
   }, []);
   return {
-    time: now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+    time: now.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }),
     date: now
-      .toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" })
+      .toLocaleDateString(locale, { weekday: "short", day: "2-digit", month: "short" })
       .toUpperCase(),
   };
 }

@@ -1,4 +1,5 @@
 import { LIMITS, type MenuItem, type Profile } from "../../shared/types";
+import { t } from "../../shared/i18n";
 import { defaultAction } from "../ActionEditor";
 import { COLORS, ItemEditor } from "./ItemEditor";
 import { ItemTree } from "./ItemTree";
@@ -40,7 +41,7 @@ export function ItemsPage({ profile, selection, onSelect, edit }: Props) {
 
   const addMain = () => {
     if (items.length >= LIMITS.maxSlices) return;
-    edit((p) => p.items.push({ id: newId("item"), label: "Novo", icon: "app-window", action: defaultAction("launch") }));
+    edit((p) => p.items.push({ id: newId("item"), label: t("items.new"), icon: "app-window", action: defaultAction("launch") }));
     onSelect({ main: items.length, child: null });
   };
 
@@ -49,7 +50,7 @@ export function ItemsPage({ profile, selection, onSelect, edit }: Props) {
     if (kids.length >= LIMITS.maxChildren) return;
     edit((p) => {
       const m = p.items[mi];
-      m.children = [...(m.children ?? []), { id: newId("sub"), label: "Novo", icon: "app-window", color: COLORS[kids.length % COLORS.length], action: defaultAction("launch") }];
+      m.children = [...(m.children ?? []), { id: newId("sub"), label: t("items.new"), icon: "app-window", color: COLORS[kids.length % COLORS.length], action: defaultAction("launch") }];
       delete m.action;
     });
     onSelect({ main: mi, child: kids.length });

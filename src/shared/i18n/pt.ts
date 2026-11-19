@@ -1,5 +1,7 @@
 // Textos em português (idioma de origem). As chaves daqui definem o tipo `Key`:
 // faltar uma chave em en.ts é erro de TypeScript.
+import { ptSettings } from "./pt.settings";
+
 export const pt = {
   // --- comum
   "common.loading": "Carregando…",
@@ -60,6 +62,8 @@ export const pt = {
   "menu.failed": "Falha em {label}: {error}",
   "menu.devHint": "Modo navegador · botão direito abre no cursor · Esc fecha · setas/roda navegam ·",
   "menu.devSettings": "configurações",
+  "menu.aria": "Menu radial",
+  "orb.aria": "Abrir o menu Kira",
 
   // --- confirmação
   "confirm.shutdown.title": "Desligar",
@@ -96,10 +100,13 @@ export const pt = {
 
   // --- idioma (Configurações → Geral)
   "lang.label": "Idioma / Language",
-  "lang.hint": "Automático segue o idioma do Windows.",
+  "lang.hint": "Automático usa português se ele estiver na sua lista de idiomas do Windows.",
   "lang.auto": "Automático",
   "lang.pt": "Português",
   "lang.en": "English",
+
+  // --- Configurações (pt.settings.ts)
+  ...ptSettings,
 } as const;
 
 export type Key = keyof typeof pt;

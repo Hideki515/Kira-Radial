@@ -1,45 +1,26 @@
 // Tipos de ação editáveis, comandos e a ação padrão de cada tipo.
 import type { Action, MediaCmd, SystemCmd } from "../../shared/types";
+import { t, type Key } from "../../shared/i18n";
+
+/** Opção de lista com o rótulo lido no idioma atual a cada acesso. */
+function opt<T extends string>(value: T, key: Key): { value: T; label: string } {
+  return { value, get label() { return t(key); } };
+}
 
 /** Tipos editáveis (focusWindow é gerado pelo submenu "Janelas abertas"). */
 export type ActionType = Exclude<Action["type"], "focusWindow" | "powerPlan" | "paste">;
 
-export const ACTION_TYPES: { value: ActionType; label: string }[] = [
-  { value: "launch", label: "Abrir programa / arquivo" },
-  { value: "folder", label: "Abrir pasta" },
-  { value: "url", label: "Abrir site (URL)" },
-  { value: "keys", label: "Enviar atalho de teclado" },
-  { value: "media", label: "Controle de mídia" },
-  { value: "system", label: "Comando do sistema" },
-  { value: "script", label: "Script (PowerShell / CMD)" },
-  { value: "audioOutput", label: "Trocar saída de áudio" },
-  { value: "window", label: "Controlar a janela ativa" },
-  { value: "brightness", label: "Brilho da tela" },
-  { value: "radio", label: "Wi-Fi / Bluetooth" },
-  { value: "discord", label: "Discord (microfone, fone, dispositivos)" },
-  { value: "sequence", label: "Várias ações em sequência" },
-  { value: "openSettings", label: "Abrir estas configurações" },
-];
+export const ACTION_TYPES: { value: ActionType; label: string }[] = (
+  ["launch", "folder", "url", "keys", "media", "system", "script", "audioOutput", "window", "brightness", "radio", "discord", "sequence", "openSettings"] as const
+).map((v) => opt(v, `act.type.${v}`));
 
-export const MEDIA: { value: MediaCmd; label: string }[] = [
-  { value: "playpause", label: "Play / Pause" },
-  { value: "next", label: "Próxima faixa" },
-  { value: "prev", label: "Faixa anterior" },
-  { value: "volup", label: "Aumentar volume" },
-  { value: "voldown", label: "Diminuir volume" },
-  { value: "mute", label: "Mudo" },
-];
+export const MEDIA: { value: MediaCmd; label: string }[] = (
+  ["playpause", "next", "prev", "volup", "voldown", "mute"] as const
+).map((v) => opt(v, `act.media.${v}`));
 
-export const SYSTEM: { value: SystemCmd; label: string }[] = [
-  { value: "lock", label: "Bloquear tela" },
-  { value: "sleep", label: "Suspender" },
-  { value: "shutdown", label: "Desligar (pede confirmação)" },
-  { value: "restart", label: "Reiniciar (pede confirmação)" },
-  { value: "signout", label: "Encerrar sessão (pede confirmação)" },
-  { value: "screenshot", label: "Captura de tela (Win+Shift+S)" },
-  { value: "taskmgr", label: "Gerenciador de Tarefas" },
-  { value: "settings", label: "Configurações do Windows" },
-];
+export const SYSTEM: { value: SystemCmd; label: string }[] = (
+  ["lock", "sleep", "shutdown", "restart", "signout", "screenshot", "taskmgr", "settings"] as const
+).map((v) => opt(v, `act.system.${v}`));
 
 export function defaultAction(type: ActionType): Action {
   switch (type) {

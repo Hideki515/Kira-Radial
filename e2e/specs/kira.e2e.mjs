@@ -1,7 +1,7 @@
 // Cenários de ponta a ponta na Kira de teste (pasta de dados de teste limpa no início).
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { QA_DATA, invoke, nav, pickRadio, pressKey, qaConfig, qaFiles, qaState, save, toWindow } from "../helpers.mjs";
+import { QA_DATA, invoke, nav, pickRadio, pressKey, qaConfig, qaFiles, qaState, save, saveEn, toWindow } from "../helpers.mjs";
 
 /** Espera a lista real de navegadores (o select fica desabilitado enquanto carrega) e devolve o 1º instalado. */
 async function firstInstalled(sel) {
@@ -729,7 +729,7 @@ describe("Kira de teste — ponta a ponta", () => {
     await pickRadio("English");
     // Vale na hora no rascunho (rótulos do próprio campo).
     await browser.waitUntil(async () => (await browser.execute(() => document.documentElement.lang)) === "en", { timeoutMsg: "rascunho não trocou o idioma" });
-    await save();
+    await saveEn(); // 0.31.1: as Configurações também ficam em inglês
     expect(qaConfig().behavior.language).toBe("en");
     // Fatia "Desligar" na posição 1 (a confirmação nunca é aceita aqui; a trava QA vale de todo jeito).
     const cfg = await invoke("get_config");
@@ -774,7 +774,7 @@ describe("Kira de teste — ponta a ponta", () => {
     await $('.shot-head button[aria-label="Close"]').click();
 
     // Automático: apaga a chave e segue o idioma do WebView2.
-    await nav("Geral");
+    await nav("General");
     await pickRadio("Automatic");
     await save();
     expect("language" in qaConfig().behavior).toBe(false);
@@ -800,5 +800,119 @@ describe("Kira de teste — ponta a ponta", () => {
     // Lista do Windows limpa: sem NUL no fim e sem repetidos (sem diferenciar caixa).
     expect(sys.filter((l) => typeof l !== "string" || !l.length || l.includes("\u0000"))).toEqual([]);
     expect(new Set(sys.map((l) => l.toLowerCase())).size).toBe(sys.length);
+  });
+  it("22. (QA) Configurações em inglês: todas as páginas, testar ação (Discord FALSO), arrastar na pré-visualização, gravador de atalho, relógio 24 h; Automático volta ao português", async function () {
+    this.timeout(180000);
+    const navEn = async (label) => {
+      await toWindow("settings.html");
+      const b = await $(`button.nav-item*=${label}`);
+      await b.waitForExist();
+      await b.click();
+    };
+    // Itens simples para o arrasto (e uma fatia comum para testar a ação).
+    await toWindow("settings.html");
+    const cfg = await invoke("get_config");
+    const leaf = (id) => ({ id: `e22-${id}`, label: id, icon: "code", action: { type: "media", cmd: "playpause" } });
+    cfg.profiles[0].items = [leaf("A"), leaf("B"), leaf("C"), { id: "e22-S", label: "S", icon: "folder", children: [leaf("s1")] }, leaf("D")];
+    cfg.behavior.language = "en";
+    await invoke("save_config", { config: cfg });
+    await browser.refresh();
+    await toWindow("settings.html");
+    await browser.waitUntil(async () => (await browser.execute(() => document.documentElement.lang)) === "en", { timeoutMsg: "Configurações não abriram em inglês" });
+
+    // Todas as páginas abrem (sem tela de erro); restos em português só são listados (parte 0.31.2 = validate/describe/schedule/Rust).
+    const PT = /[ãõçáéíóúâêôà]/i;
+    const leftovers = [];
+    for (const page of ["Menu items", "Shortcut", "Icon", "Profiles", "General", "Appearance", "Backup", "Discord", "Diagnostics"]) {
+      await navEn(page);
+      await browser.pause(150);
+      const r = await browser.execute(() => {
+        const main = document.querySelector("main.content");
+        if (!main) return { err: "sem main" };
+        const c = main.cloneNode(true);
+        c.querySelectorAll('[aria-label="Idioma / Language"], option, input, textarea, select, .theme-thumb, .tree-label, .profile-picker, .backup-list, .backup-diff, .log-view, pre').forEach((n) => n.remove());
+        return { err: document.querySelector(".error-fallback") ? "error-fallback" : null, text: c.innerText };
+      });
+      expect(r.err ?? null).toBe(null);
+      expect(r.text.length).toBeGreaterThan(20);
+      for (const line of r.text.split("\n")) if (PT.test(line)) leftovers.push(`${page}: ${line.trim()}`);
+    }
+    for (const el of [".sidebar", ".savebar"]) {
+      const txt = await $(el).getText();
+      for (const line of txt.split("\n")) if (PT.test(line)) leftovers.push(`${el}: ${line.trim()}`);
+    }
+    console.log("[22] restos em português:\n" + (leftovers.join("\n") || "(nenhum)"));
+
+    // Testar ação: fatia B vira Discord (FALSO na Kira de teste) e "Test action" alterna o mudo, sem salvar.
+    await navEn("Menu items");
+    if (await $(".profile-picker select").isExisting()) await $(".profile-picker select").selectByIndex(0);
+    await $$(".tree-row")[1].click();
+    await $$(".action-editor select")[0].selectByAttribute("value", "discord");
+    const before = (await invoke("discord_voice")).voice?.mute;
+    await $("button*=Test action").click();
+    await browser.waitUntil(async () => (await invoke("discord_voice")).voice?.mute === !before, { timeout: 8000, timeoutMsg: "Test action não executou (Discord FALSO)" });
+    await $("button=Discard").click();
+    await browser.waitUntil(async () => !(await $("button=Save").isEnabled()), { timeoutMsg: "Discard não descartou" });
+
+    // Arrastar na pré-visualização (ponteiro só dentro da página): "Same place", depois A → posição 3.
+    await $('[data-testid="preview-editor"]').waitForExist();
+    const box = await browser.execute(() => {
+      const r = document.querySelector('[data-testid="preview-editor"] svg').getBoundingClientRect();
+      return { left: r.left, top: r.top, width: r.width };
+    });
+    const k = box.width / 900;
+    const main = (i, n) => ({ x: Math.round(box.left + (450 + 215 * Math.cos(((-90 + (i * 360) / n) * Math.PI) / 180)) * k), y: Math.round(box.top + (450 + 215 * Math.sin(((-90 + (i * 360) / n) * Math.PI) / 180)) * k) });
+    const hint = () => browser.execute(() => {
+      const h = document.querySelector(".preview-drag-hint");
+      return h ? { text: h.textContent, invalid: h.classList.contains("is-invalid") } : null;
+    });
+    const ptr = () => browser.action("pointer");
+    await ptr().move({ ...main(0, 5), origin: "viewport" }).down().move({ ...main(1, 5), origin: "viewport", duration: 150 }).move({ ...main(0, 5), origin: "viewport", duration: 150 }).pause(150).perform(true);
+    expect(await hint()).toEqual({ text: "Same place", invalid: false });
+    await pressKey("Escape");
+    await browser.waitUntil(async () => (await hint()) === null, { timeoutMsg: "Esc não cancelou o arrasto" });
+    await ptr().move({ ...main(0, 5), origin: "viewport" }).up().perform();
+    await ptr().move({ ...main(0, 5), origin: "viewport" }).down().move({ ...main(1, 5), origin: "viewport", duration: 150 }).move({ ...main(2, 5), origin: "viewport", duration: 150 }).pause(150).perform(true);
+    expect((await hint()).text).toBe("Move to position 3");
+    await ptr().move({ ...main(2, 5), origin: "viewport" }).up().perform();
+    await saveEn();
+    expect(qaConfig().profiles[0].items.map((i) => i.label).join(" ")).toBe("B C A S D");
+
+    // Gravador de atalho: rótulo em inglês e combinação mostrada. NÃO recebe foco: gravar liga um
+    // hook de teclado de baixo nível (keycapture) que pegaria o teclado real do usuário.
+    // (A página Atalho esconde o gravador no modo Ícone, que o cenário 6 deixou ligado: usa o da fatia.)
+    await navEn("Menu items");
+    await $$(".tree-row")[0].click();
+    const rec = await $('[aria-label="Record shortcut"]');
+    await rec.waitForExist();
+    const recState = await browser.execute(() => {
+      const r = document.querySelector('[aria-label="Record shortcut"]');
+      return { recording: r.classList.contains("is-recording"), kbd: r.querySelectorAll("kbd").length, text: r.textContent };
+    });
+    expect(recState.recording).toBe(false);
+    expect(recState.kbd > 0 || recState.text.includes("Click to record")).toBe(true);
+
+    // Relógio da pré-visualização: hora 24 h e data em inglês.
+    const clock = await browser.execute(() => ({ time: document.querySelector(".preview .hub-time")?.textContent ?? null, date: document.querySelector(".preview .hub-date")?.textContent ?? null }));
+    console.log("[22] relógio:", JSON.stringify(clock));
+    if (clock.time !== null) expect(clock.time).toMatch(/^([01]\d|2[0-3]):[0-5]\d$/);
+    if (clock.date !== null) expect(clock.date).toMatch(/^[A-Z]{3}, [A-Z]{3} \d{2}$/);
+    // Menu e ícone com rótulos em inglês.
+    await invoke("qa_show_menu", { fromOrb: false });
+    await toWindow("");
+    await browser.waitUntil(async () => (await $("svg.radial-canvas").getAttribute("aria-label")) === "Radial menu", { timeoutMsg: "aria-label do menu não ficou em inglês" });
+    const menuClock = await browser.execute(() => ({ time: document.querySelector(".hub-time")?.textContent ?? null, date: document.querySelector(".hub-date")?.textContent ?? null }));
+    console.log("[22] relógio do menu:", JSON.stringify(menuClock));
+    if (menuClock.time !== null && /:/.test(menuClock.time)) expect(menuClock.time).toMatch(/^([01]\d|2[0-3]):[0-5]\d$/);
+    await pressKey("Escape");
+    await toWindow("settings.html");
+    await invoke("hide_menu");
+
+    // Automático: volta ao português (lista do Windows tem pt) e o salvar volta a ser "Salvar".
+    await navEn("General");
+    await pickRadio("Automatic");
+    await save();
+    expect("language" in qaConfig().behavior).toBe(false);
+    await browser.waitUntil(async () => (await browser.execute(() => document.documentElement.lang)) === "pt-BR", { timeoutMsg: "Automático não voltou ao português" });
   });
 });

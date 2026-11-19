@@ -1,4 +1,5 @@
 import { FolderSearch } from "lucide-react";
+import { t } from "../../shared/i18n";
 import { pickPath } from "../../shared/ipc";
 import type { Action } from "../../shared/types";
 import { BrowserFields, type BrowserChoice } from "../BrowserFields";
@@ -18,19 +19,19 @@ export function LaunchFields({ action, onChange }: Props<"launch">) {
   };
   return (
     <>
-      <Field label="Programa ou arquivo" hint="Ex.: notepad.exe, code, C:\Apps\app.exe. Aceita %USERPROFILE% etc.">
+      <Field label={t("path.program")} hint={t("path.program.hint")}>
         <div className="input-row">
           <input value={action.path} onChange={(e) => onChange({ ...action, path: e.target.value })} placeholder="notepad.exe" />
-          <button type="button" className="icon-btn" title="Procurar" onClick={() => void browse()}><FolderSearch size={16} /></button>
+          <button type="button" className="icon-btn" title={t("act.browse")} onClick={() => void browse()}><FolderSearch size={16} /></button>
         </div>
       </Field>
-      <Field label="Argumentos (opcional)">
+      <Field label={t("path.args")}>
         <input value={action.args ?? ""} onChange={(e) => onChange({ ...action, args: e.target.value || undefined })} />
       </Field>
-      <Field label="Pasta de trabalho (opcional)">
+      <Field label={t("path.cwd")}>
         <input value={action.cwd ?? ""} onChange={(e) => onChange({ ...action, cwd: e.target.value || undefined })} />
       </Field>
-      <Toggle label="Executar como administrador" checked={!!action.admin} onChange={(v) => onChange({ ...action, admin: v || undefined })} />
+      <Toggle label={t("path.admin")} checked={!!action.admin} onChange={(v) => onChange({ ...action, admin: v || undefined })} />
     </>
   );
 }
@@ -41,10 +42,10 @@ export function FolderFields({ action, onChange }: Props<"folder">) {
     if (p) onChange({ ...action, path: p });
   };
   return (
-    <Field label="Pasta" hint="Ex.: %USERPROFILE%\Downloads">
+    <Field label={t("path.folder")} hint={t("path.folder.hint")}>
       <div className="input-row">
         <input value={action.path} onChange={(e) => onChange({ ...action, path: e.target.value })} />
-        <button type="button" className="icon-btn" title="Procurar" onClick={() => void browse()}><FolderSearch size={16} /></button>
+        <button type="button" className="icon-btn" title={t("act.browse")} onClick={() => void browse()}><FolderSearch size={16} /></button>
       </div>
     </Field>
   );
@@ -53,7 +54,7 @@ export function FolderFields({ action, onChange }: Props<"folder">) {
 export function UrlFields({ action, onChange }: Props<"url">) {
   return (
     <>
-      <Field label="Endereço">
+      <Field label={t("path.url")}>
         <input value={action.url} onChange={(e) => onChange({ ...action, url: e.target.value })} />
       </Field>
       <BrowserFields

@@ -1,5 +1,6 @@
 // Escolha da tela do brilho: todas, onde o menu abriu ou um monitor específico.
 import { MonitorUp, RefreshCw } from "lucide-react";
+import { t } from "../shared/i18n";
 import { useCallback, useEffect, useState } from "react";
 import { identifyMonitors, listDisplays, type DisplayInfo } from "../shared/ipc";
 import { Field } from "./controls";
@@ -38,23 +39,23 @@ export function BrightnessTargetField({
   useEffect(load, [load]);
 
   const list = displays ?? [];
-  const t = target ?? defaultTarget;
-  const fixed = t === "all" || t === "cursor";
+  const tgt = target ?? defaultTarget;
+  const fixed = tgt === "all" || tgt === "cursor";
   const low = (s: string) => s.trim().toLowerCase();
   // Id antigo ("ddc:N") ou que mudou: acha pelo nome para mostrar a tela certa.
-  const found = fixed ? undefined : (list.find((d) => low(d.id) === low(t)) ?? (targetName ? list.find((d) => low(d.name) === low(targetName)) : undefined));
+  const found = fixed ? undefined : (list.find((d) => low(d.id) === low(tgt)) ?? (targetName ? list.find((d) => low(d.name) === low(targetName)) : undefined));
   const missing = !fixed && displays !== null && !found;
-  const value = fixed ? t : found ? found.id : MISSING;
+  const value = fixed ? tgt : found ? found.id : MISSING;
 
   return (
     <Field
       group
-      label="Tela"
-      hint="“Onde o menu abriu” ajusta o monitor em que você está. Funciona na tela do notebook e em monitores com DDC/CI."
+      label={t("bt.label")}
+      hint={t("bt.hint")}
     >
       <div className="input-row">
         <select
-          aria-label="Tela do brilho"
+          aria-label={t("bt.aria")}
           value={value}
           onChange={(e) => {
             const v = e.target.value;
@@ -63,20 +64,20 @@ export function BrightnessTargetField({
             onChange(v, d?.name);
           }}
         >
-          <option value="cursor">Onde o menu abriu</option>
-          <option value="all">Todas as telas</option>
-          {displays === null && !fixed && <option value={MISSING}>Carregando…</option>}
-          {missing && <option value={MISSING}>{`${targetName || t} (desconectada)`}</option>}
+          <option value="cursor">{t("bt.cursor")}</option>
+          <option value="all">{t("bt.all")}</option>
+          {displays === null && !fixed && <option value={MISSING}>{t("bt.loading")}</option>}
+          {missing && <option value={MISSING}>{t("bt.disconnected", { name: targetName || tgt })}</option>}
           {list.map((d) => (
             <option key={d.id} value={d.id}>
               {displayLabel(d)}
             </option>
           ))}
         </select>
-        <button type="button" className="icon-btn" title="Identificar monitores" aria-label="Identificar monitores" onClick={() => void identifyMonitors()}>
+        <button type="button" className="icon-btn" title={t("bt.identify")} aria-label={t("bt.identify")} onClick={() => void identifyMonitors()}>
           <MonitorUp size={16} />
         </button>
-        <button type="button" className="icon-btn" title="Atualizar lista" aria-label="Atualizar lista de telas" onClick={load}>
+        <button type="button" className="icon-btn" title={t("bt.refresh")} aria-label={t("bt.refresh.aria")} onClick={load}>
           <RefreshCw size={16} />
         </button>
       </div>

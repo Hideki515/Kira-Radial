@@ -1,4 +1,5 @@
 import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
+import { t } from "../../shared/i18n";
 import { SEQUENCE_LIMITS, type Action } from "../../shared/types";
 import { ActionEditor } from "../ActionEditor";
 import { Field } from "../controls";
@@ -21,25 +22,24 @@ export function SequenceFields({ action, onChange }: { action: SequenceAction; o
   return (
     <>
       <p className="field-hint">
-        As ações rodam uma depois da outra, na ordem abaixo. Se uma falhar, as seguintes não rodam. Desligar, reiniciar e encerrar sessão não
-        entram numa sequência.
+        {t("seq.hint")}
       </p>
-      <ol className="sequence-steps" aria-label="Passos da sequência">
+      <ol className="sequence-steps" aria-label={t("seq.steps")}>
         {steps.map((step, i) => (
           <li key={i} className="sequence-step" data-testid={`step-${i}`}>
             <div className="sequence-step-head">
-              <span className="sequence-step-num">Passo {i + 1}</span>
+              <span className="sequence-step-num">{t("seq.step", { n: i + 1 })}</span>
               <span className="row-tools">
-                <button type="button" title="Subir" aria-label={`Subir passo ${i + 1}`} disabled={i === 0} onClick={() => move(i, -1)}>
+                <button type="button" title={t("items.up")} aria-label={t("seq.up", { n: i + 1 })} disabled={i === 0} onClick={() => move(i, -1)}>
                   <ChevronUp size={14} />
                 </button>
-                <button type="button" title="Descer" aria-label={`Descer passo ${i + 1}`} disabled={i === steps.length - 1} onClick={() => move(i, 1)}>
+                <button type="button" title={t("items.down")} aria-label={t("seq.down", { n: i + 1 })} disabled={i === steps.length - 1} onClick={() => move(i, 1)}>
                   <ChevronDown size={14} />
                 </button>
                 <button
                   type="button"
-                  title="Remover"
-                  aria-label={`Remover passo ${i + 1}`}
+                  title={t("items.remove")}
+                  aria-label={t("seq.remove", { n: i + 1 })}
                   className="danger"
                   disabled={steps.length <= SEQUENCE_LIMITS.min}
                   onClick={() => setSteps(steps.filter((_, k) => k !== i))}
@@ -58,9 +58,9 @@ export function SequenceFields({ action, onChange }: { action: SequenceAction; o
         disabled={steps.length >= SEQUENCE_LIMITS.max}
         onClick={() => setSteps([...steps, { type: "launch", path: "" }])}
       >
-        <Plus size={14} /> Adicionar passo
+        <Plus size={14} /> {t("seq.add")}
       </button>
-      <Field label={`Intervalo entre as ações: ${delay} ms`} hint="Tempo para um app abrir antes do próximo passo (0 = sem espera).">
+      <Field label={t("seq.delay", { ms: delay })} hint={t("seq.delay.hint")}>
         <input
           type="range"
           min={0}

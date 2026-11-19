@@ -63,6 +63,15 @@ export async function save() {
   await browser.waitUntil(async () => (await $(".savebar").getText()).includes("salvas e aplicadas"), { timeoutMsg: "não salvou" });
 }
 
+/** Salvar com as Configurações em inglês ("Save" / "Settings saved and applied."). */
+export async function saveEn() {
+  await toWindow("settings.html");
+  const btn = await $("button=Save");
+  await btn.waitForEnabled();
+  await btn.click();
+  await browser.waitUntil(async () => (await $(".savebar").getText()).includes("Settings saved and applied"), { timeoutMsg: "não salvou (inglês)" });
+}
+
 /** config.json da pasta de TESTE. */
 export function qaConfig() {
   return JSON.parse(readFileSync(join(QA_DATA, "config.json"), "utf8"));

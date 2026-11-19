@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { t } from "../shared/i18n";
 import { comboFromEvent, formatCombo, parseCombo } from "../shared/keys";
 import { isTauri, onEvent, setHotkeyPaused, startKeyCapture, stopKeyCapture } from "../shared/ipc";
 
@@ -11,7 +12,6 @@ interface Props {
   pauseGlobal?: boolean;
 }
 
-const MOD_HINT = "Use pelo menos um modificador: Ctrl, Alt, Shift ou Win.";
 
 /**
  * Caixa que grava a combinação pressionada. Esc (sem modificadores) cancela.
@@ -34,7 +34,7 @@ export function HotkeyRecorder({ value, onChange, requireModifier, pauseGlobal }
     const c = parseCombo(combo);
     if (!c) return false;
     if (requireModifier && !c.mods.length) {
-      setHint(MOD_HINT);
+      setHint(t("hr.modHint"));
       return false;
     }
     onChangeRef.current(formatCombo(c));
@@ -71,7 +71,7 @@ export function HotkeyRecorder({ value, onChange, requireModifier, pauseGlobal }
       ref={boxRef}
       tabIndex={0}
       role="button"
-      aria-label="Gravar atalho"
+      aria-label={t("hr.aria")}
       className={`hotkey-recorder${recording ? " is-recording" : ""}`}
       // Dentro de um <label>, o clique seria repassado para o primeiro <input> do rótulo,
       // roubando o foco do gravador (e a gravação pararia). Cancelar o padrão impede isso.
@@ -101,11 +101,11 @@ export function HotkeyRecorder({ value, onChange, requireModifier, pauseGlobal }
       }}
     >
       {recording ? (
-        <span className="hotkey-placeholder">Pressione a combinação… (Esc cancela)</span>
+        <span className="hotkey-placeholder">{t("hr.recording")}</span>
       ) : parsed ? (
         [...parsed.mods, parsed.key].map((k) => <kbd key={k}>{k}</kbd>)
       ) : (
-        <span className="hotkey-placeholder">{value || "Clique para gravar"}</span>
+        <span className="hotkey-placeholder">{value || t("hr.click")}</span>
       )}
       {(hint || error) && <span className="hotkey-hint">{error ?? hint}</span>}
     </div>

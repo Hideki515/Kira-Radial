@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { t } from "../shared/i18n";
 import { hitTest, LAYOUT, sliceAngle } from "../radial/geometry";
 import { getIcon } from "../shared/icons";
 import type { MenuItem, Profile } from "../shared/types";
@@ -160,7 +161,7 @@ export function PreviewEditor({ items, profile, selection, onSelect, edit, deadZ
       className={`preview-editor${dragging ? " is-dragging" : ""}`}
       onPointerDown={onPointerDown}
       data-testid="preview-editor"
-      title="Clique para editar · arraste para reorganizar (pare sobre uma fatia com submenu para abrir)"
+      title={t("drag.title")}
     >
       {render(state)}
       {dragging && Icon && (
@@ -170,14 +171,14 @@ export function PreviewEditor({ items, profile, selection, onSelect, edit, deadZ
         </div>
       )}
       {dragging && (
-        <p className={`preview-drag-hint${invalid && invalid !== "mesmo lugar" ? " is-invalid" : ""}`} role="status">
+        <p className={`preview-drag-hint${invalid && invalid !== t("drag.samePlace") ? " is-invalid" : ""}`} role="status">
           {!dragging.target
-            ? "Solte sobre uma fatia (ou sobre o sub-anel aberto)"
+            ? t("drag.dropHere")
             : invalid
-              ? invalid === "mesmo lugar" ? "Mesmo lugar" : `Não dá: ${invalid}`
+              ? invalid === t("drag.samePlace") ? t("drag.same") : t("drag.cant", { reason: invalid })
               : dragging.target.child === null
-                ? `Mover para a posição ${dragging.target.main + 1}`
-                : `Mover para o submenu "${items[dragging.target.main]?.label}"`}
+                ? t("drag.toPos", { n: dragging.target.main + 1 })
+                : t("drag.toSub", { name: items[dragging.target.main]?.label ?? "" })}
         </p>
       )}
     </div>

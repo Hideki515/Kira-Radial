@@ -1,4 +1,5 @@
 import { Play } from "lucide-react";
+import { t } from "../shared/i18n";
 import { useState } from "react";
 import { runAction } from "../shared/ipc";
 import { DANGEROUS_SYSTEM, type Action } from "../shared/types";
@@ -54,13 +55,13 @@ export function untestable(a: Action): boolean {
 export function ActionEditor({ action, onChange, asStep }: EditorProps) {
   const [testError, setTestError] = useState<string | null>(null);
   const error = validateAction(action);
-  const types = asStep ? ACTION_TYPES.filter((t) => t.value !== "sequence") : ACTION_TYPES;
+  const types = asStep ? ACTION_TYPES.filter((o) => o.value !== "sequence") : ACTION_TYPES;
 
   return (
     <div className="action-editor">
-      <Field label="Tipo de ação">
+      <Field label={t("act.typeField")}>
         <select value={action.type} onChange={(e) => onChange(defaultAction(e.target.value as ActionType))}>
-          {types.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+          {types.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       </Field>
 
@@ -74,13 +75,13 @@ export function ActionEditor({ action, onChange, asStep }: EditorProps) {
           type="button"
           className="btn"
           disabled={!!error || untestable(action)}
-          title={untestable(action) ? "Desligar, reiniciar e encerrar sessão não são testados por aqui" : undefined}
+          title={untestable(action) ? t("act.untestable") : undefined}
           onClick={() => {
             setTestError(null);
             runAction(action).catch((e) => setTestError(String(e)));
           }}
         >
-          <Play size={14} /> Testar ação
+          <Play size={14} /> {t("act.test")}
         </button>
         {testError && <span className="inline-error">{testError}</span>}
       </div>

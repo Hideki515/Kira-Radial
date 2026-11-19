@@ -1,4 +1,5 @@
 import { FolderPlus, Trash2 } from "lucide-react";
+import { t } from "../../shared/i18n";
 import { pickPath } from "../../shared/ipc";
 import { screenshotOf, type Config, type ScreenshotConfig, type ShotCorner } from "../../shared/types";
 import { Field, Section, Segmented, Toggle } from "../controls";
@@ -8,12 +9,7 @@ interface Props {
   update: (fn: (c: Config) => void) => void;
 }
 
-const CORNERS: { value: ShotCorner; label: string }[] = [
-  { value: "bottomRight", label: "Inferior direito" },
-  { value: "bottomLeft", label: "Inferior esquerdo" },
-  { value: "topRight", label: "Superior direito" },
-  { value: "topLeft", label: "Superior esquerdo" },
-];
+const CORNER_IDS: ShotCorner[] = ["bottomRight", "bottomLeft", "topRight", "topLeft"];
 
 /** Preview dos prints tirados pela Kira (Win+Shift+S, Lightshot...). */
 export function ScreenshotSection({ config, update }: Props) {
@@ -27,22 +23,22 @@ export function ScreenshotSection({ config, update }: Props) {
 
   return (
     <Section
-      title="Preview de capturas"
-      description="Depois de uma fatia que tira print (Captura de tela, PrtSc do Lightshot, Win+Shift+S...), a Kira mostra o print num canto da tela com Copiar, Salvar como, Abrir pasta, Editar e Fixar na tela. Só os prints tirados pela Kira; nada é observado fora disso."
+      title={t("shotset.title")}
+      description={t("shotset.desc")}
     >
-      <Toggle label="Mostrar o preview do print" checked={s.preview} onChange={(preview) => set({ preview })} />
+      <Toggle label={t("shotset.show")} checked={s.preview} onChange={(preview) => set({ preview })} />
       {s.preview && (
         <>
-          <Field label={`Tempo na tela: ${s.seconds} s`} hint="Com o mouse em cima, o preview não some.">
+          <Field label={t("shotset.seconds", { s: s.seconds })} hint={t("shotset.seconds.hint")}>
             <input type="range" min={3} max={30} step={1} value={s.seconds} onChange={(e) => set({ seconds: Number(e.target.value) })} />
           </Field>
-          <Field label="Canto da tela" group>
-            <Segmented value={s.corner} options={CORNERS} onChange={(corner) => set({ corner })} />
+          <Field label={t("shotset.corner")} group>
+            <Segmented value={s.corner} options={CORNER_IDS.map((value) => ({ value, label: t(`shotset.corner.${value}`) }))} onChange={(corner) => set({ corner })} />
           </Field>
           <Field
-            label="Esperar pelo print por"
+            label={t("shotset.wait")}
             group
-            hint="Tempo para você recortar a área (ou salvar no Lightshot) depois de usar a fatia. Passou disso, nada aparece."
+            hint={t("shotset.wait.hint")}
           >
             <Segmented
               value={String(s.armSeconds)}
@@ -52,19 +48,19 @@ export function ScreenshotSection({ config, update }: Props) {
           </Field>
           <Field
             group
-            label="Pastas de prints"
-            hint="A Kira reconhece o print quando ele é copiado ou salvo. A pasta de capturas do Windows já é observada; adicione a pasta onde o Lightshot (ou outra ferramenta) salva."
+            label={t("shotset.folders")}
+            hint={t("shotset.folders.hint")}
           >
-            <ul className="folder-list" aria-label="Pastas de prints">
-              <li className="muted">Capturas de Tela do Windows (automática)</li>
+            <ul className="folder-list" aria-label={t("shotset.folders")}>
+              <li className="muted">{t("shotset.windowsFolder")}</li>
               {s.folders.map((f) => (
                 <li key={f}>
                   <span className="folder-path" title={f}>{f}</span>
                   <button
                     type="button"
                     className="icon-btn"
-                    title="Remover pasta"
-                    aria-label={`Remover ${f}`}
+                    title={t("shotset.removeFolder")}
+                    aria-label={t("shotset.remove", { path: f })}
                     onClick={() => set({ folders: s.folders.filter((x) => x !== f) })}
                   >
                     <Trash2 size={14} />
@@ -73,7 +69,7 @@ export function ScreenshotSection({ config, update }: Props) {
               ))}
             </ul>
             <button type="button" className="btn" onClick={() => void addFolder()}>
-              <FolderPlus size={14} /> Adicionar pasta…
+              <FolderPlus size={14} /> {t("shotset.addFolder")}
             </button>
           </Field>
         </>

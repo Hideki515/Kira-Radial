@@ -1,5 +1,5 @@
 import { Check, Clipboard, RotateCcw, Upload } from "lucide-react";
-import { useT } from "../../shared/i18n";
+import { t, type Key } from "../../shared/i18n";
 import { useState, type CSSProperties } from "react";
 import { cloneConfig, defaultConfig, withDefaults } from "../../shared/defaults";
 import { HOLO_ACCENT, SCALE_LIMITS, THEMES, THEME_ACCENT, wantsHotkey, wantsOrb, type Config, type LauncherMode, type Theme, type ThemeRef } from "../../shared/types";
@@ -22,15 +22,14 @@ interface PageProps {
 }
 
 export function GeneralPage({ config, update }: PageProps) {
-  const t = useT();
   const b = config.behavior;
   return (
     <>
-    <Section title="Geral">
-      <Field label="Onde abrir o menu">
+    <Section title={t("gen.title")}>
+      <Field label={t("gen.openAt")}>
         <Segmented
           value={b.openAt}
-          options={[{ value: "cursor", label: "Na posição do mouse" }, { value: "center", label: "No centro da tela" }]}
+          options={[{ value: "cursor", label: t("gen.openAt.cursor") }, { value: "center", label: t("gen.openAt.center") }]}
           onChange={(v) => update((c) => void (c.behavior.openAt = v))}
         />
       </Field>
@@ -50,18 +49,18 @@ export function GeneralPage({ config, update }: PageProps) {
           }
         />
       </Field>
-      <Toggle label="Iniciar com o Windows" checked={b.autostart} onChange={(v) => update((c) => void (c.behavior.autostart = v))} />
-      <Toggle label="Fechar ao perder o foco" hint="Clicar em outra janela fecha o menu." checked={b.closeOnBlur} onChange={(v) => update((c) => void (c.behavior.closeOnBlur = v))} />
-      <Toggle label="Fechar após executar uma ação" checked={b.closeOnAction} onChange={(v) => update((c) => void (c.behavior.closeOnAction = v))} />
+      <Toggle label={t("gen.autostart")} checked={b.autostart} onChange={(v) => update((c) => void (c.behavior.autostart = v))} />
+      <Toggle label={t("gen.closeOnBlur")} hint={t("gen.closeOnBlur.hint")} checked={b.closeOnBlur} onChange={(v) => update((c) => void (c.behavior.closeOnBlur = v))} />
+      <Toggle label={t("gen.closeOnAction")} checked={b.closeOnAction} onChange={(v) => update((c) => void (c.behavior.closeOnAction = v))} />
       <Toggle
-        label="Guardar os últimos textos copiados"
-        hint="Para o submenu automático “Área de transferência”. Só os 8 últimos textos, só na memória (somem ao fechar a Kira). Senhas copiadas de gerenciadores que pedem exclusão não são guardadas."
+        label={t("gen.clipboard")}
+        hint={t("gen.clipboard.hint")}
         checked={!!b.clipboardHistory}
         onChange={(v) => update((c) => void (c.behavior.clipboardHistory = v))}
       />
       {b.clipboardHistory && (
         <div className="row-actions">
-          <button type="button" className="btn" onClick={() => void clipboardClear()}>Limpar histórico agora</button>
+          <button type="button" className="btn" onClick={() => void clipboardClear()}>{t("gen.clipboard.clear")}</button>
         </div>
       )}
       <BrowserFields
@@ -79,7 +78,7 @@ export function GeneralPage({ config, update }: PageProps) {
           })
         }
       />
-      <Field label={`Zona morta central: ${b.deadZonePx}px`} hint="Dentro deste raio nenhuma fatia é selecionada.">
+      <Field label={t("gen.deadZone", { px: b.deadZonePx })} hint={t("gen.deadZone.hint")}>
         <input type="range" min={60} max={140} step={5} value={b.deadZonePx} onChange={(e) => update((c) => void (c.behavior.deadZonePx = Number(e.target.value)))} />
       </Field>
     </Section>
@@ -89,28 +88,22 @@ export function GeneralPage({ config, update }: PageProps) {
   );
 }
 
-const LAUNCHER_HINT: Record<LauncherMode, string> = {
-  hotkey: "O menu abre pelo atalho global, na posição do mouse.",
-  orb: "Um ícone animado fica na tela; clique nele para abrir o menu. Arraste-o para qualquer lugar. O atalho fica desligado.",
-  both: "O ícone fica na tela e o atalho global também funciona.",
-};
-
 export function LauncherSection({ config, update }: PageProps) {
   const mode = config.launcher.mode;
   return (
-    <Section title="Abrir o menu por">
-      <Field label="Modo de abertura" group hint={LAUNCHER_HINT[mode]}>
+    <Section title={t("launch.title")}>
+      <Field label={t("launch.mode")} group hint={t(`launch.hint.${mode}`)}>
         <Segmented<LauncherMode>
           value={mode}
           options={[
-            { value: "hotkey", label: "Atalho" },
-            { value: "orb", label: "Ícone" },
-            { value: "both", label: "Ícone + atalho" },
+            { value: "hotkey", label: t("launch.hotkey") },
+            { value: "orb", label: t("launch.orb") },
+            { value: "both", label: t("launch.both") },
           ]}
           onChange={(v) => update((c) => void (c.launcher.mode = v))}
         />
       </Field>
-      {wantsOrb(mode) && <p className="muted">Ajuste tamanho e aparência do ícone na página <strong>Ícone</strong>.</p>}
+      {wantsOrb(mode) && <p className="muted">{t("launch.iconPagePre")} <strong>{t("set.nav.icon")}</strong>{t("launch.iconPagePost")}</p>}
     </Section>
   );
 }
@@ -121,28 +114,26 @@ export function HotkeyPage({ config, update }: PageProps) {
     <>
     <LauncherSection config={config} update={update} />
     {!hotkeyOn ? (
-      <Section title="Atalho de exibição" description="Desligado no modo “Ícone”. Escolha “Atalho” ou “Ícone + atalho” acima para usar uma combinação de teclas.">
-        <p className="muted" data-testid="hotkey-off">Atalho atual (desligado): <kbd>{config.hotkey.accelerator}</kbd></p>
+      <Section title={t("hk.title")} description={t("hk.off.desc")}>
+        <p className="muted" data-testid="hotkey-off">{t("hk.off.current")} <kbd>{config.hotkey.accelerator}</kbd></p>
       </Section>
     ) : (
-    <Section title="Atalho de exibição" description="Combinação global que abre o menu em qualquer lugar do Windows. Enquanto você grava, o atalho atual fica pausado.">
-      <Field label="Atalho">
+    <Section title={t("hk.title")} description={t("hk.desc")}>
+      <Field label={t("hk.field")}>
         <HotkeyRecorder value={config.hotkey.accelerator} requireModifier pauseGlobal onChange={(v) => update((c) => void (c.hotkey.accelerator = v))} />
       </Field>
       <Field
-        label="Modo"
+        label={t("hk.mode")}
         group
-        hint={config.hotkey.mode === "toggle"
-          ? "Pressione para abrir; clique numa fatia (ou pressione de novo / Esc para fechar)."
-          : "Segure o atalho, aponte o mouse para a fatia e solte para executar."}
+        hint={t(config.hotkey.mode === "toggle" ? "hk.mode.toggle.hint" : "hk.mode.hold.hint")}
       >
         <Segmented
           value={config.hotkey.mode}
-          options={[{ value: "toggle", label: "Pressionar e clicar" }, { value: "hold", label: "Segurar e soltar" }]}
+          options={[{ value: "toggle", label: t("hk.mode.toggle") }, { value: "hold", label: t("hk.mode.hold") }]}
           onChange={(v) => update((c) => void (c.hotkey.mode = v))}
         />
       </Field>
-      <p className="muted">Sugestões: Ctrl+Alt+Q, Alt+Q, Ctrl+Shift+Q, Win+Shift+Z. (Alt+Space costuma ser capturado pelo PowerToys.)</p>
+      <p className="muted">{t("hk.suggestions")}</p>
     </Section>
     )}
     <KnobSection config={config} update={update} />
@@ -165,58 +156,39 @@ export function applyTheme(c: Config, theme: ThemeRef) {
   if (prevAccent && c.appearance.accent.toLowerCase() === prevAccent.toLowerCase()) c.appearance.accent = THEME_ACCENT[theme as Theme];
 }
 
-const THEME_INFO: Record<Theme, { label: string; hint: string }> = {
-  glass: { label: "Vidro", hint: "Fatias escuras translúcidas, discreto." },
-  holo: { label: "Holográfico", hint: "HUD em wireframe com esfera e anéis animados." },
-  reactor: { label: "Arc Reactor", hint: "Anéis segmentados girando e núcleo azul brilhante." },
-  terminal: { label: "Terminal", hint: "Verde fósforo, fonte monoespaçada e linhas de varredura." },
-  neon: { label: "Neon Synthwave", hint: "Retrô anos 80: sol listrado, grade em perspectiva e neon rosa/ciano." },
-  cyber: { label: "Cyberpunk", hint: "Amarelo e preto, faixa de perigo, cantos chanfrados e glitch." },
-  steam: { label: "Steampunk", hint: "Latão e cobre, engrenagens girando, rebites e letras serifadas." },
-  fluent: { label: "Fluent Claro", hint: "Claro e translúcido, no estilo do Windows 11." },
-  minimal: { label: "Minimalista", hint: "Preto e branco, traços finos, nada de enfeite." },
-  sakura: { label: "Sakura", hint: "Ameixa escuro e rosa-cerejeira, com flores e pétalas caindo." },
-  ocean: { label: "Oceano", hint: "Azul profundo, ondas saindo do anel e bolhas subindo." },
-  aurora: { label: "Aurora", hint: "Noite estrelada com faixas de aurora verde e roxa ondulando." },
-  magma: { label: "Magma", hint: "Preto vulcânico com rachaduras de lava pulsando e brasas." },
-  pixel: { label: "Pixel", hint: "Retrô 8-bit: bordas em degrau, fonte monoespaçada e brilhos piscando." },
-  paper: { label: "Papel", hint: "Claro, folha de caderno e letra à mão, com tinta azul." },
-  circuit: { label: "Circuito", hint: "Placa de circuito: trilhas douradas saindo do anel e vias acendendo." },
-  radar: { label: "Radar", hint: "Escopo de radar com grade polar, varredura girando e alvos piscando." },
-  quantum: { label: "Quântico", hint: "Órbitas atômicas em volta do centro, com elétrons de luz correndo." },
-  blueprint: { label: "Blueprint", hint: "Planta técnica azul com grade, cotas e carimbo. Sem animação." },
-  datacenter: { label: "Data Center", hint: "Painel de rack grafite com LEDs de status verdes, âmbar e azuis." },
-  neural: { label: "Rede Neural", hint: "Camadas de neurônios ligados, com pulsos de ativação." },
-};
+/** Nome e dica de cada tema embutido, no idioma atual. */
+const THEME_INFO: Record<Theme, { label: string; hint: string }> = new Proxy({} as Record<Theme, { label: string; hint: string }>, {
+  get: (_, k) => ({ label: t(`theme.${String(k)}.label` as Key), hint: t(`theme.${String(k)}.hint` as Key) }),
+});
 
 /** Cartões com miniatura (estática) de cada tema. */
 function ThemePicker({ config, update }: PageProps) {
   const current = config.appearance.theme ?? "glass";
   const items = config.profiles[0].items;
   return (
-    <div className="theme-grid" role="radiogroup" aria-label="Tema">
-      {THEMES.map((t) => (
+    <div className="theme-grid" role="radiogroup" aria-label={t("theme.group")}>
+      {THEMES.map((th) => (
         <button
-          key={t}
+          key={th}
           type="button"
           role="radio"
-          aria-checked={current === t}
-          aria-label={THEME_INFO[t].label}
-          className={`theme-card${current === t ? " is-on" : ""}`}
-          onClick={() => update((c) => applyTheme(c, t))}
+          aria-checked={current === th}
+          aria-label={THEME_INFO[th].label}
+          className={`theme-card${current === th ? " is-on" : ""}`}
+          onClick={() => update((c) => applyTheme(c, th))}
         >
-          <span className="theme-thumb is-thumb" style={{ "--active": current === t ? config.appearance.accent : THEME_ACCENT[t] } as CSSProperties}>
+          <span className="theme-thumb is-thumb" style={{ "--active": current === th ? config.appearance.accent : THEME_ACCENT[th] } as CSSProperties}>
             <RadialCanvas
               items={items}
               activeMain={0}
               activeSub={null}
               hubHovered={false}
               stats={{ cpu: 42, ram: 50 }}
-              appearance={{ ...config.appearance, theme: t, showMedia: false }}
+              appearance={{ ...config.appearance, theme: th, showMedia: false }}
             />
           </span>
-          <span className="theme-name">{THEME_INFO[t].label}</span>
-          <span className="theme-hint">{THEME_INFO[t].hint}</span>
+          <span className="theme-name">{THEME_INFO[th].label}</span>
+          <span className="theme-hint">{THEME_INFO[th].hint}</span>
         </button>
       ))}
       {(config.appearance.customThemes ?? []).map((ct) => {
@@ -242,7 +214,7 @@ function ThemePicker({ config, update }: PageProps) {
               />
             </span>
             <span className="theme-name">{ct.name}</span>
-            <span className="theme-hint">Personalizado · decorações de {THEME_INFO[ct.base]?.label ?? ct.base}</span>
+            <span className="theme-hint">{t("theme.custom.hint", { base: (THEMES as readonly string[]).includes(ct.base) ? THEME_INFO[ct.base].label : ct.base })}</span>
           </button>
         );
       })}
@@ -252,8 +224,8 @@ function ThemePicker({ config, update }: PageProps) {
         disabled={(config.appearance.customThemes?.length ?? 0) >= MAX_CUSTOM_THEMES}
         onClick={() => update((c) => addCustomTheme(c))}
       >
-        <span className="theme-name">+ Criar tema</span>
-        <span className="theme-hint">Escolha as cores por cima de um tema embutido.</span>
+        <span className="theme-name">{t("theme.create")}</span>
+        <span className="theme-hint">{t("theme.create.hint")}</span>
       </button>
     </div>
   );
@@ -263,17 +235,17 @@ export function AppearancePage({ config, update }: PageProps) {
   const a = config.appearance;
   return (
     <>
-    <Section title="Aparência">
-      <Field label="Tema" group hint="Cada tema sugere uma cor; a cor de destaque abaixo continua valendo (uma cor personalizada não é trocada).">
+    <Section title={t("app.title")}>
+      <Field label={t("theme.group")} group hint={t("app.theme.hint")}>
         <ThemePicker config={config} update={update} />
       </Field>
     </Section>
-    <ThemeEditor config={config} update={update} themeLabel={(t) => THEME_INFO[t].label} />
-    <Section title="Mais opções de aparência">
-      <Field label={`Tamanho: ${Math.round(a.scale * 100)}%`}>
+    <ThemeEditor config={config} update={update} themeLabel={(th) => THEME_INFO[th].label} />
+    <Section title={t("app.more")}>
+      <Field label={t("app.size", { pct: Math.round(a.scale * 100) })}>
         <input type="range" min={SCALE_LIMITS.min} max={SCALE_LIMITS.max} step={0.05} value={a.scale} onChange={(e) => update((c) => void (c.appearance.scale = Number(e.target.value)))} />
       </Field>
-      <Field label="Cor de destaque (fatia ativa)">
+      <Field label={t("app.accent")}>
         <div className="color-row">
           {ACCENTS.map((c) => (
             <button key={c} type="button" aria-label={c} className={`swatch${a.accent === c ? " is-on" : ""}`} style={{ background: c }} onClick={() => update((cf) => void (cf.appearance.accent = c))} />
@@ -281,20 +253,20 @@ export function AppearancePage({ config, update }: PageProps) {
           <input type="color" value={a.accent} onChange={(e) => update((c) => void (c.appearance.accent = e.target.value))} />
         </div>
       </Field>
-      <Toggle label="Mostrar relógio e data" checked={a.showClock} onChange={(v) => update((c) => void (c.appearance.showClock = v))} />
+      <Toggle label={t("app.clock")} checked={a.showClock} onChange={(v) => update((c) => void (c.appearance.showClock = v))} />
       <Toggle
-        label="Mostrar números nas fatias"
-        hint="Com o menu aberto, as teclas 1–9 escolhem a fatia (e o subitem, com o sub-anel aberto)."
+        label={t("app.numbers")}
+        hint={t("app.numbers.hint")}
         checked={!!a.showNumbers}
         onChange={(v) => update((c) => void (c.appearance.showNumbers = v))}
       />
       <Toggle
-        label="Mostrar a música no centro"
-        hint="Com algo tocando (Spotify, YouTube…), o centro mostra capa, título e artista. Gire a roda do mouse sobre o centro para ajustar o volume."
+        label={t("app.media")}
+        hint={t("app.media.hint")}
         checked={a.showMedia !== false}
         onChange={(v) => update((c) => void (c.appearance.showMedia = v))}
       />
-      <Toggle label="Mostrar medidor de CPU" checked={a.showCpu} onChange={(v) => update((c) => void (c.appearance.showCpu = v))} />
+      <Toggle label={t("app.cpu")} checked={a.showCpu} onChange={(v) => update((c) => void (c.appearance.showCpu = v))} />
     </Section>
     <SoundsSection config={config} update={update} />
     </>
@@ -308,15 +280,15 @@ export function BackupPage({ config, replace }: { config: Config; replace: (c: C
 
   return (
     <>
-      <Section title="Exportar" description="Copie a configuração atual (inclui alterações ainda não salvas).">
+      <Section title={t("bk.export")} description={t("bk.export.desc")}>
         <textarea className="code" rows={8} readOnly value={json} />
         <div className="row-actions">
-          <button type="button" className="btn" onClick={() => navigator.clipboard.writeText(json).then(() => setMsg({ ok: true, text: "Copiado." }))}>
-            <Clipboard size={14} /> Copiar JSON
+          <button type="button" className="btn" onClick={() => navigator.clipboard.writeText(json).then(() => setMsg({ ok: true, text: t("bk.copied") }))}>
+            <Clipboard size={14} /> {t("bk.copyJson")}
           </button>
         </div>
       </Section>
-      <Section title="Importar" description="Cole um JSON exportado. Ele substitui o rascunho; revise e clique em Salvar.">
+      <Section title={t("bk.import")} description={t("bk.import.desc")}>
         <textarea className="code" rows={6} value={text} onChange={(e) => setText(e.target.value)} placeholder='{ "version": 1, ... }' spellCheck={false} />
         <div className="row-actions">
           <button
@@ -325,22 +297,22 @@ export function BackupPage({ config, replace }: { config: Config; replace: (c: C
             onClick={() => {
               try {
                 const c = JSON.parse(text) as Config;
-                if (c.version !== 1 || !Array.isArray(c.profiles)) throw new Error("formato não reconhecido");
+                if (c.version !== 1 || !Array.isArray(c.profiles)) throw new Error(t("bk.badFormat"));
                 replace(withDefaults(c));
-                setMsg({ ok: true, text: "Importado para o rascunho." });
+                setMsg({ ok: true, text: t("bk.imported") });
               } catch (e) {
-                setMsg({ ok: false, text: `JSON inválido: ${(e as Error).message}` });
+                setMsg({ ok: false, text: t("bk.invalid", { error: (e as Error).message }) });
               }
             }}
           >
-            <Upload size={14} /> Importar
+            <Upload size={14} /> {t("bk.import")}
           </button>
           <button
             type="button"
             className="btn btn-danger"
-            onClick={() => window.confirm("Restaurar todas as configurações padrão?") && replace(cloneConfig(defaultConfig))}
+            onClick={() => window.confirm(t("bk.resetConfirm")) && replace(cloneConfig(defaultConfig))}
           >
-            <RotateCcw size={14} /> Restaurar padrões
+            <RotateCcw size={14} /> {t("bk.reset")}
           </button>
         </div>
         {msg && <p className={msg.ok ? "inline-ok" : "inline-error"}>{msg.ok && <Check size={13} />} {msg.text}</p>}

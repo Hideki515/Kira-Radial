@@ -80,7 +80,7 @@ describe("SettingsApp", () => {
     await settle();
     expect(ipc.save).not.toHaveBeenCalled(); // nada mudou: igual ao botão desligado
     await renameProfile("   ");
-    expect(screen.getByText(/problema\(s\) impedem salvar/)).toBeTruthy();
+    expect(screen.getByText(/problemas? impedem? salvar/)).toBeTruthy();
     expect(btn(/Salvar/).disabled).toBe(true);
     fireEvent.keyDown(window, { key: "S", ctrlKey: true });
     await settle();
@@ -130,7 +130,9 @@ describe("SettingsApp", () => {
     await settle();
     expect(document.documentElement.lang).toBe("en");
     expect(screen.getByRole("radio", { name: "Automatic" }).getAttribute("aria-checked")).toBe("false");
-    fireEvent.click(btn(/Salvar/));
+    // As próprias Configurações já mudam de idioma.
+    expect(screen.getByRole("heading", { name: "General" })).toBeTruthy();
+    fireEvent.click(btn(/^ ?Save$/));
     await settle();
     expect((ipc.save.mock.calls[0][0] as Config).behavior.language).toBe("en");
     fireEvent.click(screen.getByRole("radio", { name: "Automatic" }));

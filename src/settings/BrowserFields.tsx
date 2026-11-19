@@ -1,5 +1,6 @@
 // Escolha do navegador: na ação "Abrir site" (por fatia) e o navegador geral (página Geral).
 import { RefreshCw } from "lucide-react";
+import { t } from "../shared/i18n";
 import { useCallback, useEffect, useState } from "react";
 import {
   PRIVATE_FAMILIES,
@@ -96,19 +97,15 @@ export function BrowserFields({
     <>
       <Field
         group
-        label={scope === "global" ? "Navegador para sites" : "Navegador"}
-        hint={
-          scope === "global"
-            ? "Usado por todas as fatias \"Abrir site\" que não escolhem um navegador próprio."
-            : "Endereços mailto: sempre abrem no app de e-mail."
-        }
+        label={scope === "global" ? t("br.global") : t("br.item")}
+        hint={scope === "global" ? t("br.global.hint") : t("br.item.hint")}
       >
         <div className="input-row">
-          <select aria-label={scope === "global" ? "Navegador para sites" : "Navegador"} value={selectValue} disabled={list === null} onChange={(e) => pick(e.target.value)}>
-            {list === null && <option value={selectValue}>Carregando…</option>}
-            {scope === "item" && <option value="">Navegador geral (página Geral)</option>}
-            <option value={scope === "item" ? "system" : ""}>{`Padrão do Windows${defaultName ? ` (${defaultName})` : ""}`}</option>
-            {missing && <option value={MISSING}>{`${value.browserName || chosen} (não encontrado — abre no padrão)`}</option>}
+          <select aria-label={scope === "global" ? t("br.global") : t("br.item")} value={selectValue} disabled={list === null} onChange={(e) => pick(e.target.value)}>
+            {list === null && <option value={selectValue}>{t("br.loading")}</option>}
+            {scope === "item" && <option value="">{t("br.useGlobal")}</option>}
+            <option value={scope === "item" ? "system" : ""}>{defaultName ? t("br.systemNamed", { name: defaultName }) : t("br.system")}</option>
+            {missing && <option value={MISSING}>{t("br.missing", { name: value.browserName || chosen || "" })}</option>}
             {browsers.map((b) => (
               <option key={b.id} value={b.id}>
                 {b.name}
@@ -116,20 +113,20 @@ export function BrowserFields({
             ))}
           </select>
           {found?.icon && <img className="browser-icon" src={found.icon} alt="" width={22} height={22} />}
-          <button type="button" className="icon-btn" title="Atualizar lista" aria-label="Atualizar lista de navegadores" onClick={reload}>
+          <button type="button" className="icon-btn" title={t("br.refresh")} aria-label={t("br.refresh.aria")} onClick={reload}>
             <RefreshCw size={16} />
           </button>
         </div>
         {error && <span className="inline-error">{error}</span>}
       </Field>
       {scope === "item" && privateOk && (
-        <Toggle label="Abrir em janela anônima (InPrivate no Edge)" checked={!!value.private} onChange={(v) => onChange({ ...value, private: v || undefined })} />
+        <Toggle label={t("br.private")} checked={!!value.private} onChange={(v) => onChange({ ...value, private: v || undefined })} />
       )}
       {scope === "item" && profileCapable && profiles.length > 1 && (
-        <Field label="Perfil do navegador" hint="Ex.: Pessoal ou Trabalho. Em branco = o último perfil usado.">
-          <select aria-label="Perfil do navegador" value={value.profile ?? ""} onChange={(e) => onChange({ ...value, profile: e.target.value || undefined })}>
-            <option value="">Último usado</option>
-            {value.profile && !profiles.some((p) => p.dir === value.profile) && <option value={value.profile}>{`${value.profile} (não encontrado)`}</option>}
+        <Field label={t("br.profile")} hint={t("br.profile.hint")}>
+          <select aria-label={t("br.profile")} value={value.profile ?? ""} onChange={(e) => onChange({ ...value, profile: e.target.value || undefined })}>
+            <option value="">{t("br.profile.last")}</option>
+            {value.profile && !profiles.some((p) => p.dir === value.profile) && <option value={value.profile}>{t("br.profile.missing", { name: value.profile })}</option>}
             {profiles.map((p) => (
               <option key={p.dir} value={p.dir}>
                 {p.name}

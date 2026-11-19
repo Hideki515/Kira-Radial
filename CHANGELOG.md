@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.31.1
+
+- **Interface em inglês (parte 2): as Configurações inteiras** seguem o idioma escolhido em Geral → Idioma / Language.
+  - Isso inclui todas as páginas, os campos de cada tipo de ação, os avisos de salvar, a pré-visualização e o arrastar nela.
+  - Nomes de temas embutidos e suas descrições também mudam de idioma.
+- **Centro do menu:** a data agora segue o idioma (antes ficava sempre em português). A hora continua em 24 h.
+- O rótulo de acessibilidade do menu e do ícone flutuante também segue o idioma.
+- **Ainda em português (próxima versão):** mensagens de validação ("problemas que impedem salvar"), descrições automáticas de ações e de horários de perfil, e mensagens de erro vindas do sistema.
+
 ## 0.31.0
 
 - **Interface em inglês (parte 1):** nova opção **Idioma / Language** em Configurações → Geral: **Automático** (padrão: português se ele estiver na sua lista de idiomas do Windows, mesmo que não seja o 1º; senão inglês), **Português** ou **English**.

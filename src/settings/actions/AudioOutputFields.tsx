@@ -1,4 +1,5 @@
 import { RefreshCw } from "lucide-react";
+import { t } from "../../shared/i18n";
 import { useCallback, useEffect, useState } from "react";
 import { listAudioOutputs, type AudioDevice } from "../../shared/ipc";
 import type { Action } from "../../shared/types";
@@ -34,29 +35,29 @@ export function AudioOutputFields({ action, onChange }: { action: AudioAction; o
 
   return (
     <>
-      <Field label="Modo">
+      <Field label={t("act.mode")}>
         <Segmented
           value={action.mode}
           options={[
-            { value: "cycle", label: "Alternar entre dispositivos" },
-            { value: "set", label: "Dispositivo específico" },
+            { value: "cycle", label: t("audio.cycle") },
+            { value: "set", label: t("audio.set") },
           ]}
           onChange={(mode) => onChange({ ...action, mode })}
         />
       </Field>
       {action.mode === "cycle" ? (
         <p className="field-hint">
-          Cada clique passa para a próxima saída de áudio ativa (ex.: alto-falantes → fone → monitor) e volta ao início.
+          {t("audio.cycle.hint")}
         </p>
       ) : (
         <Field
           group
-          label="Dispositivo de saída"
-          hint="Torna este dispositivo a saída padrão do Windows (inclusive para chamadas). Se ele estiver desconectado, a ação avisa com um erro."
+          label={t("audio.device")}
+          hint={t("audio.device.hint")}
         >
           <div className="input-row">
             <select
-              aria-label="Dispositivo de saída"
+              aria-label={t("audio.device")}
               value={value}
               disabled={devices === null}
               onChange={(e) => {
@@ -64,16 +65,16 @@ export function AudioOutputFields({ action, onChange }: { action: AudioAction; o
                 if (d) onChange({ ...action, deviceId: d.id, deviceName: d.name });
               }}
             >
-              {devices === null && <option value="">Carregando…</option>}
-              {devices !== null && !value && <option value="">Selecione…</option>}
+              {devices === null && <option value="">{t("act.loading")}</option>}
+              {devices !== null && !value && <option value="">{t("act.select")}</option>}
               {missing && (
-                <option value={MISSING}>{`${action.deviceName || action.deviceId} (desconectado)`}</option>
+                <option value={MISSING}>{t("audio.disconnected", { name: action.deviceName || action.deviceId || "" })}</option>
               )}
               {list.map((d) => (
-                <option key={d.id} value={d.id}>{d.isDefault ? `${d.name} (atual)` : d.name}</option>
+                <option key={d.id} value={d.id}>{d.isDefault ? t("act.current", { name: d.name }) : d.name}</option>
               ))}
             </select>
-            <button type="button" className="icon-btn" title="Atualizar lista" aria-label="Atualizar lista" onClick={load}>
+            <button type="button" className="icon-btn" title={t("act.refresh")} aria-label={t("act.refresh")} onClick={load}>
               <RefreshCw size={16} />
             </button>
           </div>

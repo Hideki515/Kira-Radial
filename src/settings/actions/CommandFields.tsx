@@ -1,4 +1,5 @@
 import { WINDOW_LABEL } from "../../shared/ipc";
+import { t } from "../../shared/i18n";
 import type { Action, MediaCmd, SystemCmd, WindowCmd } from "../../shared/types";
 import { Field, Segmented, Toggle } from "../controls";
 import { MEDIA, SYSTEM } from "./catalog";
@@ -7,7 +8,7 @@ type Props<T extends Action["type"]> = { action: Extract<Action, { type: T }>; o
 
 export function MediaFields({ action, onChange }: Props<"media">) {
   return (
-    <Field label="Comando">
+    <Field label={t("act.command")}>
       <select value={action.cmd} onChange={(e) => onChange({ ...action, cmd: e.target.value as MediaCmd })}>
         {MEDIA.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
       </select>
@@ -17,7 +18,7 @@ export function MediaFields({ action, onChange }: Props<"media">) {
 
 export function SystemFields({ action, onChange }: Props<"system">) {
   return (
-    <Field label="Comando">
+    <Field label={t("act.command")}>
       <select value={action.cmd} onChange={(e) => onChange({ ...action, cmd: e.target.value as SystemCmd })}>
         {SYSTEM.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
       </select>
@@ -27,7 +28,7 @@ export function SystemFields({ action, onChange }: Props<"system">) {
 
 export function WindowFields({ action, onChange }: Props<"window">) {
   return (
-    <Field label="Comando" hint="Age sobre a janela que estava em uso quando o menu abriu.">
+    <Field label={t("act.command")} hint={t("win.hint")}>
       <select value={action.cmd} onChange={(e) => onChange({ ...action, cmd: e.target.value as WindowCmd })}>
         {(Object.keys(WINDOW_LABEL) as WindowCmd[]).map((c) => <option key={c} value={c}>{WINDOW_LABEL[c]}</option>)}
       </select>
@@ -38,17 +39,17 @@ export function WindowFields({ action, onChange }: Props<"window">) {
 export function RadioFields({ action, onChange }: Props<"radio">) {
   return (
     <>
-      <Field label="Rádio" group>
+      <Field label={t("radio.field")} group>
         <Segmented
           value={action.kind}
           options={[{ value: "wifi", label: "Wi-Fi" }, { value: "bluetooth", label: "Bluetooth" }]}
           onChange={(k) => onChange({ ...action, kind: k })}
         />
       </Field>
-      <Field label="Ao executar" group>
+      <Field label={t("radio.onRun")} group>
         <Segmented
           value={action.mode}
-          options={[{ value: "toggle", label: "Alternar" }, { value: "on", label: "Ligar" }, { value: "off", label: "Desligar" }]}
+          options={[{ value: "toggle", label: t("radio.toggle") }, { value: "on", label: t("radio.on") }, { value: "off", label: t("radio.off") }]}
           onChange={(m) => onChange({ ...action, mode: m })}
         />
       </Field>
@@ -66,10 +67,10 @@ export function ScriptFields({ action, onChange }: Props<"script">) {
           onChange={(shell) => onChange({ ...action, shell })}
         />
       </Field>
-      <Field label="Comando">
+      <Field label={t("act.command")}>
         <textarea rows={4} value={action.command} spellCheck={false} onChange={(e) => onChange({ ...action, command: e.target.value })} />
       </Field>
-      <Toggle label="Executar oculto" hint="Sem janela de console. Desligado por padrão: scripts ocultos são um padrão que antivírus costumam tratar como suspeito." checked={action.hidden} onChange={(hidden) => onChange({ ...action, hidden })} />
+      <Toggle label={t("script.hidden")} hint={t("script.hidden.hint")} checked={action.hidden} onChange={(hidden) => onChange({ ...action, hidden })} />
     </>
   );
 }

@@ -1,4 +1,5 @@
 import { Monitor, ScanEye } from "lucide-react";
+import { t } from "../../shared/i18n";
 import { identifyMonitors, type MonitorInfo } from "../../shared/ipc";
 import { DAY_SHORT, whenErrors } from "../../shared/schedule";
 import type { ProfileWhen } from "../../shared/types";
@@ -36,13 +37,13 @@ export function WhenEditor({ when, monitors, onChange }: Props) {
 
   return (
     <Field
-      label="Quando usar"
+      label={t("when.label")}
       group
-      hint="Opcional. Sem app associado, o perfil vale quando os critérios marcados batem (todos juntos). Um app associado tem prioridade."
+      hint={t("when.hint")}
     >
       <div className="when-row">
-        <span className="when-label">Dias</span>
-        <div className="day-chips" role="group" aria-label="Dias da semana">
+        <span className="when-label">{t("when.days")}</span>
+        <div className="day-chips" role="group" aria-label={t("when.days.aria")}>
           {DAY_SHORT.map((label, d) => (
             <button
               key={label}
@@ -54,35 +55,35 @@ export function WhenEditor({ when, monitors, onChange }: Props) {
               {label}
             </button>
           ))}
-          <button type="button" className="btn btn-ghost" onClick={() => set({ days: [1, 2, 3, 4, 5] })}>Dias úteis</button>
-          <button type="button" className="btn btn-ghost" onClick={() => set({ days: [] })}>Qualquer dia</button>
+          <button type="button" className="btn btn-ghost" onClick={() => set({ days: [1, 2, 3, 4, 5] })}>{t("when.weekdays")}</button>
+          <button type="button" className="btn btn-ghost" onClick={() => set({ days: [] })}>{t("when.anyDay")}</button>
         </div>
       </div>
       <div className="when-row">
-        <span className="when-label">Horário</span>
-        <input type="time" aria-label="Início" value={w.from ?? ""} onChange={(e) => set({ from: e.target.value || undefined })} />
-        <span className="muted">até</span>
-        <input type="time" aria-label="Fim" value={w.to ?? ""} onChange={(e) => set({ to: e.target.value || undefined })} />
+        <span className="when-label">{t("when.time")}</span>
+        <input type="time" aria-label={t("when.from")} value={w.from ?? ""} onChange={(e) => set({ from: e.target.value || undefined })} />
+        <span className="muted">{t("when.until")}</span>
+        <input type="time" aria-label={t("when.to")} value={w.to ?? ""} onChange={(e) => set({ to: e.target.value || undefined })} />
         {(w.from || w.to) && (
-          <button type="button" className="btn btn-ghost" onClick={() => set({ from: undefined, to: undefined })}>Qualquer horário</button>
+          <button type="button" className="btn btn-ghost" onClick={() => set({ from: undefined, to: undefined })}>{t("when.anyTime")}</button>
         )}
-        {w.from && w.to && w.from > w.to && <span className="muted">(passa da meia-noite)</span>}
+        {w.from && w.to && w.from > w.to && <span className="muted">{t("when.overnight")}</span>}
       </div>
       <div className="when-row">
-        <span className="when-label">Monitores</span>
+        <span className="when-label">{t("when.monitors")}</span>
         <div className="monitor-picks">
           {monitors === null ? (
-            <span className="muted">Carregando…</span>
+            <span className="muted">{t("when.loading")}</span>
           ) : (
             monitors.map((m) => (
               <label key={m.device} className="monitor-pick">
                 <input type="checkbox" checked={!!w.monitors?.includes(m.device)} onChange={() => toggleMonitor(m.device)} />
-                <Monitor size={13} /> {m.number}. {m.name} <span className="muted">({m.width}×{m.height}{m.primary ? ", principal" : ""})</span>
+                <Monitor size={13} /> {m.number}. {m.name} <span className="muted">({m.width}×{m.height}{m.primary ? t("when.primary") : ""})</span>
               </label>
             ))
           )}
           <button type="button" className="btn btn-ghost" onClick={() => void identifyMonitors()}>
-            <ScanEye size={14} /> Identificar
+            <ScanEye size={14} /> {t("when.identify")}
           </button>
         </div>
       </div>

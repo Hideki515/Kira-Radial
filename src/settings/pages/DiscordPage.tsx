@@ -1,4 +1,6 @@
 import { ExternalLink, Link2, Plug, Unplug } from "lucide-react";
+import { t } from "../../shared/i18n";
+import { Rich } from "../../shared/i18n/Rich";
 import { useCallback, useEffect, useState } from "react";
 import { discordConnect, discordDisconnect, discordStatus, discordVoice, runAction, type DiscordStatus } from "../../shared/ipc";
 import { Field, Section } from "../controls";
@@ -7,10 +9,10 @@ export const DEV_PORTAL = "https://discord.com/developers/applications";
 
 /** Texto do resultado de "Testar". */
 export function describeTest(s: Awaited<ReturnType<typeof discordVoice>>): { ok: boolean; text: string } {
-  if (s.status !== "ok" || !s.voice) return { ok: false, text: s.message || "O Discord não respondeu." };
-  const mic = s.voice.mute ? "mutado" : "ligado";
-  const fone = s.voice.deaf ? "ensurdecido" : "ligado";
-  return { ok: true, text: `Funcionando: microfone ${mic}, fone ${fone}.` };
+  if (s.status !== "ok" || !s.voice) return { ok: false, text: s.message || t("dcp.noAnswer") };
+  const mic = t(s.voice.mute ? "dcp.muted" : "dcp.on");
+  const headset = t(s.voice.deaf ? "dcp.deafened" : "dcp.on");
+  return { ok: true, text: t("dcp.test.ok", { mic, headset }) };
 }
 
 export function DiscordPage() {
@@ -46,51 +48,51 @@ export function DiscordPage() {
     run("connect", async () => {
       const user = await discordConnect(clientId, secret);
       setSecret("");
-      return { ok: true, text: `Conectado como ${user}.` };
+      return { ok: true, text: t("dcp.connectedAs", { user }) };
     });
 
   return (
     <>
       <Section
         title="Discord"
-        description="Mute/desmute o microfone, ensurdeça e troque os dispositivos de entrada e saída do Discord pelo menu. Usa o controle local do próprio Discord (RPC): nada passa pela internet além da autorização."
+        description={t("dcp.desc")}
       >
         <p className="field-hint" data-testid="discord-status">
           {status === null
-            ? "Verificando…"
+            ? t("dcp.checking")
             : status.configured
-              ? `Conectado${status.user ? ` como ${status.user}` : ""}. As fatias do Discord já funcionam com o Discord aberto.`
-              : "Não conectado."}
+              ? status.user ? t("dcp.status.okAs", { user: status.user }) : t("dcp.status.ok")
+              : t("dcp.status.off")}
         </p>
       </Section>
 
-      <Section title="Conectar (uma vez)" description="O Discord só libera o controle de voz para um aplicativo seu. Leva uns 5 minutos:">
+      <Section title={t("dcp.connect.title")} description={t("dcp.connect.desc")}>
         <ol className="steps">
           <li>
-            Abra o portal de desenvolvedores do Discord e clique em <b>New Application</b> (qualquer nome, ex.: Kira).{" "}
+            <Rich text={t("dcp.step1")} />{" "}
             <button type="button" className="btn" onClick={() => void runAction({ type: "url", url: DEV_PORTAL })}>
-              <ExternalLink size={14} /> Abrir o portal
+              <ExternalLink size={14} /> {t("dcp.openPortal")}
             </button>
           </li>
           <li>
-            Em <b>OAuth2</b>, adicione o Redirect <code>http://localhost</code> e salve.
+            <Rich text={t("dcp.step2")} />
           </li>
           <li>
-            Copie o <b>Client ID</b> e o <b>Client Secret</b> (Reset Secret) para os campos abaixo.
+            <Rich text={t("dcp.step3")} />
           </li>
           <li>
-            Clique em <b>Conectar</b> e, no Discord, em <b>Autorizar</b>.
+            <Rich text={t("dcp.step4")} />
           </li>
         </ol>
         <Field label="Client ID">
           <input value={clientId} inputMode="numeric" onChange={(e) => setClientId(e.target.value)} placeholder="123456789012345678" />
         </Field>
-        <Field label="Client Secret" hint="Guardado cifrado neste PC (só o seu usuário do Windows consegue ler). Não entra no backup nem na exportação.">
+        <Field label="Client Secret" hint={t("dcp.secret.hint")}>
           <input type="password" value={secret} autoComplete="off" onChange={(e) => setSecret(e.target.value)} />
         </Field>
         <div className="input-row">
           <button type="button" className="btn btn-primary" disabled={!!busy || !clientId.trim() || !secret.trim()} onClick={connect}>
-            <Plug size={14} /> {busy === "connect" ? "Aguardando o Discord…" : "Conectar"}
+            <Plug size={14} /> {busy === "connect" ? t("dcp.waiting") : t("dcp.connect")}
           </button>
           <button
             type="button"
@@ -98,7 +100,7 @@ export function DiscordPage() {
             disabled={!!busy || !status?.configured}
             onClick={() => run("test", async () => describeTest(await discordVoice()))}
           >
-            <Link2 size={14} /> Testar
+            <Link2 size={14} /> {t("dcp.test")}
           </button>
           <button
             type="button"
@@ -107,25 +109,24 @@ export function DiscordPage() {
             onClick={() =>
               run("disconnect", async () => {
                 await discordDisconnect();
-                return { ok: true, text: "Desconectado. As credenciais foram apagadas deste PC." };
+                return { ok: true, text: t("dcp.disconnected") };
               })
             }
           >
-            <Unplug size={14} /> Desconectar
+            <Unplug size={14} /> {t("dcp.disconnect")}
           </button>
         </div>
-        {busy === "connect" && <p className="field-hint">Confira a janela do Discord: ele pede para autorizar a Kira.</p>}
+        {busy === "connect" && <p className="field-hint">{t("dcp.authorizeHint")}</p>}
         {msg && <p className={msg.ok ? "inline-ok" : "inline-error"} role="status">{msg.text}</p>}
       </Section>
 
-      <Section title="Como usar" description="Em Itens do menu, crie uma fatia com:">
+      <Section title={t("dcp.howto")} description={t("dcp.howto.desc")}>
         <ul className="steps">
-          <li><b>Submenu automático</b> → "Discord: microfone e fone" (mostra o estado), "Discord: entrada" ou "Discord: saída";</li>
-          <li>ou a ação <b>Discord</b>, para um comando direto (alternar mudo, ensurdecer, usar um microfone…).</li>
+          <li><Rich text={t("dcp.howto.auto")} /></li>
+          <li><Rich text={t("dcp.howto.action")} /></li>
         </ul>
         <p className="field-hint">
-          Sem conectar, dá para mutar e ensurdecer com a ação <b>Enviar atalho de teclado</b>: crie os atalhos em Discord → Configurações → Atalhos
-          ("Alternar mudo" e "Alternar ensurdecimento"). Assim a Kira não mostra o estado nem troca dispositivos.
+          <Rich text={t("dcp.howto.keys")} />
         </p>
       </Section>
     </>

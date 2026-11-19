@@ -76,7 +76,7 @@ describe("QA v0.27.0 atalho de fatia nas Configurações", () => {
     expect(document.querySelector(".tree-hotkey")?.textContent).toBe("A");
     const save = screen.getByRole("button", { name: /Salvar/ }) as HTMLButtonElement;
     expect(save.disabled).toBe(true);
-    expect(screen.getByText(/problema\(s\) impedem salvar/)).toBeTruthy();
+    expect(screen.getByText(/problemas? impedem? salvar/)).toBeTruthy();
     expect(screen.getByText(/Atalho de "Alfa": "A" inválido/)).toBeTruthy();
     fireEvent.keyDown(window, { key: "s", code: "KeyS", ctrlKey: true });
     await settle();

@@ -1,4 +1,5 @@
 import type { NowPlaying, StatsPayload } from "../shared/ipc";
+import { t } from "../shared/i18n";
 import type { Config, MenuItem } from "../shared/types";
 import { CenterHub } from "./CenterHub";
 import { HoloBack, HoloFront, HoloScan } from "./HoloLayer";
@@ -62,7 +63,7 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
   // Mesma classe usada como chave dos rótulos pré-calculados (labelLayout.themeClassOf).
   const themeClass = themeClassOf(appearance);
   return (
-    <svg className={themeClass} style={custom ? (themeVars(custom) as CSSProperties) : undefined} viewBox={`0 0 ${LAYOUT.size} ${LAYOUT.size}`} role="menu" aria-label="Menu radial">
+    <svg className={themeClass} style={custom ? (themeVars(custom) as CSSProperties) : undefined} viewBox={`0 0 ${LAYOUT.size} ${LAYOUT.size}`} role="menu" aria-label={t("menu.aria")}>
       <defs>
         <radialGradient id="slice-glass" cx={C} cy={C} r={LAYOUT.subOuter} gradientUnits="userSpaceOnUse">
           <stop offset="0.35" stopColor="#0a0f17" />

@@ -1,4 +1,5 @@
 import { Copy, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import { t } from "../../shared/i18n";
 import { useEffect, useState } from "react";
 import { listMonitors, listProcesses, type MonitorInfo } from "../../shared/ipc";
 import { describeWhen } from "../../shared/schedule";
@@ -41,7 +42,7 @@ export function ProfilesPage({ config, selected, onSelect, update }: Props) {
   const duplicate = () => {
     const base = config.profiles[selected];
     update((c) =>
-      c.profiles.push({ ...structuredClone(base), id: `perfil-${Date.now().toString(36)}`, name: `${base.name} (cópia)`, matchExe: [], when: undefined }),
+      c.profiles.push({ ...structuredClone(base), id: `perfil-${Date.now().toString(36)}`, name: t("prof.copySuffix", { name: base.name }), matchExe: [], when: undefined }),
     );
     onSelect(config.profiles.length);
   };
@@ -49,8 +50,8 @@ export function ProfilesPage({ config, selected, onSelect, update }: Props) {
   return (
     <>
       <Section
-        title="Perfis"
-        description="Cada perfil tem suas próprias fatias. Ao abrir o menu, a Kira escolhe: 1) o perfil do app em primeiro plano; 2) um perfil cujo horário/dias/monitor bate; 3) o Padrão."
+        title={t("prof.title")}
+        description={t("prof.desc")}
       >
         <div className="profile-list">
           {config.profiles.map((p, i) => (
@@ -58,30 +59,30 @@ export function ProfilesPage({ config, selected, onSelect, update }: Props) {
               <strong>{p.name}</strong>
               <span>
                 {i === 0
-                  ? "Usado quando nenhum outro combina"
-                  : [(p.matchExe ?? []).join(", "), describeWhen(p.when, monitorName)].filter(Boolean).join(" · ") || "sem critério"}
+                  ? t("prof.default")
+                  : [(p.matchExe ?? []).join(", "), describeWhen(p.when, monitorName)].filter(Boolean).join(" · ") || t("prof.noRule")}
               </span>
             </button>
           ))}
           <button type="button" className="profile-card is-add" onClick={duplicate}>
-            <Plus size={16} /> Novo perfil (cópia do selecionado)
+            <Plus size={16} /> {t("prof.new")}
           </button>
         </div>
       </Section>
 
-      <Section title={`Perfil: ${profile.name}`}>
-        <Field label="Nome">
+      <Section title={t("prof.heading", { name: profile.name })}>
+        <Field label={t("prof.name")}>
           <input value={profile.name} onChange={(e) => update((c) => void (c.profiles[selected].name = e.target.value))} />
         </Field>
 
         {!isDefault && (
           <>
-            <Field label="Executáveis associados" hint="Nome do processo, ex.: code.exe, chrome.exe, photoshop.exe">
+            <Field label={t("prof.exes")} hint={t("prof.exes.hint")}>
               <div className="chips">
                 {(profile.matchExe ?? []).map((exe) => (
                   <span key={exe} className="chip">
                     {exe}
-                    <button type="button" aria-label={`Remover ${exe}`} onClick={() => update((c) => {
+                    <button type="button" aria-label={t("prof.removeExe", { exe })} onClick={() => update((c) => {
                       const p = c.profiles[selected];
                       p.matchExe = (p.matchExe ?? []).filter((x) => x !== exe);
                     })}><X size={12} /></button>
@@ -95,9 +96,9 @@ export function ProfilesPage({ config, selected, onSelect, update }: Props) {
                   onChange={(e) => setExeInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addExe(exeInput))}
                 />
-                <button type="button" className="btn" onClick={() => addExe(exeInput)}>Adicionar</button>
+                <button type="button" className="btn" onClick={() => addExe(exeInput)}>{t("prof.add")}</button>
                 <button type="button" className="btn btn-ghost" onClick={() => listProcesses().then(setProcs)}>
-                  <RefreshCw size={14} /> Apps abertos
+                  <RefreshCw size={14} /> {t("prof.openApps")}
                 </button>
               </div>
             </Field>
@@ -123,22 +124,22 @@ export function ProfilesPage({ config, selected, onSelect, update }: Props) {
         )}
 
         <div className="row-actions">
-          <button type="button" className="btn btn-ghost" onClick={duplicate}><Copy size={14} /> Duplicar</button>
+          <button type="button" className="btn btn-ghost" onClick={duplicate}><Copy size={14} /> {t("prof.duplicate")}</button>
           {!isDefault && (
             <button
               type="button"
               className="btn btn-danger"
               onClick={() => {
-                if (!window.confirm(`Excluir o perfil "${profile.name}"?`)) return;
+                if (!window.confirm(t("prof.deleteConfirm", { name: profile.name }))) return;
                 update((c) => void c.profiles.splice(selected, 1));
                 onSelect(0);
               }}
             >
-              <Trash2 size={14} /> Excluir perfil
+              <Trash2 size={14} /> {t("prof.delete")}
             </button>
           )}
         </div>
-        <p className="muted">As fatias deste perfil são editadas na página “Itens do menu”.</p>
+        <p className="muted">{t("prof.itemsNote")}</p>
       </Section>
     </>
   );

@@ -1,4 +1,5 @@
 import { ImageIcon, LocateFixed, Sparkles } from "lucide-react";
+import { t } from "../../shared/i18n";
 import { useState } from "react";
 import { Orb } from "../../orb/Orb";
 import { useOrbImage } from "../../orb/useOrbImage";
@@ -33,21 +34,21 @@ export function IconPage({ config, update, goToLauncher }: Props) {
     <>
       {!wantsOrb(config.launcher.mode) && (
         <div className="banner-info" role="note" data-testid="orb-off">
-          O ícone está desligado: o menu abre só pelo atalho.{" "}
-          <button type="button" className="link" onClick={goToLauncher}>Ativar em Atalho → Abrir o menu por</button>
+          {t("icon.off")}{" "}
+          <button type="button" className="link" onClick={goToLauncher}>{t("icon.off.link")}</button>
         </div>
       )}
 
       {wantsOrb(config.launcher.mode) && hidden && (
         <div className="banner-info" role="note" data-testid="orb-hidden">
-          O ícone está escondido (pelo botão direito ou pela bandeja).{" "}
+          {t("icon.hidden")}{" "}
           <button type="button" className="link" onClick={() => orbSetHidden(false).then(() => setHidden(false), (e) => setMsg(String(e)))}>
-            Mostrar o ícone
+            {t("icon.show")}
           </button>
         </div>
       )}
 
-      <Section title="Ícone flutuante" description="Clique no ícone para abrir o menu; arraste-o para qualquer lugar da tela (a posição fica salva).">
+      <Section title={t("icon.title")} description={t("icon.desc")}>
         <div className="orb-preview" data-testid="orb-preview">
           <Orb
             size={orb.size}
@@ -59,12 +60,12 @@ export function IconPage({ config, update, goToLauncher }: Props) {
           />
         </div>
 
-        <Field label="Aparência" group>
+        <Field label={t("icon.look")} group>
           <Segmented<Look>
             value={look}
             options={[
-              { value: "builtin", label: "Orbe holográfico" },
-              { value: "image", label: "Imagem própria" },
+              { value: "builtin", label: t("icon.look.builtin") },
+              { value: "image", label: t("icon.look.image") },
             ]}
             onChange={(v) => (v === "builtin" ? update((c) => void (c.launcher.orb.image = null)) : void choose())}
           />
@@ -72,21 +73,21 @@ export function IconPage({ config, update, goToLauncher }: Props) {
 
         {orb.image && (
           <Field
-            label="Imagem"
+            label={t("icon.image")}
             group
-            hint="GIF, WebP ou PNG animado, até 8 MB. Prefira WebP/APNG: o GIF não tem transparência suave e as bordas ficam serrilhadas."
+            hint={t("icon.image.hint")}
           >
             <div className="row-actions">
               <span className="path-chip" title={orb.image}>
                 <ImageIcon size={14} /> {fileName(orb.image)}
               </span>
-              <button type="button" className="btn" onClick={() => void choose()}>Trocar…</button>
+              <button type="button" className="btn" onClick={() => void choose()}>{t("icon.image.change")}</button>
             </div>
-            {image.error && <span className="inline-error" role="alert">Não foi possível carregar: {image.error}. O orbe embutido será usado.</span>}
+            {image.error && <span className="inline-error" role="alert">{t("icon.image.error", { error: image.error })}</span>}
           </Field>
         )}
 
-        <Field label={`Tamanho: ${orb.size}px`}>
+        <Field label={t("icon.size", { px: orb.size })}>
           <input
             type="range"
             min={ORB_LIMITS.minSize}
@@ -97,7 +98,7 @@ export function IconPage({ config, update, goToLauncher }: Props) {
           />
         </Field>
 
-        <Field label={`Opacidade em repouso: ${Math.round(orb.opacityIdle * 100)}%`} hint="Ao passar o mouse, o ícone fica 100% visível.">
+        <Field label={t("icon.opacity", { pct: Math.round(orb.opacityIdle * 100) })} hint={t("icon.opacity.hint")}>
           <input
             type="range"
             min={ORB_LIMITS.minOpacity}
@@ -110,31 +111,31 @@ export function IconPage({ config, update, goToLauncher }: Props) {
 
         <Field
           group
-          label="Animação"
-          hint="O orbe animado é bonito, mas desenha o tempo todo (~15% de um núcleo de CPU). “Só ao passar o mouse” e “Parado” não gastam quase nada."
+          label={t("icon.anim")}
+          hint={t("icon.anim.hint")}
         >
           <Segmented
             value={orb.animation ?? "full"}
             options={[
-              { value: "full", label: "Sempre" },
-              { value: "hover", label: "Só ao passar o mouse" },
-              { value: "off", label: "Parado" },
+              { value: "full", label: t("icon.anim.full") },
+              { value: "hover", label: t("icon.anim.hover") },
+              { value: "off", label: t("icon.anim.off") },
             ]}
             onChange={(v) => update((c) => void (c.launcher.orb.animation = v))}
           />
         </Field>
 
         <Toggle
-          label="Alerta de CPU alta"
-          hint="O núcleo fica avermelhado e pulsa mais rápido quando o uso de CPU passa de 85%."
+          label={t("icon.cpuAlert")}
+          hint={t("icon.cpuAlert.hint")}
           checked={orb.cpuAlert !== false}
           onChange={(v) => update((c) => void (c.launcher.orb.cpuAlert = v))}
         />
-        <p className="muted">Dica: solte o ícone encostado numa borda da tela para ele ficar meio escondido; passe o mouse para ele aparecer. Gire a roda do mouse sobre o ícone para ajustar o volume.</p>
+        <p className="muted">{t("icon.tip")}</p>
 
         <Toggle
-          label="Esconder em tela cheia"
-          hint="Some durante jogos, vídeos e apresentações em tela cheia e volta sozinho ao sair."
+          label={t("icon.fullscreen")}
+          hint={t("icon.fullscreen.hint")}
           checked={orb.hideOnFullscreen}
           onChange={(v) => update((c) => void (c.launcher.orb.hideOnFullscreen = v))}
         />
@@ -143,15 +144,14 @@ export function IconPage({ config, update, goToLauncher }: Props) {
           <button
             type="button"
             className="btn"
-            onClick={() => orbResetPosition().then(() => setMsg("Ícone movido para o canto inferior direito."), (e) => setMsg(String(e)))}
+            onClick={() => orbResetPosition().then(() => setMsg(t("icon.reset.done")), (e) => setMsg(String(e)))}
           >
-            <LocateFixed size={14} /> Voltar o ícone para o canto
+            <LocateFixed size={14} /> {t("icon.reset")}
           </button>
           {msg && <span className="muted">{msg}</span>}
         </div>
         <p className="muted">
-          <Sparkles size={13} /> Clique com o botão direito no ícone para abrir as configurações ou escondê-lo. Para mostrar de novo, use
-          “Mostrar/esconder ícone” na bandeja.
+          <Sparkles size={13} /> {t("icon.rightClick")}
         </p>
       </Section>
     </>

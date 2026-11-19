@@ -1,4 +1,5 @@
 import { AppWindow, ImagePlus } from "lucide-react";
+import { t } from "../../shared/i18n";
 import { useEffect, useState } from "react";
 import { DYNAMIC_HINT, DYNAMIC_LABEL } from "../../radial/dynamic";
 import { forgetIconFile, loadIconFile } from "../../shared/iconFiles";
@@ -67,19 +68,19 @@ export function ItemEditor({ selected, isChild, editSelected }: Props) {
 
   return (
     <div className="item-editor">
-      <h3>{isChild ? "Subitem" : "Fatia"}</h3>
-      <Field label="Rótulo">
+      <h3>{isChild ? t("ed.child") : t("ed.slice")}</h3>
+      <Field label={t("ed.label")}>
         <input value={selected.label} maxLength={14} onChange={(e) => editSelected((it) => void (it.label = e.target.value))} />
       </Field>
 
-      <Field label="Ícone" group hint={selected.iconFile ? "Usando ícone próprio. Se o arquivo sumir, volta para o ícone marcado abaixo." : undefined}>
+      <Field label={t("ed.icon")} group hint={selected.iconFile ? t("ed.icon.ownHint") : undefined}>
         <div className="row-actions icon-own">
           <button type="button" className="btn" onClick={() => void chooseImage()}>
-            <ImagePlus size={14} /> Imagem própria…
+            <ImagePlus size={14} /> {t("ed.icon.image")}
           </button>
           {selected.action?.type === "launch" && selected.action.path.trim() && (
             <button type="button" className="btn" onClick={() => void applyProgramIcon()}>
-              <AppWindow size={14} /> Usar ícone do programa
+              <AppWindow size={14} /> {t("ed.icon.program")}
             </button>
           )}
           {selected.iconFile && (
@@ -88,7 +89,7 @@ export function ItemEditor({ selected, isChild, editSelected }: Props) {
                 {iconPreview && <img src={iconPreview} alt="" width={16} height={16} />} {fileName(selected.iconFile)}
               </span>
               <button type="button" className="btn btn-ghost" onClick={() => editSelected((it) => void delete it.iconFile)}>
-                Remover
+                {t("ed.remove")}
               </button>
             </>
           )}
@@ -110,7 +111,7 @@ export function ItemEditor({ selected, isChild, editSelected }: Props) {
       </Field>
 
       {isChild && (
-        <Field label="Cor da borda">
+        <Field label={t("ed.color")}>
           <div className="color-row">
             {COLORS.map((c) => (
               <button
@@ -128,19 +129,19 @@ export function ItemEditor({ selected, isChild, editSelected }: Props) {
       )}
 
       {!isChild && (
-        <Field label="Ao selecionar">
+        <Field label={t("ed.onSelect")}>
           <Segmented
             value={selected.dynamic ? "auto" : selected.children ? "submenu" : "action"}
             options={[
-              { value: "action", label: "Executar ação" },
-              { value: "submenu", label: "Abrir submenu" },
-              { value: "auto", label: "Submenu automático" },
+              { value: "action", label: t("ed.onSelect.action") },
+              { value: "submenu", label: t("ed.onSelect.submenu") },
+              { value: "auto", label: t("ed.onSelect.auto") },
             ]}
             onChange={(v) =>
               editSelected((it) => {
                 const current = it.dynamic ? "auto" : it.children ? "submenu" : "action";
                 if (v === current) return;
-                if (it.children?.length && !window.confirm("Remover os subitens desta fatia?")) return;
+                if (it.children?.length && !window.confirm(t("ed.removeChildrenConfirm"))) return;
                 delete it.children;
                 delete it.action;
                 delete it.dynamic;
@@ -157,7 +158,7 @@ export function ItemEditor({ selected, isChild, editSelected }: Props) {
 
       {selected.dynamic ? (
         <>
-          <Field label="Conteúdo do submenu">
+          <Field label={t("ed.dynContent")}>
             <select
               value={selected.dynamic}
               onChange={(e) =>
@@ -190,13 +191,12 @@ export function ItemEditor({ selected, isChild, editSelected }: Props) {
             />
           )}
           <p className="muted">
-            O sub-anel mostra automaticamente {DYNAMIC_HINT[selected.dynamic]} Até {LIMITS.maxChildren} itens; as informações são
-            atualizadas a cada abertura do menu.
+            {t("ed.dynHint", { hint: DYNAMIC_HINT[selected.dynamic], max: LIMITS.maxChildren })}
           </p>
         </>
       ) : selected.children ? (
         <p className="muted">
-          Esta fatia abre um sub-anel com {selected.children.length} item(ns). Use “+ Subitem” na lista ao lado.
+          {selected.children.length === 1 ? t("ed.children.one") : t("ed.children.many", { n: selected.children.length })}
         </p>
       ) : (
         <>
@@ -206,14 +206,14 @@ export function ItemEditor({ selected, isChild, editSelected }: Props) {
           />
           <Field
             group
-            label="Atalho global (opcional)"
-            hint="Executa esta ação de qualquer lugar do Windows, sem abrir o menu. Clique na caixa e pressione a combinação (com Ctrl, Alt, Shift ou Win, ou uma tecla F)."
+            label={t("ed.hotkey")}
+            hint={t("ed.hotkey.hint")}
           >
             <div className="input-row">
               <HotkeyRecorder value={selected.hotkey ?? ""} pauseGlobal onChange={(v) => editSelected((it) => void (it.hotkey = v || undefined))} />
               {selected.hotkey && (
                 <button type="button" className="btn btn-ghost" onClick={() => editSelected((it) => void delete it.hotkey)}>
-                  Remover atalho
+                  {t("ed.hotkey.remove")}
                 </button>
               )}
             </div>

@@ -1,4 +1,5 @@
 import { comboIsCapture } from "../../shared/keys";
+import { t } from "../../shared/i18n";
 import type { Action } from "../../shared/types";
 import { Field, Toggle } from "../controls";
 import { HotkeyRecorder } from "../HotkeyRecorder";
@@ -6,15 +7,15 @@ import { HotkeyRecorder } from "../HotkeyRecorder";
 export function KeysFields({ action, onChange }: { action: Extract<Action, { type: "keys" }>; onChange: (a: Action) => void }) {
   return (
     <>
-      <Field group label="Combinação" hint="Clique na caixa tracejada e pressione a combinação (aceita Ctrl, Alt, Shift e Win), ou digite o texto, ex.: Ctrl+Shift+Esc, Win+D. Será enviada ao app que estava em foco.">
+      <Field group label={t("keys.combo")} hint={t("keys.combo.hint")}>
         <div className="input-row">
           <input value={action.combo} onChange={(e) => onChange({ ...action, combo: e.target.value })} placeholder="Ctrl+C" />
           <HotkeyRecorder value={action.combo} onChange={(combo) => onChange({ ...action, combo })} />
         </div>
       </Field>
       <Field
-        label="Atraso antes de enviar (ms)"
-        hint="O menu já some da tela antes de enviar. Use um atraso extra se o app de destino demorar a reagir (ex.: 100–300 ms para apps de print como o Lightshot). 0 = sem atraso."
+        label={t("keys.delay")}
+        hint={t("keys.delay.hint")}
       >
         <div className="input-row delay-row">
           <input
@@ -44,12 +45,12 @@ export function KeysFields({ action, onChange }: { action: Extract<Action, { typ
       </Field>
       {comboIsCapture(action.combo) ? (
         <p className="field-hint" data-testid="capture-auto">
-          Atalho de print reconhecido (PrtSc / Win+Shift+S): a Kira mostra o preview do print (Configurações → Geral).
+          {t("keys.captureAuto")}
         </p>
       ) : (
         <Toggle
-          label="É uma ferramenta de print"
-          hint="Marque se este atalho abre uma ferramenta de print (ex.: ShareX, Greenshot): a Kira mostra o preview do print."
+          label={t("keys.capture")}
+          hint={t("keys.capture.hint")}
           checked={!!action.capture}
           onChange={(v) => onChange({ ...action, capture: v || undefined })}
         />

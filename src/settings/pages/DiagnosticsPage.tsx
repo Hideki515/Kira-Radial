@@ -1,4 +1,5 @@
 import { Clipboard, FileText, FolderOpen, RefreshCw, Trash2 } from "lucide-react";
+import { t } from "../../shared/i18n";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { clearLog, describeOpenStats, getDiagnostics, openDataDir, readLog, writeReport, type Diagnostics } from "../../shared/ipc";
 import { Section, Toggle } from "../controls";
@@ -13,12 +14,12 @@ export function levelOf(line: string): "INFO" | "WARN" | "ERROR" {
 
 /** Filtra por nível mínimo e texto (sem diferenciar maiúsculas). */
 export function filterLines(lines: string[], level: LevelFilter, text: string): string[] {
-  const t = text.trim().toLowerCase();
+  const needle = text.trim().toLowerCase();
   return lines.filter((l) => {
     const lv = levelOf(l);
     if (level === "error" && lv !== "ERROR") return false;
     if (level === "warn" && lv === "INFO") return false;
-    return !t || l.toLowerCase().includes(t);
+    return !needle || l.toLowerCase().includes(needle);
   });
 }
 
@@ -43,8 +44,8 @@ export function DiagnosticsPage() {
 
   useEffect(() => {
     if (!auto) return;
-    const t = window.setInterval(load, REFRESH_MS);
-    return () => window.clearInterval(t);
+    const timer = window.setInterval(load, REFRESH_MS);
+    return () => window.clearInterval(timer);
   }, [auto, load]);
 
   const shown = useMemo(() => filterLines(lines, level, text), [lines, level, text]);
@@ -57,67 +58,67 @@ export function DiagnosticsPage() {
 
   return (
     <>
-      <Section title="Resumo" description="Informações para entender problemas. Nada aqui sai do PC.">
+      <Section title={t("diag.summary")} description={t("diag.summary.desc")}>
         {diag ? (
           <dl className="diag-grid" data-testid="diag-summary">
-            <dt>Versão</dt><dd>{diag.version}{diag.qa && " (Kira de teste)"}</dd>
-            <dt>Windows</dt><dd>{diag.windows || "—"}</dd>
+            <dt>{t("diag.version")}</dt><dd>{diag.version}{diag.qa && t("diag.qa")}</dd>
+            <dt>{t("diag.windows")}</dt><dd>{diag.windows || "—"}</dd>
             <dt>WebView2</dt><dd>{diag.webview}</dd>
-            <dt>Monitores</dt><dd>{diag.monitors.join(" · ") || "—"}</dd>
-            <dt>Abrir por</dt><dd>{diag.launcherMode}</dd>
-            <dt>Tema</dt><dd>{diag.theme}</dd>
-            <dt>Atalho</dt>
+            <dt>{t("diag.monitors")}</dt><dd>{diag.monitors.join(" · ") || "—"}</dd>
+            <dt>{t("diag.launcher")}</dt><dd>{diag.launcherMode}</dd>
+            <dt>{t("diag.theme")}</dt><dd>{diag.theme}</dd>
+            <dt>{t("diag.hotkey")}</dt>
             <dd>
-              {diag.hotkey} — {diag.hotkeyRegistered ? "registrado" : "não registrado"}
+              {diag.hotkey} — {diag.hotkeyRegistered ? t("diag.registered") : t("diag.notRegistered")}
               {diag.hotkeyError && <span className="inline-error"> ({diag.hotkeyError})</span>}
             </dd>
-            <dt>Abertura do menu</dt>
-            <dd data-testid="diag-open-time" title="Do atalho (ou clique no ícone) até o primeiro quadro do menu na tela.">
+            <dt>{t("diag.openTime")}</dt>
+            <dd data-testid="diag-open-time" title={t("diag.openTime.title")}>
               {describeOpenStats(diag.menuOpen)}
             </dd>
-            <dt>Memória</dt><dd>{diag.memoryMb} MB</dd>
-            <dt>Erros recentes</dt><dd className={diag.recentErrors ? "inline-error" : ""}>{diag.recentErrors}</dd>
-            <dt>Pasta de dados</dt><dd className="diag-path">{diag.dataDir}</dd>
+            <dt>{t("diag.memory")}</dt><dd>{diag.memoryMb} MB</dd>
+            <dt>{t("diag.errors")}</dt><dd className={diag.recentErrors ? "inline-error" : ""}>{diag.recentErrors}</dd>
+            <dt>{t("diag.dataDir")}</dt><dd className="diag-path">{diag.dataDir}</dd>
           </dl>
         ) : (
-          <p className="muted">Resumo disponível só no app.</p>
+          <p className="muted">{t("diag.appOnly")}</p>
         )}
         <div className="row-actions">
-          <button type="button" className="btn" onClick={() => void act(writeReport, "Relatório criado")}>
-            <FileText size={14} /> Gerar relatório
+          <button type="button" className="btn" onClick={() => void act(writeReport, t("diag.reportDone"))}>
+            <FileText size={14} /> {t("diag.report")}
           </button>
-          <button type="button" className="btn btn-ghost" onClick={() => void act(openDataDir, "Pasta aberta")}>
-            <FolderOpen size={14} /> Abrir pasta
+          <button type="button" className="btn btn-ghost" onClick={() => void act(openDataDir, t("diag.folderOpened"))}>
+            <FolderOpen size={14} /> {t("diag.openFolder")}
           </button>
         </div>
-        <p className="muted">O relatório não leva sua configuração, o histórico da área de transferência nem arquivos recentes, e oculta o nome do seu usuário do Windows.</p>
+        <p className="muted">{t("diag.report.note")}</p>
       </Section>
 
-      <Section title="Log">
+      <Section title={t("diag.log")}>
         <div className="log-toolbar">
-          <select aria-label="Nível" value={level} onChange={(e) => setLevel(e.target.value as LevelFilter)}>
-            <option value="all">Tudo</option>
-            <option value="warn">Avisos e erros</option>
-            <option value="error">Só erros</option>
+          <select aria-label={t("diag.level")} value={level} onChange={(e) => setLevel(e.target.value as LevelFilter)}>
+            <option value="all">{t("diag.level.all")}</option>
+            <option value="warn">{t("diag.level.warn")}</option>
+            <option value="error">{t("diag.level.error")}</option>
           </select>
-          <input aria-label="Filtrar log" placeholder="Filtrar…" value={text} onChange={(e) => setText(e.target.value)} />
-          <Toggle label="Atualizar sozinho" checked={auto} onChange={setAuto} />
-          <button type="button" className="btn btn-ghost" aria-label="Atualizar" onClick={load}><RefreshCw size={14} /></button>
-          <button type="button" className="btn btn-ghost" onClick={() => void navigator.clipboard.writeText(shown.join("\n")).then(() => setMsg({ ok: true, text: "Copiado." }))}>
-            <Clipboard size={14} /> Copiar
+          <input aria-label={t("diag.filter")} placeholder={t("diag.filter.ph")} value={text} onChange={(e) => setText(e.target.value)} />
+          <Toggle label={t("diag.auto")} checked={auto} onChange={setAuto} />
+          <button type="button" className="btn btn-ghost" aria-label={t("diag.refresh")} onClick={load}><RefreshCw size={14} /></button>
+          <button type="button" className="btn btn-ghost" onClick={() => void navigator.clipboard.writeText(shown.join("\n")).then(() => setMsg({ ok: true, text: t("diag.copied") }))}>
+            <Clipboard size={14} /> {t("diag.copy")}
           </button>
           <button
             type="button"
             className="btn btn-ghost danger"
-            onClick={() => window.confirm("Apagar o log?") && void clearLog().then(load)}
+            onClick={() => window.confirm(t("diag.clearConfirm")) && void clearLog().then(load)}
           >
-            <Trash2 size={14} /> Limpar
+            <Trash2 size={14} /> {t("diag.clear")}
           </button>
         </div>
         <pre className="log-view" data-testid="log-view">
-          {shown.length ? shown.map((l, i) => <div key={i} className={`log-line is-${levelOf(l).toLowerCase()}`}>{l}</div>) : <span className="muted">Nada para mostrar.</span>}
+          {shown.length ? shown.map((l, i) => <div key={i} className={`log-line is-${levelOf(l).toLowerCase()}`}>{l}</div>) : <span className="muted">{t("diag.empty")}</span>}
         </pre>
-        <span className="muted">{shown.length} de {lines.length} linhas</span>
+        <span className="muted">{t("diag.count", { shown: shown.length, total: lines.length })}</span>
         {msg && <span className={msg.ok ? "inline-ok" : "inline-error"} role="status">{msg.text}</span>}
       </Section>
     </>

@@ -1,4 +1,5 @@
 import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
+import { t } from "../shared/i18n";
 import type { OrbAnimation, OrbEdge } from "../shared/types";
 
 /** Distância (px) que o mouse precisa andar com o botão pressionado para virar arrasto. */
@@ -116,7 +117,7 @@ export function Orb({ size, accent, opacityIdle, imageSrc, onActivate, onDragSta
         type="button"
         className={`orb${imageSrc ? " has-image" : ""}${hot ? " is-hot" : ""}`}
         onWheel={(e) => onWheel?.(e.deltaY < 0)}
-        aria-label="Abrir o menu Kira"
+        aria-label={t("orb.aria")}
         data-testid="orb"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}

@@ -1,5 +1,5 @@
 import { CircleDot, Headset, Orbit, Stethoscope, Keyboard, LayoutGrid, Palette, Save, Settings2, Undo2, Users, Archive, AlertTriangle } from "lucide-react";
-import { applyLangSetting, useLang } from "../shared/i18n";
+import { applyLangSetting, t, useLang } from "../shared/i18n";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useSystemStats } from "../hooks/useSystemStats";
 import { getConfig, getHotkeyError, saveConfig } from "../shared/ipc";
@@ -26,16 +26,16 @@ import { AppearancePage, BackupPage, GeneralPage, HotkeyPage } from "./pages/Sim
 
 type Page = "items" | "hotkey" | "icon" | "profiles" | "general" | "appearance" | "backup" | "discord" | "diagnostics";
 
-const NAV: { id: Page; label: string; icon: typeof CircleDot }[] = [
-  { id: "items", label: "Itens do menu", icon: LayoutGrid },
-  { id: "hotkey", label: "Atalho", icon: Keyboard },
-  { id: "icon", label: "Ícone", icon: Orbit },
-  { id: "profiles", label: "Perfis", icon: Users },
-  { id: "general", label: "Geral", icon: Settings2 },
-  { id: "appearance", label: "Aparência", icon: Palette },
-  { id: "backup", label: "Backup", icon: Archive },
-  { id: "discord", label: "Discord", icon: Headset },
-  { id: "diagnostics", label: "Diagnóstico", icon: Stethoscope },
+const NAV: { id: Page; icon: typeof CircleDot }[] = [
+  { id: "items", icon: LayoutGrid },
+  { id: "hotkey", icon: Keyboard },
+  { id: "icon", icon: Orbit },
+  { id: "profiles", icon: Users },
+  { id: "general", icon: Settings2 },
+  { id: "appearance", icon: Palette },
+  { id: "backup", icon: Archive },
+  { id: "discord", icon: Headset },
+  { id: "diagnostics", icon: Stethoscope },
 ];
 
 export function SettingsApp() {
@@ -89,7 +89,7 @@ export function SettingsApp() {
       await saveConfig(draft);
       setSaved(structuredClone(draft));
       setHotkeyError(null);
-      setStatus({ ok: true, text: "Configurações salvas e aplicadas." });
+      setStatus({ ok: true, text: t("set.saved") });
     } catch (e) {
       setStatus({ ok: false, text: String(e) });
     } finally {
@@ -108,7 +108,7 @@ export function SettingsApp() {
     return () => window.removeEventListener("keydown", onKey);
   }, [save]);
 
-  if (!draft) return <div className="settings-loading">Carregando…</div>;
+  if (!draft) return <div className="settings-loading">{t("common.loading")}</div>;
 
   const pIdx = Math.min(profileIdx, draft.profiles.length - 1);
   const profile = draft.profiles[pIdx];
@@ -129,9 +129,9 @@ export function SettingsApp() {
           <CircleDot size={20} />
           <span>Kira Radial</span>
         </div>
-        {NAV.filter((n) => n.id !== "icon" || wantsOrb(draft.launcher.mode) || page === "icon").map(({ id, label, icon: Icon }) => (
+        {NAV.filter((n) => n.id !== "icon" || wantsOrb(draft.launcher.mode) || page === "icon").map(({ id, icon: Icon }) => (
           <button key={id} type="button" className={`nav-item${page === id ? " is-on" : ""}`} onClick={() => setPage(id)}>
-            <Icon size={16} /> {label}
+            <Icon size={16} /> {t(`set.nav.${id}`)}
           </button>
         ))}
         <div className="sidebar-foot">v{__APP_VERSION__}</div>
@@ -141,8 +141,8 @@ export function SettingsApp() {
         {updateInfo?.available && page !== "general" && (
           <div className="banner-info" role="note" data-testid="update-banner">
             <span>
-              <strong>Versão {updateInfo.version} disponível.</strong>{" "}
-              <button type="button" className="link" onClick={() => setPage("general")}>Ver e atualizar em Geral</button>
+              <strong>{t("set.update.available", { version: updateInfo.version ?? "" })}</strong>{" "}
+              <button type="button" className="link" onClick={() => setPage("general")}>{t("set.update.goto")}</button>
             </span>
           </div>
         )}
@@ -150,14 +150,14 @@ export function SettingsApp() {
           <div className="banner-error" role="alert">
             <AlertTriangle size={16} />
             <span>
-              <strong>O atalho atual não funcionou.</strong> {hotkeyError}. Escolha outra combinação em{" "}
-              <button type="button" className="link" onClick={() => setPage("hotkey")}>Atalho</button> e salve.
+              <strong>{t("set.hotkeyFailed.title")}</strong> {hotkeyError}. {t("set.hotkeyFailed.pre")}{" "}
+              <button type="button" className="link" onClick={() => setPage("hotkey")}>{t("set.nav.hotkey")}</button> {t("set.hotkeyFailed.post")}
             </span>
           </div>
         )}
         {(page === "items" || page === "profiles") && draft.profiles.length > 1 && (
           <div className="profile-picker">
-            <span>Perfil</span>
+            <span>{t("set.profile")}</span>
             <select value={pIdx} onChange={(e) => { setProfileIdx(Number(e.target.value)); setSelection({ main: 0, child: null }); }}>
               {draft.profiles.map((p, i) => <option key={p.id} value={i}>{p.name}</option>)}
             </select>
@@ -178,7 +178,7 @@ export function SettingsApp() {
       </main>
 
       <aside className="preview">
-        <div className="preview-title">Pré-visualização · {profile.name}</div>
+        <div className="preview-title">{t("set.preview", { name: profile.name })}</div>
         <div className="preview-canvas">
           {page === "items" ? (
             // Página Itens: clicar escolhe e arrastar reorganiza direto no desenho.
@@ -214,11 +214,11 @@ export function SettingsApp() {
         </div>
         <div className="preview-hotkey">
           {draft.launcher.mode === "orb" ? (
-            <>Abrir clicando no <strong>ícone</strong></>
+            <>{t("set.preview.orbPre")} <strong>{t("set.preview.orbIcon")}</strong></>
           ) : (
             <>
-              Abrir com <kbd>{draft.hotkey.accelerator}</kbd> · {draft.hotkey.mode === "hold" ? "segurar e soltar" : "pressionar e clicar"}
-              {draft.launcher.mode === "both" && <> · ou pelo ícone</>}
+              {t("set.preview.hotkey")} <kbd>{draft.hotkey.accelerator}</kbd> · {t(draft.hotkey.mode === "hold" ? "set.preview.hold" : "set.preview.press")}
+              {draft.launcher.mode === "both" && <> · {t("set.preview.orToo")}</>}
             </>
           )}
         </div>
@@ -227,20 +227,20 @@ export function SettingsApp() {
       <footer className="savebar">
         {errors.length > 0 ? (
           <details className="savebar-errors">
-            <summary><AlertTriangle size={14} /> {errors.length} problema(s) impedem salvar</summary>
+            <summary><AlertTriangle size={14} /> {errors.length === 1 ? t("set.errors.one") : t("set.errors.many", { n: errors.length })}</summary>
             <ul>{errors.map((e) => <li key={e}>{e}</li>)}</ul>
           </details>
         ) : status ? (
           <span className={status.ok ? "inline-ok" : "inline-error"}>{status.text}</span>
         ) : (
-          <span className="muted">{dirty ? "Alterações não salvas" : "Tudo salvo"}</span>
+          <span className="muted">{dirty ? t("set.dirty") : t("set.clean")}</span>
         )}
         <div className="savebar-actions">
           <button type="button" className="btn btn-ghost" disabled={!dirty} onClick={() => { setDraft(structuredClone(saved!)); setStatus(null); }}>
-            <Undo2 size={14} /> Descartar
+            <Undo2 size={14} /> {t("set.discard")}
           </button>
           <button type="button" className="btn btn-primary" disabled={!dirty || errors.length > 0 || saving} onClick={save}>
-            <Save size={14} /> {saving ? "Salvando…" : "Salvar"}
+            <Save size={14} /> {saving ? t("set.saving") : t("set.save")}
           </button>
         </div>
       </footer>

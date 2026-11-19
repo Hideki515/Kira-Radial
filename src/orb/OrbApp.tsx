@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { applyLangSetting, useLang } from "../shared/i18n";
 import { useConfig } from "../hooks/useConfig";
 import { getVolume, onEvent, orbClicked, orbContextMenu, runAction, startWindowDrag, type StatsPayload } from "../shared/ipc";
 import { perfLog } from "../shared/perf";
@@ -15,6 +16,9 @@ export const ORB_VOLUME_MS = 1200;
 /** Janela do ícone flutuante. */
 export function OrbApp() {
   const config = useConfig();
+  // Idioma da config: só o rótulo de acessibilidade do ícone usa texto.
+  useEffect(() => applyLangSetting(config?.behavior.language), [config?.behavior.language]);
+  useLang();
   const image = useOrbImage(config?.launcher.orb.image ?? null);
   const [cpu, setCpu] = useState<number | null>(null);
   const [volume, setVolume] = useState<number | null>(null);

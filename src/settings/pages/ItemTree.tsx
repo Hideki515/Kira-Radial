@@ -1,4 +1,5 @@
 import { ChevronDown, ChevronUp, CornerDownRight, GripVertical, Plus, Sparkles, Trash2 } from "lucide-react";
+import { t } from "../../shared/i18n";
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { getIcon } from "../../shared/icons";
 import { LIMITS, type MenuItem } from "../../shared/types";
@@ -53,9 +54,9 @@ export function ItemTree({ items, selection, onSelect, addMain, addChild, remove
   return (
   <div className="item-tree">
     <div className="tree-head">
-      <span>Fatias ({items.length}/{LIMITS.maxSlices})</span>
+      <span>{t("items.slices", { n: items.length, max: LIMITS.maxSlices })}</span>
       <button type="button" className="btn btn-ghost" onClick={addMain} disabled={items.length >= LIMITS.maxSlices}>
-        <Plus size={14} /> Fatia
+        <Plus size={14} /> {t("items.addSlice")}
       </button>
     </div>
     <ol className="tree-list">
@@ -74,10 +75,10 @@ export function ItemTree({ items, selection, onSelect, addMain, addChild, remove
             >
               <DragHandle onStart={() => setDrag({ mi, ci: null, over: null })} />
               <Icon size={16} />
-              <span className="tree-label">{it.label || "(sem nome)"}</span>
-                {it.hotkey && <kbd className="tree-hotkey" title="Atalho global">{it.hotkey}</kbd>}
+              <span className="tree-label">{it.label || t("items.noName")}</span>
+                {it.hotkey && <kbd className="tree-hotkey" title={t("items.globalHotkey")}>{it.hotkey}</kbd>}
               {it.dynamic ? (
-                <span className="tree-badge" title="Submenu automático"><Sparkles size={11} /></span>
+                <span className="tree-badge" title={t("items.autoBadge")}><Sparkles size={11} /></span>
               ) : it.children?.length ? (
                 <span className="tree-badge">{it.children.length}</span>
               ) : null}
@@ -106,8 +107,8 @@ export function ItemTree({ items, selection, onSelect, addMain, addChild, remove
                         <DragHandle onStart={() => setDrag({ mi, ci, over: null })} />
                         <CornerDownRight size={13} className="tree-elbow" />
                         <CIcon size={15} />
-                        <span className="tree-label">{ch.label || "(sem nome)"}</span>
-                          {ch.hotkey && <kbd className="tree-hotkey" title="Atalho global">{ch.hotkey}</kbd>}
+                        <span className="tree-label">{ch.label || t("items.noName")}</span>
+                          {ch.hotkey && <kbd className="tree-hotkey" title={t("items.globalHotkey")}>{ch.hotkey}</kbd>}
                         <RowTools onUp={() => reorder(mi, ci, -1)} onDown={() => reorder(mi, ci, 1)} onDelete={() => remove(mi, ci)} />
                       </div>
                     </li>
@@ -116,7 +117,7 @@ export function ItemTree({ items, selection, onSelect, addMain, addChild, remove
                 {it.children.length < LIMITS.maxChildren && (
                   <li>
                     <button type="button" className="tree-add" onClick={() => addChild(mi)}>
-                      <Plus size={13} /> Subitem
+                      <Plus size={13} /> {t("items.addChild")}
                     </button>
                   </li>
                 )}
@@ -135,8 +136,8 @@ function DragHandle({ onStart }: { onStart: () => void }) {
   return (
     <span
       className="drag-handle"
-      title="Arraste para reordenar (ou Alt+↑/↓)"
-      aria-label="Arrastar para reordenar"
+      title={t("items.dragTitle")}
+      aria-label={t("items.dragLabel")}
       role="button"
       onPointerDown={(e) => {
         if (e.button !== 0) return;
@@ -158,9 +159,9 @@ function RowTools({ onUp, onDown, onDelete }: { onUp: () => void; onDown: () => 
   };
   return (
     <span className="row-tools">
-      <button type="button" title="Subir" onClick={stop(onUp)}><ChevronUp size={14} /></button>
-      <button type="button" title="Descer" onClick={stop(onDown)}><ChevronDown size={14} /></button>
-      {onDelete && <button type="button" title="Remover" className="danger" onClick={stop(onDelete)}><Trash2 size={14} /></button>}
+      <button type="button" title={t("items.up")} onClick={stop(onUp)}><ChevronUp size={14} /></button>
+      <button type="button" title={t("items.down")} onClick={stop(onDown)}><ChevronDown size={14} /></button>
+      {onDelete && <button type="button" title={t("items.remove")} className="danger" onClick={stop(onDelete)}><Trash2 size={14} /></button>}
     </span>
   );
 }
