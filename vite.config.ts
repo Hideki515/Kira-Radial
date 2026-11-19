@@ -34,6 +34,8 @@ export default defineConfig({
       reportsDirectory: "coverage",
       // Mesmo com algum teste falhando, grava o relatório (e o total) para comparação.
       reportOnFailure: true,
+      // Piso: `npm run coverage` falha se a cobertura cair abaixo disso (o QA usa o mesmo piso).
+      thresholds: { lines: 85, functions: 80 },
     },
   },
 });

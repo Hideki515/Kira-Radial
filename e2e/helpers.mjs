@@ -23,8 +23,8 @@ export async function toWindow(page) {
     },
     { timeout: 15000, timeoutMsg: `janela "${page}" não encontrada` },
   );
-  // Espera o React montar a página.
-  await $("#root > *").waitForExist({ timeout: 15000 });
+  // Espera o React montar a página (pode haver mais de um filho, ex.: um aviso na tela).
+  await browser.waitUntil(async () => (await $$("#root > *")).length > 0, { timeout: 15000, timeoutMsg: `página "${page}" não montou` });
   return found;
 }
 

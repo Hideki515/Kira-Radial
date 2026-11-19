@@ -20,7 +20,12 @@ function qaRunning() {
   try {
     const out = execFileSync(
       "pwsh",
-      ["-NoProfile", "-Command", "@(Get-Process kira-radial -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '*\\target-qa\\*' }).Count"],
+      // Get-Process .Path vem vazio neste ambiente; o caminho do exe vem pelo CIM.
+      [
+        "-NoProfile",
+        "-Command",
+        "@(Get-CimInstance Win32_Process -Filter \"Name='kira-radial.exe'\" | Where-Object { $_.ExecutablePath -like '*\\target-qa\\*' }).Count",
+      ],
       { encoding: "utf8" },
     );
     return Number(out.trim()) || 0;

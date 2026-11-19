@@ -424,4 +424,72 @@ describe("Kira de teste — ponta a ponta", () => {
     await toWindow("settings.html");
     await browser.waitUntil(async () => (await invoke("shot_pin_image")) === null, { timeoutMsg: "print fixado não fechou" });
   });
+  it("14. rótulos dentro da fatia: nenhum texto sai do formato (anel e sub-anel do Discord)", async () => {
+    await toWindow("settings.html");
+    await invoke("hide_menu");
+    await invoke("qa_show_menu", { fromOrb: false });
+    await toWindow("");
+    await pressKey("1", "Digit1"); // fatia do Discord (cenário 11) → sub-anel com nomes longos
+    await browser.waitUntil(async () => (await $$(".sub-slice")).length > 0, { timeoutMsg: "sub-anel não abriu" });
+    await browser.pause(400); // animação de entrada do sub-anel
+    const out = await browser.execute(() => {
+      const bad = [];
+      let checked = 0;
+      for (const g of document.querySelectorAll(".main-slice, .sub-slice")) {
+        const shape = g.querySelector("path.slice-shape");
+        const text = g.querySelector("text.slice-label:not([visibility])");
+        if (!shape || !text) continue;
+        checked++;
+        const rows = text.querySelectorAll("tspan").length ? [...text.querySelectorAll("tspan")] : [text];
+        for (const row of rows) {
+          const b = row.getBBox();
+          // Margem de 1 px: a caixa de linha inclui um pouco de espaço acima/abaixo das letras.
+          const pts = [[b.x + 1, b.y + 2], [b.x + b.width - 1, b.y + 2], [b.x + 1, b.y + b.height - 2], [b.x + b.width - 1, b.y + b.height - 2]];
+          const outside = pts.filter(([x, y]) => !shape.isPointInFill(new DOMPoint(x, y)));
+          if (outside.length) bad.push(`${g.getAttribute("aria-label")}: "${row.textContent}"`);
+        }
+      }
+      return { checked, bad };
+    });
+    expect(out.checked).toBeGreaterThan(8);
+    expect(out.bad).toEqual([]);
+    await pressKey("Escape");
+    await pressKey("Escape");
+  });
+
+  it("15. confirmação de Desligar: a trava da Kira de teste vale e o duplo clique não confirma", async () => {
+    await toWindow("settings.html");
+    // Antes de tudo: na Kira de teste, comandos de energia nunca rodam de verdade.
+    const lock = await browser.execute(() =>
+      window.__TAURI_INTERNALS__.invoke("run_action", { action: { type: "system", cmd: "lock" } }).then(() => "rodou", (e) => String(e)),
+    );
+    expect(lock).toContain("bloqueado na Kira de teste");
+    // Fatia "Desligar" na posição 1 de todos os perfis (o perfil ativo depende do monitor).
+    const cfg = await invoke("get_config");
+    for (const p of cfg.profiles) p.items[0] = { id: "e2e-off", label: "Desligar", icon: "zap", action: { type: "system", cmd: "shutdown" } };
+    await invoke("save_config", { config: cfg });
+    await invoke("qa_show_menu", { fromOrb: false });
+    await toWindow("");
+    // Escolhe a fatia e clica em Desligar logo em seguida (~50 ms, como o 2º clique de um duplo
+    // clique), tudo dentro da página: a ida e volta do WebDriver passaria dos 400 ms da pausa.
+    const quick = await browser.execute(
+      () =>
+        new Promise((done) => {
+          window.dispatchEvent(new KeyboardEvent("keydown", { key: "1", code: "Digit1", bubbles: true }));
+          setTimeout(() => {
+            const btn = document.querySelector("button.confirm-btn.is-danger");
+            if (!btn) return done("sem diálogo");
+            btn.click();
+            setTimeout(() => done(document.querySelector('[role="alertdialog"]') ? "aberto" : "fechou"), 50);
+          }, 50);
+        }),
+    );
+    expect(quick).toBe("aberto");
+    await browser.pause(450);
+    await $("button.confirm-btn.is-danger").click();
+    await browser.waitUntil(async () => !(await $('[role="alertdialog"]').isExisting()), { timeoutMsg: "diálogo não fechou" });
+    await browser.waitUntil(async () => (await $(".toast").isExisting()) && (await $(".toast").getText()).includes("bloqueado"), {
+      timeoutMsg: "o Desligar não chegou à trava da Kira de teste",
+    });
+  });
 });

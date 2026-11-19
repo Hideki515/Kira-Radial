@@ -1,6 +1,7 @@
 // Ajuste dos rótulos às fatias, compartilhado entre as fatias (SliceContent) e o pré-cálculo
 // em segundo plano (prewarmLabels): ao abrir o menu, o ajuste já está pronto no cache e sai
 // na primeira renderização (sem medir nem renderizar de novo no caminho de abertura).
+import { useEffect } from "react";
 import { findCustom } from "../shared/customTheme";
 import { THEMES, type Config, type MenuItem, type Theme } from "../shared/types";
 import { LAYOUT, polar, sliceAngle, sliceSpan, submenuAngles, submenuItemSpan, textBand, type Sector } from "./geometry";
@@ -68,6 +69,11 @@ export function fontOf(themeClass: string, size: LabelSize, el: Element): LabelF
 }
 
 let canvasCtx: CanvasRenderingContext2D | null | undefined;
+
+/** Testes: injeta um contexto de medida (o jsdom não tem canvas). `undefined` volta ao normal. */
+export function setMeasureContextForTests(ctx: CanvasRenderingContext2D | null | undefined): void {
+  canvasCtx = ctx;
+}
 function measureCtx(): CanvasRenderingContext2D | null {
   if (canvasCtx === undefined) {
     const jsdom = typeof navigator !== "undefined" && /jsdom/i.test(navigator.userAgent);
@@ -200,4 +206,21 @@ export function prewarmLabels(themeClass: string, profiles: { items: MenuItem[] 
     });
   }
   return n;
+}
+
+/**
+ * Pré-calcula os rótulos num momento ocioso sempre que a config (tema/perfis) muda, para a
+ * abertura do menu já encontrar tudo pronto.
+ */
+export function useLabelPrewarm(config: Pick<Config, "appearance" | "profiles">): void {
+  useEffect(() => {
+    const run = () => prewarmLabels(themeClassOf(config.appearance), config.profiles);
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    if (w.requestIdleCallback && w.cancelIdleCallback) {
+      const id = w.requestIdleCallback(run, { timeout: 2000 });
+      return () => w.cancelIdleCallback!(id);
+    }
+    const t = window.setTimeout(run, 300);
+    return () => window.clearTimeout(t);
+  }, [config.appearance, config.profiles]);
 }

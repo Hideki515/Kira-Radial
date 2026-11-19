@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.25.3
+
+Versão de manutenção, sem mudanças visíveis.
+
+- **Testes de ponta a ponta confiáveis:**
+  - a espera pela Kira de teste anterior voltou a funcionar (o caminho do exe agora vem pelo CIM);
+  - o teste não falha mais quando há um aviso na tela;
+  - cenários novos: rótulos dentro da fatia e confirmação de Desligar à prova de duplo clique (com a trava da Kira de teste conferida antes).
+- **Código dividido,** sem mudar o comportamento:
+  - o menu (`RadialApp`) passou de 491 para ~300 linhas; confirmação, mouse/teclado/roda, knob e pré-cálculo de rótulos viraram hooks próprios;
+  - o editor de ações passou de 456 para 70 linhas, com cada tipo de ação no seu arquivo (`src/settings/actions/`);
+  - a página Itens foi dividida em lista (`ItemTree`) e editor (`ItemEditor`).
+- **Cobertura de testes:** linhas 87% → 90% e funções 77% → 81%.
+  - Testes novos para a medida dos rótulos (com canvas falso), os campos de cada ação e adicionar, remover e editar itens.
+  - `npm run coverage` agora falha abaixo de 85% de linhas ou 80% de funções.
+
 ## 0.25.2
 
 - **Nomes que não cabiam na fatia** (ex.: "MICROFONE MUTADO" e "ENSURDECIDO" no sub-anel) agora se ajustam ao formato da fatia.

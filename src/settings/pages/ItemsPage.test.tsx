@@ -145,3 +145,34 @@ describe("ItemsPage › reordenar", () => {
     expect(latest.items[1].id).toBe(ids[0]);
   });
 });
+
+describe("ItemsPage › adicionar, remover e editar", () => {
+  it("+ Fatia adiciona no fim e seleciona; + Subitem adiciona com cor; remover respeita o mínimo de 3", () => {
+    render(<Harness initial={baseProfile()} main={0} />);
+    fireEvent.click(screen.getByRole("button", { name: /Fatia/ }));
+    expect(latest.items).toHaveLength(4);
+    expect(latest.items[3]).toMatchObject({ label: "Novo", action: { type: "launch" } });
+    expect(screen.getByTestId("row-3").className).toContain("is-selected");
+    fireEvent.click(screen.getByRole("button", { name: /Subitem/ }));
+    expect(latest.items[1].children).toHaveLength(2);
+    expect(latest.items[1].children![1].color).toMatch(/^#/);
+    // 4 fatias: dá para remover uma; com 3, o botão some.
+    fireEvent.click(screen.getByTestId("row-3").querySelector('button[title="Remover"]')!);
+    expect(latest.items).toHaveLength(3);
+    expect(screen.getByTestId("row-0").querySelector('button[title="Remover"]')).toBeNull();
+    // Remover subitem.
+    fireEvent.click(screen.getByTestId("row-1-1").querySelector('button[title="Remover"]')!);
+    expect(latest.items[1].children).toHaveLength(1);
+  });
+
+  it("subir/descer pelos botões e editar rótulo, ícone e cor do subitem", () => {
+    render(<Harness initial={baseProfile()} main={1} />);
+    fireEvent.click(screen.getByTestId("row-2").querySelector('button[title="Subir"]')!);
+    expect(latest.items.map((i) => i.id)).toEqual(["a", "c", "b"]);
+    fireEvent.click(screen.getByTestId("row-2-0"));
+    fireEvent.change(screen.getByLabelText("Rótulo"), { target: { value: "Novo nome" } });
+    fireEvent.click(screen.getByTitle("music"));
+    fireEvent.click(screen.getByRole("button", { name: "#a78bfa" }));
+    expect(latest.items[2].children![0]).toMatchObject({ label: "Novo nome", icon: "music", color: "#a78bfa" });
+  });
+});
