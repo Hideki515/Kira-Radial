@@ -346,3 +346,15 @@ input[type="number"]:focus-visible { border-color: var(--active); }
 
 /* Selo do atalho global na lista de itens. */
 .tree-hotkey { margin-left: auto; padding: 1px 5px; border-radius: 4px; font-size: 10.5px; line-height: 1.4; color: var(--text-muted); border: 1px solid var(--line, rgba(255, 255, 255, 0.14)); white-space: nowrap; }
+
+/* Pré-visualização editável (página Itens): arrastar fatias. */
+.preview-editor { position: relative; width: 100%; height: 100%; display: grid; place-items: center; cursor: grab; touch-action: none; user-select: none; }
+.preview-editor.is-dragging { cursor: grabbing; }
+.preview-ghost {
+  position: fixed; z-index: 50; transform: translate(12px, 12px); pointer-events: none;
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px;
+  background: var(--surface, #1b2230); border: 1px solid var(--active); color: var(--text-primary); font-size: 12px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+.preview-ghost.is-invalid { border-color: var(--danger); opacity: 0.8; }
+.preview-drag-hint { position: absolute; left: 0; right: 0; bottom: 4px; margin: 0; text-align: center; font-size: 12px; color: var(--text-muted); pointer-events: none; }
+.preview-drag-hint.is-invalid { color: var(--danger); }

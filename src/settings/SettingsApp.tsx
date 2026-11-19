@@ -4,6 +4,7 @@ import { useSystemStats } from "../hooks/useSystemStats";
 import { getConfig, getHotkeyError, saveConfig } from "../shared/ipc";
 import { wantsOrb, type Config, type Profile } from "../shared/types";
 import { IconPage } from "./pages/IconPage";
+import { PreviewEditor } from "./PreviewEditor";
 import { DiagnosticsPage } from "./pages/DiagnosticsPage";
 import { DiscordPage } from "./pages/DiscordPage";
 import { validateConfig } from "../shared/validate";
@@ -163,14 +164,37 @@ export function SettingsApp() {
       <aside className="preview">
         <div className="preview-title">Pré-visualização · {profile.name}</div>
         <div className="preview-canvas">
-          <PreviewCanvas
-            items={previewItems}
-            activeMain={previewMain}
-            activeSub={previewSub}
-            hubHovered={false}
-            stats={stats}
-            appearance={draft.appearance}
-          />
+          {page === "items" ? (
+            // Página Itens: clicar escolhe e arrastar reorganiza direto no desenho.
+            <PreviewEditor
+              items={previewItems}
+              profile={profile}
+              selection={sel}
+              onSelect={setSelection}
+              edit={editProfile}
+              deadZonePx={draft.behavior.deadZonePx}
+              render={(s) => (
+                <PreviewCanvas
+                  items={previewItems}
+                  activeMain={s.activeMain}
+                  activeSub={s.openMain === undefined ? previewSub : s.activeSub}
+                  openMain={s.openMain}
+                  hubHovered={false}
+                  stats={stats}
+                  appearance={draft.appearance}
+                />
+              )}
+            />
+          ) : (
+            <PreviewCanvas
+              items={previewItems}
+              activeMain={previewMain}
+              activeSub={previewSub}
+              hubHovered={false}
+              stats={stats}
+              appearance={draft.appearance}
+            />
+          )}
         </div>
         <div className="preview-hotkey">
           {draft.launcher.mode === "orb" ? (

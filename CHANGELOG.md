@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.29.0
+
+- **Editar arrastando na pré-visualização** (Configurações → Itens):
+  - **clicar** numa fatia ou subitem do desenho escolhe o item para editar, como na lista;
+  - **arrastar uma fatia** para outra posição do anel reordena;
+  - **parar meio segundo sobre uma fatia com submenu** abre o sub-anel dela, e soltar lá **põe o item dentro do submenu**; soltar na própria fatia-mãe aberta põe no fim;
+  - **arrastar um subitem para o anel principal** transforma ele em fatia;
+  - um "fantasma" com o ícone acompanha o ponteiro, e uma dica diz o que vai acontecer ao soltar (ou por que não pode);
+  - **limites respeitados:** de 3 a 10 fatias, até 8 subitens, sem submenu dentro de submenu e nada entra em submenu automático.
+- A lista ao lado continua com arrastar pela alça, botões e Alt+↑/↓.
+
 ## 0.28.0
 
 - **Busca por digitação:** com o menu aberto, comece a digitar e as fatias viram os resultados.

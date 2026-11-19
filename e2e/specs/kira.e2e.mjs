@@ -584,4 +584,89 @@ describe("Kira de teste — ponta a ponta", () => {
     await toWindow("settings.html");
     await browser.waitUntil(async () => !(await qaState()).menuVisible, { timeoutMsg: "o 2º Esc não fechou o menu" });
   });
+  it("19. (QA) pré-visualização editável: clicar escolhe, arrastar reordena, põe no submenu (spring), tira dele; inválido não muda (ponteiro só na página)", async function () {
+    this.timeout(180000);
+    await toWindow("settings.html");
+    const cfg = await invoke("get_config");
+    const leaf = (id) => ({ id: `e2e-${id}`, label: id, icon: "code", action: { type: "media", cmd: "playpause" } });
+    cfg.profiles[0].items = [leaf("A"), leaf("B"), leaf("C"), { id: "e2e-S", label: "S", icon: "folder", children: [leaf("s1"), leaf("s2")] }, { id: "e2e-T", label: "T", icon: "folder", children: [leaf("t1")] }, leaf("D")];
+    await invoke("save_config", { config: cfg });
+    await browser.refresh();
+    await toWindow("settings.html");
+    // Outras páginas: pré-visualização sem editor (igual a antes).
+    await nav("Aparência");
+    await $(".preview-canvas svg.radial-canvas").waitForExist();
+    expect(await $('[data-testid="preview-editor"]').isExisting()).toBe(false);
+    await nav("Itens do menu");
+    if (await $(".profile-picker select").isExisting()) await $(".profile-picker select").selectByIndex(0);
+    await $('[data-testid="preview-editor"]').waitForExist();
+    const box = await browser.execute(() => {
+      const r = document.querySelector('[data-testid="preview-editor"] svg').getBoundingClientRect();
+      return { left: r.left, top: r.top, width: r.width, height: r.height, vw: innerWidth, vh: innerHeight };
+    });
+    expect(Math.abs(box.width - box.height)).toBeLessThan(2); // hitTest supõe <svg> quadrado
+    const k = box.width / 900;
+    const at = (r, deg) => ({ x: Math.round(box.left + (450 + r * Math.cos((deg * Math.PI) / 180)) * k), y: Math.round(box.top + (450 + r * Math.sin((deg * Math.PI) / 180)) * k) });
+    const main = (i, n) => at(215, -90 + (i * 360) / n);
+    const sub = (parent, n, j, kids) => {
+      const s = Math.min(38, 320 / kids);
+      return at(332, -90 + (parent * 360) / n - (kids * s) / 2 + (j + 0.5) * s);
+    };
+    const rows = () => browser.execute(() => [...document.querySelectorAll(".tree-row")].map((r) => (r.classList.contains("is-child") ? "  " : "") + r.querySelector(".tree-label").textContent + (r.classList.contains("is-selected") ? "*" : "")));
+    const hint = () => browser.execute(() => document.querySelector(".preview-drag-hint")?.textContent ?? null);
+    const ptr = () => browser.action("pointer");
+    const labels = (items) => items.map((i) => (i.children ? `${i.label}[${i.children.map((c) => c.label).join(",")}]` : i.label)).join(" ");
+
+    // Clique escolhe (e não muda nada).
+    await ptr().move({ ...main(2, 6), origin: "viewport" }).down().pause(60).up().perform();
+    expect(await rows()).toEqual(["A", "B", "C*", "S", "  s1", "  s2", "T", "  t1", "D"]);
+    expect(await browser.execute(() => document.querySelector(".item-editor input").value)).toBe("C");
+    expect(await $("button=Salvar").isEnabled()).toBe(false);
+
+    // Fatia 1 → posição 3 (com captura no meio do arrasto).
+    await ptr().move({ ...main(0, 6), origin: "viewport" }).down().move({ ...main(1, 6), origin: "viewport", duration: 150 }).move({ ...main(2, 6), origin: "viewport", duration: 150 }).pause(150).perform(true);
+    expect(await hint()).toBe("Mover para a posição 3");
+    expect(await $(".preview-ghost").isExisting()).toBe(true);
+    if (process.env.KIRA_SHOT_DIR) await browser.saveScreenshot(join(process.env.KIRA_SHOT_DIR, "19-arrastando.png"));
+    await ptr().move({ ...main(2, 6), origin: "viewport" }).up().perform();
+    expect(await rows()).toEqual(["B", "C", "A*", "S", "  s1", "  s2", "T", "  t1", "D"]);
+    await save();
+    expect(labels(qaConfig().profiles[0].items)).toBe("B C A S[s1,s2] T[t1] D");
+
+    // D parado sobre S → sub-anel abre → solta entre s1 e s2.
+    await ptr().move({ ...main(5, 6), origin: "viewport" }).down().move({ ...main(4, 6), origin: "viewport", duration: 100 }).move({ ...main(3, 6), origin: "viewport", duration: 100 }).pause(800).perform(true);
+    expect(await browser.execute(() => document.querySelectorAll('[data-testid="preview-editor"] .sub-slice').length)).toBe(2);
+    await ptr().move({ ...sub(3, 6, 1, 2), origin: "viewport", duration: 150 }).pause(100).perform(true);
+    expect(await hint()).toBe('Mover para o submenu "S"');
+    if (process.env.KIRA_SHOT_DIR) await browser.saveScreenshot(join(process.env.KIRA_SHOT_DIR, "19-subanel.png"));
+    await ptr().move({ ...sub(3, 6, 1, 2), origin: "viewport" }).up().perform();
+    expect(await rows()).toEqual(["B", "C", "A", "S", "  s1", "  D*", "  s2", "T", "  t1"]);
+    await save();
+    expect(labels(qaConfig().profiles[0].items)).toBe("B C A S[s1,D,s2] T[t1]");
+
+    // Subitem s1 (sub-anel de S aberto pela seleção) → anel, na posição 1.
+    await ptr().move({ ...sub(3, 5, 0, 3), origin: "viewport" }).down().move({ ...main(4, 5), origin: "viewport", duration: 150 }).move({ ...main(0, 5), origin: "viewport", duration: 150 }).pause(100).perform(true);
+    expect(await hint()).toBe("Mover para a posição 1");
+    await ptr().move({ ...main(0, 5), origin: "viewport" }).up().perform();
+    expect(await rows()).toEqual(["s1*", "B", "C", "A", "S", "  D", "  s2", "T", "  t1"]);
+    await save();
+    expect(labels(qaConfig().profiles[0].items)).toBe("s1 B C A S[D,s2] T[t1]");
+
+    // Inválido: submenu S dentro do submenu T → motivo na tela, nada muda.
+    await ptr().move({ ...main(4, 6), origin: "viewport" }).down().move({ ...main(5, 6), origin: "viewport", duration: 150 }).pause(800).perform(true);
+    await ptr().move({ ...sub(5, 6, 0, 1), origin: "viewport", duration: 150 }).pause(100).perform(true);
+    expect(await hint()).toBe("Não dá: submenu dentro de submenu não é permitido");
+    expect(await $(".preview-ghost.is-invalid").isExisting()).toBe(true);
+    if (process.env.KIRA_SHOT_DIR) await browser.saveScreenshot(join(process.env.KIRA_SHOT_DIR, "19-invalido.png"));
+    await ptr().move({ ...sub(5, 6, 0, 1), origin: "viewport" }).up().perform();
+    expect(await rows()).toEqual(["s1", "B", "C", "A", "S*", "  D", "  s2", "T", "  t1"]);
+    expect(await $("button=Salvar").isEnabled()).toBe(false);
+    expect(await $(".preview-ghost").isExisting()).toBe(false);
+
+    // Lista ao lado continua igual: Alt+↓ na linha move o item.
+    await browser.execute(() => document.querySelector(".tree-row.is-selected").dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", altKey: true, bubbles: true })));
+    expect((await rows()).filter((r) => !r.startsWith(" ")).map((r) => r.replace("*", ""))).toEqual(["s1", "B", "C", "A", "T", "S"]);
+    await browser.execute(() => document.querySelector(".tree-row.is-selected").dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", altKey: true, bubbles: true })));
+    expect(await $("button=Salvar").isEnabled()).toBe(false);
+  });
 });
