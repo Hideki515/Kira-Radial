@@ -1,11 +1,12 @@
 import { LogOut, Power, RotateCcw } from "lucide-react";
 import type { SystemCmd } from "../shared/types";
+import { useT } from "../shared/i18n";
 
-/** Comandos de sistema que pedem confirmação antes de rodar. */
-export const CONFIRM: Partial<Record<SystemCmd, { title: string; message: string; button: string; icon: typeof Power }>> = {
-  shutdown: { title: "Desligar", message: "Tem certeza que deseja desligar o computador?", button: "Desligar", icon: Power },
-  restart: { title: "Reiniciar", message: "Tem certeza que deseja reiniciar o computador?", button: "Reiniciar", icon: RotateCcw },
-  signout: { title: "Encerrar sessão", message: "Tem certeza que deseja encerrar a sessão?", button: "Encerrar", icon: LogOut },
+/** Comandos de sistema que pedem confirmação antes de rodar (textos em `confirm.<cmd>.*`). */
+export const CONFIRM: Partial<Record<SystemCmd, { key: "shutdown" | "restart" | "signout"; icon: typeof Power }>> = {
+  shutdown: { key: "shutdown", icon: Power },
+  restart: { key: "restart", icon: RotateCcw },
+  signout: { key: "signout", icon: LogOut },
 };
 
 export type ConfirmChoice = "confirm" | "cancel";
@@ -30,6 +31,7 @@ interface Props {
 
 /** Confirmação no estilo de um diálogo de sistema: ícone, título, pergunta e dois botões. */
 export function ConfirmDialog({ cmd, choice, onChoice, onConfirm, onCancel, x, y }: Props) {
+  const t = useT();
   const info = CONFIRM[cmd];
   if (!info) return null;
   const Icon = info.icon;
@@ -47,8 +49,8 @@ export function ConfirmDialog({ cmd, choice, onChoice, onConfirm, onCancel, x, y
         <div className="confirm-icon" aria-hidden="true">
           <Icon size={18} strokeWidth={2.4} />
         </div>
-        <h2 id="confirm-title" className="confirm-title">{info.title}</h2>
-        <p id="confirm-message" className="confirm-message">{info.message}</p>
+        <h2 id="confirm-title" className="confirm-title">{t(`confirm.${info.key}.title`)}</h2>
+        <p id="confirm-message" className="confirm-message">{t(`confirm.${info.key}.message`)}</p>
         <div className="confirm-buttons">
           <button
             type="button"
@@ -56,7 +58,7 @@ export function ConfirmDialog({ cmd, choice, onChoice, onConfirm, onCancel, x, y
             onPointerMove={() => choice !== "confirm" && onChoice("confirm")}
             onClick={onConfirm}
           >
-            {info.button}
+            {t(`confirm.${info.key}.button`)}
           </button>
           <button
             type="button"
@@ -64,7 +66,7 @@ export function ConfirmDialog({ cmd, choice, onChoice, onConfirm, onCancel, x, y
             onPointerMove={() => choice !== "cancel" && onChoice("cancel")}
             onClick={onCancel}
           >
-            Cancelar
+            {t("common.cancel")}
           </button>
         </div>
       </div>

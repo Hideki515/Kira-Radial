@@ -29,6 +29,7 @@ mod shot;
 mod recent;
 mod power;
 mod stats;
+mod syslang;
 mod updater;
 mod winlist;
 mod winops;
@@ -148,6 +149,7 @@ pub fn run() {
         })
         .invoke_handler(handlers!(
             commands::get_config,
+            commands::system_languages,
             commands::save_config,
             commands::run_action,
             commands::hide_menu,

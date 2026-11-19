@@ -16,6 +16,7 @@ import type { MenuControls, MenuState, Point } from "./menuControls";
 import { useConfirm } from "./useConfirm";
 import { useKnobInput } from "./useKnobInput";
 import { useMenuInput } from "./useMenuInput";
+import { applyLangSetting, t, useLang } from "../shared/i18n";
 import { asSlices, buildIndex, search } from "./search";
 
 export { MEDIA_POLL_MS, TOAST_MS, VOLUME_SHOW_MS } from "./menuHooks";
@@ -58,7 +59,10 @@ function RadialMenu({ config }: { config: Config }) {
   const [openKey, setOpenKey] = useState(0);
   // Submenus automáticos (áudio, janelas, energia...): relidos a cada abertura.
   const sources = useDynamicSources(profile.items, open, openKey);
-  const resolved = useMemo(() => resolveItems(profile.items, sources), [profile.items, sources]);
+  // Idioma da config ("auto" segue o Windows); trocar redesenha os textos do menu.
+  useEffect(() => applyLangSetting(config.behavior.language), [config.behavior.language]);
+  const lang = useLang();
+  const resolved = useMemo(() => resolveItems(profile.items, sources), [profile.items, sources, lang]); // eslint-disable-line react-hooks/exhaustive-deps
   // Busca por digitação: os resultados (todos os perfis) viram as fatias do anel.
   const [query, setQueryState] = useState("");
   const index = useMemo(() => buildIndex(config.profiles), [config.profiles]);
@@ -191,7 +195,7 @@ function RadialMenu({ config }: { config: Config }) {
         // Mídia mantém o menu aberto (backend não o esconde): mostra um retorno rápido.
         if (!isTauri() || action.type === "media") flash(`${item.label}: ${describeAction(action)}`);
       } catch (e) {
-        flash(`Falha em ${item.label}: ${String(e)}`, true);
+        flash(t("menu.failed", { label: item.label, error: String(e) }), true);
       }
     },
     [flash, askConfirm, cancelConfirm],
@@ -316,8 +320,8 @@ function RadialMenu({ config }: { config: Config }) {
       )}
       {!isTauri() && (
         <div className="dev-hint">
-          Modo navegador · <kbd>botão direito</kbd> abre no cursor · <kbd>Esc</kbd> fecha · setas/roda navegam ·{" "}
-          <a href="/settings.html" target="_blank" rel="noreferrer">configurações</a>
+          {t("menu.devHint")}{" "}
+          <a href="/settings.html" target="_blank" rel="noreferrer">{t("menu.devSettings")}</a>
         </div>
       )}
     </>

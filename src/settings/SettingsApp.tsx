@@ -1,4 +1,5 @@
 import { CircleDot, Headset, Orbit, Stethoscope, Keyboard, LayoutGrid, Palette, Save, Settings2, Undo2, Users, Archive, AlertTriangle } from "lucide-react";
+import { applyLangSetting, useLang } from "../shared/i18n";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useSystemStats } from "../hooks/useSystemStats";
 import { getConfig, getHotkeyError, saveConfig } from "../shared/ipc";
@@ -69,6 +70,11 @@ export function SettingsApp() {
   }, []);
 
   // Pré-visualização dos submenus automáticos com os dados reais (lidos uma vez).
+  // O idioma escolhido vale na hora (antes de salvar), como o tema na pré-visualização.
+  useEffect(() => {
+    if (draft) applyLangSetting(draft.behavior.language);
+  }, [draft?.behavior.language]); // eslint-disable-line react-hooks/exhaustive-deps
+  useLang();
   const allItems = useMemo(() => draft?.profiles.flatMap((p) => p.items) ?? [], [draft?.profiles]);
   const sources = useDynamicSources(allItems, true, 0);
 

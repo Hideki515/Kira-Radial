@@ -722,4 +722,83 @@ describe("Kira de teste — ponta a ponta", () => {
     expect(after.error ?? null).toBe(null);
     expect(await $('[data-testid="update-box"]').getText()).toContain("Procurar agora");
   });
+  it("21. (QA) idioma: English nas Configurações vale no menu, na confirmação e no preview do print; Automático tira a chave; inválido não quebra", async () => {
+    const hubLabel = () => $("g.center-hub").getAttribute("aria-label");
+    await nav("Geral");
+    console.log("[21] WebView2:", JSON.stringify(await browser.execute(() => [navigator.language, navigator.languages])));
+    await pickRadio("English");
+    // Vale na hora no rascunho (rótulos do próprio campo).
+    await browser.waitUntil(async () => (await browser.execute(() => document.documentElement.lang)) === "en", { timeoutMsg: "rascunho não trocou o idioma" });
+    await save();
+    expect(qaConfig().behavior.language).toBe("en");
+    // Fatia "Desligar" na posição 1 (a confirmação nunca é aceita aqui; a trava QA vale de todo jeito).
+    const cfg = await invoke("get_config");
+    for (const p of cfg.profiles) p.items[0] = { id: "e2e-off", label: "Desligar", icon: "zap", action: { type: "system", cmd: "shutdown" } };
+    await invoke("save_config", { config: cfg });
+    expect(qaConfig().behavior.language).toBe("en");
+
+    // Menu (config:changed): centro, busca e confirmação em inglês.
+    await invoke("hide_menu");
+    await invoke("qa_show_menu", { fromOrb: false });
+    await toWindow("");
+    await browser.waitUntil(async () => (await hubLabel()) === "Close", { timeoutMsg: "menu não ficou em inglês" });
+    expect(await browser.execute(() => document.documentElement.lang)).toBe("en");
+    for (const k of "zzqx") await pressKey(k, `Key${k.toUpperCase()}`);
+    await $('[data-testid="hub-search"]').waitForExist({ timeout: 5000 });
+    const hubText = await $('[data-testid="hub-search"]').getText();
+    expect(hubText).toContain("SEARCH");
+    expect(hubText).toContain("ESC CLEARS");
+    await pressKey("Escape");
+    await browser.waitUntil(async () => !(await $('[data-testid="hub-search"]').isExisting()), { timeoutMsg: "Esc não limpou a busca" });
+    await pressKey("1", "Digit1");
+    await $('[role="alertdialog"]').waitForExist({ timeout: 5000 });
+    // textContent: getText devolve "" enquanto a animação de entrada ainda está transparente.
+    await browser.waitUntil(async () => (await $("#confirm-title").getProperty("textContent")) === "Shut Down", { timeout: 5000, timeoutMsg: "título da confirmação não ficou em inglês" });
+    expect(await $("#confirm-message").getProperty("textContent")).toBe("Are you sure you want to shut down?");
+    const cancel = await $("button.confirm-btn:not(.is-danger)");
+    expect(await cancel.getProperty("textContent")).toBe("Cancel");
+    await browser.pause(450); // pausa anti-duplo-clique
+    await cancel.click();
+    await browser.waitUntil(async () => !(await $('[role="alertdialog"]').isExisting()), { timeoutMsg: "Cancel não fechou" });
+    await pressKey("Escape");
+    await toWindow("settings.html");
+    await invoke("hide_menu");
+
+    // Preview do print (falso) em inglês.
+    await invoke("qa_fake_shot", { width: 1280, height: 720 });
+    await toWindow("shot.html");
+    await $('[data-testid="shot-preview"]').waitForExist({ timeout: 10000 });
+    await browser.waitUntil(async () => (await $(".shot-title").getText()) === "Screenshot · 1280×720", { timeout: 5000, timeoutMsg: "preview não ficou em inglês" });
+    const labels = await $$(".shot-btn").map((b) => b.getAttribute("aria-label"));
+    expect(labels).toEqual(["Copy", "Save as…", "Edit", "Pin to screen"]);
+    await $('.shot-head button[aria-label="Close"]').click();
+
+    // Automático: apaga a chave e segue o idioma do WebView2.
+    await nav("Geral");
+    await pickRadio("Automatic");
+    await save();
+    expect("language" in qaConfig().behavior).toBe(false);
+    await invoke("qa_show_menu", { fromOrb: false });
+    await toWindow("");
+    // Automático = lista de idiomas do usuário no Windows (qualquer pt → português).
+    const sys = await invoke("system_languages");
+    console.log("[21] system_languages:", JSON.stringify(sys));
+    const want = sys.some((l) => /^pt\b/i.test(l)) ? "Fechar" : "Close";
+    await browser.waitUntil(async () => (await hubLabel()) === want, { timeoutMsg: `automático não seguiu ${JSON.stringify(sys)}` });
+    expect(await browser.execute(() => document.documentElement.lang)).toBe(want === "Fechar" ? "pt-BR" : "en");
+    await pressKey("Escape");
+
+    // Idioma inválido vindo de fora (número, "fr") não derruba o salvar nem grava a chave.
+    await toWindow("settings.html");
+    for (const bad of [5, "fr"]) {
+      const c = await invoke("get_config");
+      c.behavior.language = bad;
+      await invoke("save_config", { config: c });
+      expect("language" in qaConfig().behavior).toBe(false);
+      expect((await invoke("get_config")).profiles.length).toBeGreaterThan(0);
+    }
+    // Lista do Windows limpa: sem NUL no fim e sem repetidos (sem diferenciar caixa).
+    expect(sys.filter((l) => typeof l !== "string" || !l.length || l.includes("\u0000"))).toEqual([]);
+    expect(new Set(sys.map((l) => l.toLowerCase())).size).toBe(sys.length);
+  });
 });

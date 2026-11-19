@@ -183,6 +183,8 @@ export interface Config {
     clipboardHistory?: boolean;
     /** Procura versão nova ao iniciar e a cada 24 h (só avisa). Ausente = ligado. */
     checkUpdates?: boolean;
+    /** Idioma da interface: "auto" (segue o Windows; padrão), "pt" ou "en". */
+    language?: "auto" | "pt" | "en";
     /** Navegador geral para "Abrir site" (id do Windows). Ausente = padrão do Windows. */
     browser?: string;
     browserName?: string;

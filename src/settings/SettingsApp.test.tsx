@@ -122,4 +122,22 @@ describe("SettingsApp", () => {
     await mount(both);
     expect(screen.getByRole("button", { name: /^Ícone$/ })).toBeTruthy();
   });
+
+  it("idioma: escolher English troca na hora e 'Automático' tira a chave", async () => {
+    await mount();
+    fireEvent.click(btn(/^Geral/));
+    fireEvent.click(screen.getByRole("radio", { name: "English" }));
+    await settle();
+    expect(document.documentElement.lang).toBe("en");
+    expect(screen.getByRole("radio", { name: "Automatic" }).getAttribute("aria-checked")).toBe("false");
+    fireEvent.click(btn(/Salvar/));
+    await settle();
+    expect((ipc.save.mock.calls[0][0] as Config).behavior.language).toBe("en");
+    fireEvent.click(screen.getByRole("radio", { name: "Automatic" }));
+    await settle();
+    expect(document.documentElement.lang).toBe("pt-BR");
+    fireEvent.click(btn(/Salvar/));
+    await settle();
+    expect("language" in (ipc.save.mock.calls[1][0] as Config).behavior).toBe(false);
+  });
 });

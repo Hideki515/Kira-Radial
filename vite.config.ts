@@ -23,13 +23,14 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
+    setupFiles: ["src/test-setup.ts"],
     // Testes de página inteira (ex.: editor de tema) passam de 5 s com cobertura e CPU disputada.
     testTimeout: 20_000,
     // npm run coverage → resumo no terminal + relatório em coverage/index.html (fora do git).
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/**/*.test.{ts,tsx}", "src/**/*.d.ts", "src/main.tsx", "src/*/main.tsx"],
+      exclude: ["src/**/*.test.{ts,tsx}", "src/**/*.d.ts", "src/main.tsx", "src/*/main.tsx", "src/test-setup.ts"],
       reporter: ["text-summary", "html", "json-summary"],
       reportsDirectory: "coverage",
       // Mesmo com algum teste falhando, grava o relatório (e o total) para comparação.

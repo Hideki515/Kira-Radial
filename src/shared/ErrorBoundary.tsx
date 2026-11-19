@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { t } from "./i18n";
 import { perfLog } from "./perf";
 
 interface Props {
@@ -33,10 +34,10 @@ export class ErrorBoundary extends Component<Props, State> {
     if (!error) return this.props.children;
     return (
       <div className={`error-fallback${this.props.compact ? " is-compact" : ""}`} role="alert">
-        <strong>Algo deu errado.</strong>
+        <strong>{t("error.title")}</strong>
         {!this.props.compact && <span className="error-detail">{error.message}</span>}
-        <span className="error-hint">O erro foi registrado no log (Configurações → Diagnóstico).</span>
-        <button type="button" className="btn" onClick={() => location.reload()}>Recarregar</button>
+        <span className="error-hint">{t("error.hint")}</span>
+        <button type="button" className="btn" onClick={() => location.reload()}>{t("error.reload")}</button>
       </div>
     );
   }

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.31.0
+
+- **Interface em inglês (parte 1):** nova opção **Idioma / Language** em Configurações → Geral: **Automático** (padrão: português se ele estiver na sua lista de idiomas do Windows, mesmo que não seja o 1º; senão inglês), **Português** ou **English**.
+  - A troca vale na hora, antes mesmo de salvar.
+  - **Já traduzidos:** o menu (centro, busca, avisos de erro), os nomes dos submenus automáticos e os itens que eles geram, a confirmação de desligar/reiniciar/encerrar sessão, o preview e o print fixado, e a tela de erro.
+  - **Ainda em português:** as páginas das Configurações (próxima versão) e as mensagens de erro vindas do sistema.
+  - Nomes de fatias, perfis e temas criados por você não são traduzidos.
+- Valor de idioma inválido no arquivo de configuração é ignorado (vira Automático) em vez de impedir a leitura da config.
+
 ## 0.30.0
 
 - **Atualização automática:** a Kira procura versões novas no repositório público de releases (`Hideki515/Kira-Radial-releases`; o código continua privado).

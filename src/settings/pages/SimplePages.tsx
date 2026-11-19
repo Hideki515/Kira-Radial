@@ -1,4 +1,5 @@
 import { Check, Clipboard, RotateCcw, Upload } from "lucide-react";
+import { useT } from "../../shared/i18n";
 import { useState, type CSSProperties } from "react";
 import { cloneConfig, defaultConfig, withDefaults } from "../../shared/defaults";
 import { HOLO_ACCENT, SCALE_LIMITS, THEMES, THEME_ACCENT, wantsHotkey, wantsOrb, type Config, type LauncherMode, type Theme, type ThemeRef } from "../../shared/types";
@@ -21,6 +22,7 @@ interface PageProps {
 }
 
 export function GeneralPage({ config, update }: PageProps) {
+  const t = useT();
   const b = config.behavior;
   return (
     <>
@@ -30,6 +32,22 @@ export function GeneralPage({ config, update }: PageProps) {
           value={b.openAt}
           options={[{ value: "cursor", label: "Na posição do mouse" }, { value: "center", label: "No centro da tela" }]}
           onChange={(v) => update((c) => void (c.behavior.openAt = v))}
+        />
+      </Field>
+      <Field label={t("lang.label")} hint={t("lang.hint")} group>
+        <Segmented
+          value={b.language ?? "auto"}
+          options={[
+            { value: "auto", label: t("lang.auto") },
+            { value: "pt", label: t("lang.pt") },
+            { value: "en", label: t("lang.en") },
+          ]}
+          onChange={(v) =>
+            update((c) => {
+              if (v === "auto") delete c.behavior.language;
+              else c.behavior.language = v;
+            })
+          }
         />
       </Field>
       <Toggle label="Iniciar com o Windows" checked={b.autostart} onChange={(v) => update((c) => void (c.behavior.autostart = v))} />

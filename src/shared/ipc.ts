@@ -57,6 +57,12 @@ export async function hideMenu(): Promise<void> {
   if (isTauri()) await invoke("hide_menu");
 }
 
+/** Idiomas do usuário no Windows, em ordem (no navegador: os do navegador). */
+export async function systemLanguages(): Promise<string[]> {
+  if (isTauri()) return invoke<string[]>("system_languages");
+  return [...new Set([navigator.language, ...(navigator.languages ?? [])])];
+}
+
 const LS_KEY = "kira-radial:config";
 
 export async function getConfig(): Promise<Config> {

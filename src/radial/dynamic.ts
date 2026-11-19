@@ -1,5 +1,7 @@
 import type { AudioDevice, DiscordVoiceState, DisplayInfo, PowerPlan, RadioInfo, RecentFile, WindowInfo } from "../shared/ipc";
 import { DYNAMIC_KINDS, LIMITS, type DynamicKind, type MenuItem } from "../shared/types";
+import { t, type Key } from "../shared/i18n";
+import { pt } from "../shared/i18n/pt";
 
 /** Cor do dispositivo em uso e dos demais no sub-anel. */
 export const AUDIO_CURRENT_COLOR = "#4ade9b";
@@ -35,8 +37,8 @@ export function audioIcon(name: string): string {
 }
 
 export function audioChildren(parentId: string, devices: AudioDevice[] | null): MenuItem[] {
-  if (devices === null) return [{ id: `${parentId}:loading`, label: "Carregando…", icon: "volume-1" }];
-  if (!devices.length) return [{ id: `${parentId}:none`, label: "Sem saídas", icon: "volume-x" }];
+  if (devices === null) return [{ id: `${parentId}:loading`, label: t("common.loading"), icon: "volume-1" }];
+  if (!devices.length) return [{ id: `${parentId}:none`, label: t("dyn.none.outputs"), icon: "volume-x" }];
   const list = devices.slice(0, LIMITS.maxChildren);
   const labels = audioLabels(list.map((d) => d.name));
   return list.map((d, i) => ({
@@ -66,8 +68,8 @@ export function windowIcon(exe: string | null): string {
 }
 
 export function windowChildren(parentId: string, list: WindowInfo[] | null): MenuItem[] {
-  if (list === null) return [{ id: `${parentId}:loading`, label: "Carregando…", icon: "app-window" }];
-  if (!list.length) return [{ id: `${parentId}:none`, label: "Nenhuma janela", icon: "app-window" }];
+  if (list === null) return [{ id: `${parentId}:loading`, label: t("common.loading"), icon: "app-window" }];
+  if (!list.length) return [{ id: `${parentId}:none`, label: t("dyn.none.windows"), icon: "app-window" }];
   return list.slice(0, LIMITS.maxChildren).map((w) => ({
     id: `${parentId}:${w.hwnd}`,
     label: windowLabel(w.title, w.exe),
@@ -79,8 +81,8 @@ export function windowChildren(parentId: string, list: WindowInfo[] | null): Men
 
 /** Plano ativo em destaque (mesmo verde da saída de áudio atual). */
 export function powerChildren(parentId: string, list: PowerPlan[] | null): MenuItem[] {
-  if (list === null) return [{ id: `${parentId}:loading`, label: "Carregando…", icon: "zap" }];
-  if (!list.length) return [{ id: `${parentId}:none`, label: "Sem planos", icon: "zap" }];
+  if (list === null) return [{ id: `${parentId}:loading`, label: t("common.loading"), icon: "zap" }];
+  if (!list.length) return [{ id: `${parentId}:none`, label: t("dyn.none.power"), icon: "zap" }];
   return list.slice(0, LIMITS.maxChildren).map((p) => ({
     id: `${parentId}:${p.guid}`,
     label: trimLabel(p.name),
@@ -104,8 +106,8 @@ export function targetDisplays(displays: DisplayInfo[], target = "all", targetNa
 }
 
 export function brightnessChildren(parentId: string, displays: DisplayInfo[] | null, target = "all", targetName?: string): MenuItem[] {
-  if (displays === null) return [{ id: `${parentId}:loading`, label: "Carregando…", icon: "sun" }];
-  if (!displays.length) return [{ id: `${parentId}:none`, label: "Sem suporte", icon: "sun-dim" }];
+  if (displays === null) return [{ id: `${parentId}:loading`, label: t("common.loading"), icon: "sun" }];
+  if (!displays.length) return [{ id: `${parentId}:none`, label: t("dyn.none.brightness"), icon: "sun-dim" }];
   const shown = targetDisplays(displays, target, targetName);
   const avg = shown.reduce((s, d) => s + d.level, 0) / shown.length;
   const nearest = BRIGHTNESS_LEVELS.reduce((a, b) => (Math.abs(b - avg) < Math.abs(a - avg) ? b : a));
@@ -120,11 +122,11 @@ export function brightnessChildren(parentId: string, displays: DisplayInfo[] | n
 
 /** Wi-Fi/Bluetooth: ligado em verde; clique alterna. */
 export function radioChildren(parentId: string, radios: RadioInfo[] | null): MenuItem[] {
-  if (radios === null) return [{ id: `${parentId}:loading`, label: "Carregando…", icon: "wifi" }];
-  if (!radios.length) return [{ id: `${parentId}:none`, label: "Sem rádios", icon: "wifi-off" }];
+  if (radios === null) return [{ id: `${parentId}:loading`, label: t("common.loading"), icon: "wifi" }];
+  if (!radios.length) return [{ id: `${parentId}:none`, label: t("dyn.none.radios"), icon: "wifi-off" }];
   return radios.map((r, i) => ({
     id: `${parentId}:${r.kind}:${i}`,
-    label: `${r.kind === "wifi" ? "Wi-Fi" : "Bluetooth"} ${r.on ? "ligado" : "desligado"}`,
+    label: t(r.on ? "dyn.radio.on" : "dyn.radio.off", { name: r.kind === "wifi" ? "Wi-Fi" : "Bluetooth" }),
     icon: r.kind === "wifi" ? (r.on ? "wifi" : "wifi-off") : r.on ? "bluetooth" : "bluetooth-off",
     color: r.on ? AUDIO_CURRENT_COLOR : AUDIO_OTHER_COLOR,
     action: { type: "radio", kind: r.kind, mode: "toggle" },
@@ -133,26 +135,26 @@ export function radioChildren(parentId: string, radios: RadioInfo[] | null): Men
 
 /** Discord fechado / não conectado / erro: uma fatia que explica (sem ação). */
 function discordProblem(parentId: string, state: DiscordVoiceState): MenuItem[] {
-  const label = state.status === "closed" ? "Discord fechado" : state.status === "notConnected" ? "Conectar nas Configurações" : "Discord sem resposta";
+  const label = t(state.status === "closed" ? "dyn.discord.closed" : state.status === "notConnected" ? "dyn.discord.notConnected" : "dyn.discord.error");
   return [{ id: `${parentId}:${state.status}`, label, icon: "headset" }];
 }
 
 /** Microfone e fone do Discord: estado atual (verde = ligado); clique alterna. */
 export function discordVoiceChildren(parentId: string, state: DiscordVoiceState | null): MenuItem[] {
-  if (state === null) return [{ id: `${parentId}:loading`, label: "Carregando…", icon: "headset" }];
+  if (state === null) return [{ id: `${parentId}:loading`, label: t("common.loading"), icon: "headset" }];
   if (state.status !== "ok" || !state.voice) return discordProblem(parentId, state);
   const { mute, deaf } = state.voice;
   return [
     {
       id: `${parentId}:mic`,
-      label: mute ? "Microfone mutado" : "Microfone ligado",
+      label: t(mute ? "dyn.discord.micMuted" : "dyn.discord.micOn"),
       icon: mute ? "mic-off" : "mic",
       color: mute ? AUDIO_OTHER_COLOR : AUDIO_CURRENT_COLOR,
       action: { type: "discord", cmd: "toggleMute" },
     },
     {
       id: `${parentId}:deaf`,
-      label: deaf ? "Ensurdecido" : "Áudio ligado",
+      label: t(deaf ? "dyn.discord.deafened" : "dyn.discord.audioOn"),
       icon: deaf ? "headphone-off" : "headphones",
       color: deaf ? AUDIO_OTHER_COLOR : AUDIO_CURRENT_COLOR,
       action: { type: "discord", cmd: "toggleDeafen" },
@@ -163,13 +165,13 @@ export function discordVoiceChildren(parentId: string, state: DiscordVoiceState 
 /** Dispositivos de entrada ou saída do Discord; o atual em verde, "Padrão" primeiro. */
 export function discordDeviceChildren(parentId: string, state: DiscordVoiceState | null, kind: "input" | "output"): MenuItem[] {
   const icon = kind === "input" ? "mic" : "headphones";
-  if (state === null) return [{ id: `${parentId}:loading`, label: "Carregando…", icon }];
+  if (state === null) return [{ id: `${parentId}:loading`, label: t("common.loading"), icon }];
   if (state.status !== "ok" || !state.voice) return discordProblem(parentId, state);
   const list = state.voice[kind];
   const sorted = [...list.devices].sort((a, b) => Number(b.id === "default") - Number(a.id === "default"));
-  if (!sorted.length) return [{ id: `${parentId}:none`, label: kind === "input" ? "Sem entradas" : "Sem saídas", icon }];
+  if (!sorted.length) return [{ id: `${parentId}:none`, label: t(kind === "input" ? "dyn.none.inputs" : "dyn.none.outputs"), icon }];
   const shown = sorted.slice(0, LIMITS.maxChildren);
-  const labels = audioLabels(shown.map((d) => (d.id === "default" ? "Padrão" : d.name)));
+  const labels = audioLabels(shown.map((d) => (d.id === "default" ? t("dyn.discord.default") : d.name)));
   return shown.map((d, i) => ({
     id: `${parentId}:${d.id}`,
     label: labels[i],
@@ -189,8 +191,8 @@ export function fileIcon(ext: string): string {
 }
 
 export function recentChildren(parentId: string, files: RecentFile[] | null): MenuItem[] {
-  if (files === null) return [{ id: `${parentId}:loading`, label: "Carregando…", icon: "history" }];
-  if (!files.length) return [{ id: `${parentId}:none`, label: "Nada recente", icon: "history" }];
+  if (files === null) return [{ id: `${parentId}:loading`, label: t("common.loading"), icon: "history" }];
+  if (!files.length) return [{ id: `${parentId}:none`, label: t("dyn.none.recent"), icon: "history" }];
   return files.slice(0, LIMITS.maxChildren).map((f, i) => ({
     id: `${parentId}:${i}`,
     label: trimLabel(f.name),
@@ -200,8 +202,8 @@ export function recentChildren(parentId: string, files: RecentFile[] | null): Me
 }
 
 export function clipboardChildren(parentId: string, items: string[] | null): MenuItem[] {
-  if (items === null) return [{ id: `${parentId}:loading`, label: "Carregando…", icon: "clipboard" }];
-  if (!items.length) return [{ id: `${parentId}:none`, label: "Vazio", icon: "clipboard" }];
+  if (items === null) return [{ id: `${parentId}:loading`, label: t("common.loading"), icon: "clipboard" }];
+  if (!items.length) return [{ id: `${parentId}:none`, label: t("dyn.none.clipboard"), icon: "clipboard" }];
   return items.slice(0, LIMITS.maxChildren).map((t, i) => ({
     id: `${parentId}:${i}`,
     label: trimLabel(t),
@@ -223,33 +225,21 @@ export interface DynamicSources {
   discord?: DiscordVoiceState | null;
 }
 
-/** Nome de cada submenu automático (página Itens). */
-export const DYNAMIC_LABEL: Record<DynamicKind, string> = {
-  audioOutputs: "Saídas de áudio",
-  windows: "Janelas abertas",
-  powerPlans: "Planos de energia",
-  brightness: "Brilho da tela",
-  radios: "Wi-Fi e Bluetooth",
-  recentFiles: "Arquivos recentes",
-  clipboard: "Área de transferência",
-  discordVoice: "Discord: microfone e fone",
-  discordInput: "Discord: entrada (microfone)",
-  discordOutput: "Discord: saída (fone)",
-};
+/** Texto `dyn.<grupo>.<tipo>` no idioma atual; tipo desconhecido = undefined (como num objeto comum). */
+function dynText(group: "label" | "hint", kind: string | symbol): string | undefined {
+  const key = `dyn.${group}.${String(kind)}`;
+  return key in pt ? t(key as Key) : undefined;
+}
 
-/** Explicação exibida na página Itens. */
-export const DYNAMIC_HINT: Record<DynamicKind, string> = {
-  audioOutputs: "as saídas de áudio reconhecidas pelo Windows. A saída em uso aparece em verde; clique em outra para trocar.",
-  windows: "as janelas abertas mais recentes, com o ícone de cada app. Clique numa para trazê-la para a frente.",
-  powerPlans: "os planos de energia do Windows. O plano ativo aparece em verde; clique em outro para trocar.",
-  brightness: "níveis de brilho (10% a 100%) aplicados à tela escolhida abaixo — tela do notebook e monitores com DDC/CI. O nível mais próximo do atual aparece em verde.",
-  radios: "o Wi-Fi e o Bluetooth do PC. Ligado aparece em verde; clique para ligar/desligar.",
-  recentFiles: "os arquivos abertos recentemente no Windows (os mesmos de \"Recentes\" no Explorador). Clique para abrir.",
-  clipboard: "os últimos textos copiados. Clique para colar no app que estava em uso. Precisa ligar o histórico em Configurações → Geral (fica só na memória).",
-  discordVoice: "o microfone e o fone do Discord, com o estado atual (verde = ligado). Clique para mutar/desmutar ou ensurdecer. Precisa conectar em Configurações → Discord.",
-  discordInput: "os microfones que o Discord reconhece (os do próprio Discord, não do Windows). O atual aparece em verde. Precisa conectar em Configurações → Discord.",
-  discordOutput: "as saídas de áudio que o Discord reconhece (as do próprio Discord, não do Windows). A atual aparece em verde. Precisa conectar em Configurações → Discord.",
-};
+/** Nome de cada submenu automático (página Itens), no idioma atual. */
+export const DYNAMIC_LABEL: Record<DynamicKind, string> = new Proxy({} as Record<DynamicKind, string>, {
+  get: (_, k) => dynText("label", k),
+});
+
+/** Explicação exibida na página Itens, no idioma atual. */
+export const DYNAMIC_HINT: Record<DynamicKind, string> = new Proxy({} as Record<DynamicKind, string>, {
+  get: (_, k) => dynText("hint", k),
+});
 
 function childrenFor(it: MenuItem, src: DynamicSources): MenuItem[] {
   switch (it.dynamic!) {

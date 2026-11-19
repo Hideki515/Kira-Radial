@@ -162,6 +162,12 @@ fn lenient_animation<'de, D: serde::Deserializer<'de>>(d: D) -> Result<OrbAnimat
     Ok(serde_json::from_value(v).unwrap_or_default())
 }
 
+/// Só "pt" e "en" valem; qualquer outra coisa (inclusive "auto") = automático.
+fn lenient_language<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Option<String>, D::Error> {
+    let v = Value::deserialize(d)?;
+    Ok(v.as_str().filter(|s| matches!(*s, "pt" | "en")).map(str::to_owned))
+}
+
 fn lenient_when<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Option<crate::schedule::When>, D::Error> {
     let v = Value::deserialize(d)?;
     Ok(serde_json::from_value(v).ok())
@@ -225,6 +231,9 @@ pub struct Behavior {
     /// Procurar versão nova ao iniciar e a cada 24 h (só avisa; instalar é com um clique).
     #[serde(default = "default_true")]
     pub check_updates: bool,
+    /// Idioma da interface: "auto" (padrão, segue o Windows), "pt" ou "en".
+    #[serde(default, skip_serializing_if = "Option::is_none", deserialize_with = "lenient_language")]
+    pub language: Option<String>,
     /// Navegador geral para "Abrir site" (id em StartMenuInternet); ausente = padrão do Windows.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub browser: Option<String>,
@@ -554,6 +563,21 @@ mod knob_config_tests {
         v["behavior"]["checkUpdates"] = serde_json::json!(false);
         let c: Config = serde_json::from_value(v).unwrap();
         assert!(!c.behavior.check_updates);
+    }
+
+    #[test]
+    fn idioma_ausente_ou_invalido_vira_automatico() {
+        let mut v: Value = serde_json::to_value(Config::default_config()).unwrap();
+        assert!(v["behavior"].get("language").is_none(), "automático não grava a chave");
+        for bad in [serde_json::json!(5), serde_json::json!("fr"), serde_json::json!("auto")] {
+            v["behavior"]["language"] = bad;
+            let c: Config = serde_json::from_value(v.clone()).expect("idioma estranho não derruba a config");
+            assert_eq!(c.behavior.language, None);
+        }
+        v["behavior"]["language"] = serde_json::json!("en");
+        let c: Config = serde_json::from_value(v).unwrap();
+        assert_eq!(c.behavior.language.as_deref(), Some("en"));
+        assert_eq!(serde_json::to_value(&c).unwrap()["behavior"]["language"], "en");
     }
 
     #[test]

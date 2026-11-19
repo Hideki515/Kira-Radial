@@ -1,6 +1,7 @@
 import { useClock } from "../hooks/useClock";
 import type { NowPlaying, StatsPayload } from "../shared/ipc";
 import { LAYOUT } from "./geometry";
+import { useT } from "../shared/i18n";
 
 interface Props {
   stats: StatsPayload | null;
@@ -38,11 +39,12 @@ export function CenterHub({ stats, showCpu, showClock, hovered, inSubmenu, nowPl
   // Durante a busca o centro é dela (sem capa de mídia).
   const nowPlaying = search ? null : np;
   const { time, date } = useClock();
+  const t = useT();
   const c = LAYOUT.size / 2;
   const cpu = stats ? Math.round(stats.cpu) : null;
   const showVolume = volume !== null && volume !== undefined;
   return (
-    <g className={`center-hub${hovered ? " is-hovered" : ""}${nowPlaying ? " has-media" : ""}`} aria-label={inSubmenu ? "Voltar" : "Fechar"}>
+    <g className={`center-hub${hovered ? " is-hovered" : ""}${nowPlaying ? " has-media" : ""}`} aria-label={inSubmenu ? t("hub.back") : t("common.close")}>
       <circle cx={c} cy={c} r={LAYOUT.mainInner - 6} className="hub-well" />
       <circle cx={c} cy={c} r={LAYOUT.hubRadius} className="hub-disc" />
 
@@ -85,13 +87,13 @@ export function CenterHub({ stats, showCpu, showClock, hovered, inSubmenu, nowPl
         </g>
       ) : search ? (
         <g data-testid="hub-search">
-          <text x={c} y={c - 30} className="hub-date" textAnchor="middle">BUSCAR</text>
+          <text x={c} y={c - 30} className="hub-date" textAnchor="middle">{t("hub.search")}</text>
           <text x={c} y={c + 4} className="hub-time hub-search-text" textAnchor="middle">{clip(search.query, 14)}</text>
           <rect x={c - 46} y={c + 22} width={92} height={18} rx={9} className="hub-pill" />
           <text x={c} y={c + 34.5} className="hub-pill-text" textAnchor="middle">
-            {search.count === 0 ? "NENHUM" : `${search.count} ${search.count === 1 ? "RESULTADO" : "RESULTADOS"}`}
+            {search.count === 0 ? t("hub.results.none") : t(search.count === 1 ? "hub.results.one" : "hub.results.many", { n: search.count })}
           </text>
-          <text x={c} y={c + 62} className="hub-date" textAnchor="middle">ESC LIMPA</text>
+          <text x={c} y={c + 62} className="hub-date" textAnchor="middle">{t("hub.escClears")}</text>
         </g>
       ) : (
         <>

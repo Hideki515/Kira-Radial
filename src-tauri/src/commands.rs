@@ -10,6 +10,12 @@ use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_autostart::ManagerExt;
 use crate::lock::LockExt;
 
+/// Idiomas do usuário no Windows, em ordem (para o idioma "Automático" da interface).
+#[tauri::command]
+pub fn system_languages() -> Vec<String> {
+    crate::syslang::languages()
+}
+
 #[tauri::command]
 pub fn get_config(state: State<'_, AppState>) -> Config {
     state.config()

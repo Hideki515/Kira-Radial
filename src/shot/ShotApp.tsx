@@ -1,6 +1,7 @@
 import { ClipboardCopy, FolderOpen, Pencil, Pin, Save, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  getConfig,
   onEvent,
   shotCopy,
   shotCurrent,
@@ -15,12 +16,14 @@ import {
   type PinImage,
   type ShotInfo,
 } from "../shared/ipc";
+import { applyLangSetting, useT } from "../shared/i18n";
 
 /** Tempo (ms) que o aviso de um botão ("Copiado!") fica visível. */
 const NOTE_MS = 1800;
 
 /** Preview do print no canto da tela: some sozinho (pausa com o mouse em cima). */
 export function ShotPreview() {
+  const t = useT();
   const [shot, setShot] = useState<ShotInfo | null>(null);
   const [hover, setHover] = useState(false);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
@@ -56,7 +59,7 @@ export function ShotPreview() {
   const run = (fn: () => Promise<unknown>, ok?: string) =>
     fn().then(
       (r) => {
-        if (typeof r === "string") flash(true, `Salvo em ${r}`);
+        if (typeof r === "string") flash(true, t("shot.savedTo", { path: r }));
         else if (ok) flash(true, ok);
       },
       (e) => flash(false, String(e)),
@@ -65,11 +68,11 @@ export function ShotPreview() {
   if (!shot) return null;
   // `short` cabe no botão; o nome completo vai na dica e no leitor de tela.
   const buttons: { label: string; short: string; icon: typeof Save; onClick: () => void; hidden?: boolean }[] = [
-    { label: "Copiar", short: "Copiar", icon: ClipboardCopy, onClick: () => void run(() => shotCopy(shot.id), "Copiado!") },
-    { label: "Salvar como…", short: "Salvar", icon: Save, onClick: () => void run(() => shotSaveAs(shot.id)) },
-    { label: "Abrir pasta", short: "Pasta", icon: FolderOpen, onClick: () => void run(() => shotOpenFolder(shot.id)), hidden: !shot.path },
-    { label: "Editar", short: "Editar", icon: Pencil, onClick: () => void run(() => shotEdit(shot.id)) },
-    { label: "Fixar na tela", short: "Fixar", icon: Pin, onClick: () => { setHover(false); void run(() => shotPin(shot.id)); } },
+    { label: t("shot.copy"), short: t("shot.copy"), icon: ClipboardCopy, onClick: () => void run(() => shotCopy(shot.id), t("shot.copied")) },
+    { label: t("shot.saveAs"), short: t("shot.saveShort"), icon: Save, onClick: () => void run(() => shotSaveAs(shot.id)) },
+    { label: t("shot.openFolder"), short: t("shot.folderShort"), icon: FolderOpen, onClick: () => void run(() => shotOpenFolder(shot.id)), hidden: !shot.path },
+    { label: t("shot.edit"), short: t("shot.edit"), icon: Pencil, onClick: () => void run(() => shotEdit(shot.id)) },
+    { label: t("shot.pin"), short: t("shot.pinShort"), icon: Pin, onClick: () => { setHover(false); void run(() => shotPin(shot.id)); } },
   ];
 
   return (
@@ -80,12 +83,12 @@ export function ShotPreview() {
       onMouseLeave={() => setHover(false)}
     >
       <div className="shot-head">
-        <span className="shot-title">Print · {shot.width}×{shot.height}</span>
-        <button type="button" className="shot-icon-btn" title="Fechar" aria-label="Fechar" onClick={() => { setHover(false); void shotDismiss(); }}>
+        <span className="shot-title">{t("shot.title", { w: shot.width, h: shot.height })}</span>
+        <button type="button" className="shot-icon-btn" title={t("common.close")} aria-label={t("common.close")} onClick={() => { setHover(false); void shotDismiss(); }}>
           <X size={15} />
         </button>
       </div>
-      <img className="shot-thumb" src={shot.thumb} alt={`Print de ${shot.width}×${shot.height}`} draggable={false} />
+      <img className="shot-thumb" src={shot.thumb} alt={t("shot.alt", { w: shot.width, h: shot.height })} draggable={false} />
       <div className="shot-actions">
         {buttons.filter((b) => !b.hidden).map(({ label, short, icon: Icon, onClick }) => (
           <button key={label} type="button" className="shot-btn" title={label} aria-label={label} onClick={onClick}>
@@ -95,7 +98,7 @@ export function ShotPreview() {
         ))}
       </div>
       <p className={`shot-note${note ? (note.ok ? " is-ok" : " is-error") : ""}`} role="status">
-        {note?.text ?? (shot.path ? shot.path.split(/[\\/]/).pop() : "Também está na área de transferência.")}
+        {note?.text ?? (shot.path ? shot.path.split(/[\\/]/).pop() : t("shot.inClipboard"))}
       </p>
       {!hover && <div className="shot-timer" style={{ animationDuration: `${shot.seconds}s` }} key={shot.id} />}
     </div>
@@ -104,6 +107,7 @@ export function ShotPreview() {
 
 /** Print fixado na tela: arraste para mover; Esc ou × fecha. */
 export function ShotPin() {
+  const t = useT();
   const [img, setImg] = useState<PinImage | null>(null);
 
   useEffect(() => {
@@ -122,15 +126,26 @@ export function ShotPin() {
   if (!img) return null;
   return (
     <div className="shot-pin" data-testid="shot-pin" onMouseDown={(e) => e.button === 0 && !(e.target as HTMLElement).closest("button") && void startWindowDrag()}>
-      <img src={img.src} alt={`Print fixado de ${img.width}×${img.height}`} draggable={false} />
-      <button type="button" className="shot-icon-btn shot-pin-close" title="Fechar (Esc)" aria-label="Fechar" onClick={() => void shotUnpin()}>
+      <img src={img.src} alt={t("shot.pinAlt", { w: img.width, h: img.height })} draggable={false} />
+      <button type="button" className="shot-icon-btn shot-pin-close" title={t("shot.pinClose")} aria-label={t("common.close")} onClick={() => void shotUnpin()}>
         <X size={16} />
       </button>
     </div>
   );
 }
 
+/** Idioma da config (as janelas do print não carregam a config inteira). */
+function useConfigLang() {
+  useEffect(() => {
+    const load = () => void getConfig().then((c) => applyLangSetting(c.behavior.language), () => {});
+    load();
+    const off = onEvent("config:changed", load);
+    return () => void off.then((f) => f());
+  }, []);
+}
+
 export function ShotApp() {
+  useConfigLang();
   const pin = new URLSearchParams(window.location.search).has("pin");
   return pin ? <ShotPin /> : <ShotPreview />;
 }
