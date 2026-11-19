@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.30.0
+
+- **Atualização automática:** a Kira procura versões novas no repositório público de releases (`Hideki515/Kira-Radial-releases`; o código continua privado).
+  - **Quando procura:** 30 s depois de iniciar e uma vez por dia. Dá para desligar em Configurações → Geral → **Atualizações**, onde também há "Procurar agora".
+  - **Quando há versão nova:**
+    - aparece um aviso no topo das Configurações e a dica da bandeja muda;
+    - a seção mostra o que mudou e o botão **"Atualizar e reiniciar"**, que baixa, instala e reabre a Kira.
+  - **Nada é instalado sem um clique seu**, e só são aceitas versões **assinadas** pela chave da Kira (a chave pública vem embutida no app).
+- **Publicação** (para o desenvolvedor):
+  - `scripts/release.ps1` gera o instalador assinado e o `latest.json` e publica no repositório público; `-DryRun` confere tudo sem publicar;
+  - a chave privada fica fora do repositório, com a senha no Gerenciador de Credenciais do Windows;
+  - `update-installed.ps1` passou a assinar também.
+
 ## 0.29.1
 
 - **Arrastar na pré-visualização:**

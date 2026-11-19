@@ -181,6 +181,8 @@ export interface Config {
     autostart: boolean;
     /** Guarda os últimos textos copiados (só na memória). Padrão: desligado. */
     clipboardHistory?: boolean;
+    /** Procura versão nova ao iniciar e a cada 24 h (só avisa). Ausente = ligado. */
+    checkUpdates?: boolean;
     /** Navegador geral para "Abrir site" (id do Windows). Ausente = padrão do Windows. */
     browser?: string;
     browserName?: string;

@@ -12,6 +12,7 @@ import { MAX_CUSTOM_THEMES, customRef, isCustomRef } from "../../shared/customTh
 import { BackupHistory } from "./BackupHistory";
 import { KnobSection } from "./KnobSection";
 import { ScreenshotSection } from "./ScreenshotSection";
+import { UpdatesSection } from "./UpdatesSection";
 import { clipboardClear } from "../../shared/ipc";
 
 interface PageProps {
@@ -65,6 +66,7 @@ export function GeneralPage({ config, update }: PageProps) {
       </Field>
     </Section>
     <ScreenshotSection config={config} update={update} />
+    <UpdatesSection config={config} update={update} />
     </>
   );
 }

@@ -9,7 +9,19 @@ $installedExe = Join-Path $installDir 'kira-radial.exe'
 if (-not $SkipBuild) {
     Push-Location $root
     try {
-        npx tauri build --bundles nsis
+        # Com a atualização automática ligada, o build com instalador assina a atualização:
+        # usa a chave local (senha no Gerenciador de Credenciais) ou, sem ela, pula os artefatos.
+        . "$PSScriptRoot\lib\credential.ps1"
+        $keyPath = Join-Path $env:USERPROFILE ".tauri\kira-radial.key"
+        $pass = if (Test-Path $keyPath) { [KiraCred]::Read($KiraSigningCredential) } else { $null }
+        if ($pass) {
+            $env:TAURI_SIGNING_PRIVATE_KEY = Get-Content $keyPath -Raw
+            $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = $pass
+            try { npx tauri build --bundles nsis }
+            finally { Remove-Item Env:TAURI_SIGNING_PRIVATE_KEY, Env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD -ErrorAction SilentlyContinue }
+        } else {
+            npx tauri build --bundles nsis --config '{\"bundle\":{\"createUpdaterArtifacts\":false}}'
+        }
         if ($LASTEXITCODE -ne 0) { throw "tauri build falhou ($LASTEXITCODE)" }
     } finally { Pop-Location }
 }

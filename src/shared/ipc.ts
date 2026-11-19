@@ -84,6 +84,31 @@ export async function saveConfig(config: Config): Promise<void> {
   window.dispatchEvent(new CustomEvent("kira:config-changed"));
 }
 
+// --- Atualizações ---
+
+export interface UpdateInfo {
+  current: string;
+  available: boolean;
+  version?: string | null;
+  notes?: string | null;
+  /** Última busca (segundos desde 1970). */
+  checkedAt?: number | null;
+  error?: string | null;
+}
+
+/** Último resultado (sem procurar de novo). */
+export async function updateStatus(): Promise<UpdateInfo> {
+  return isTauri() ? invoke<UpdateInfo>("update_status") : { current: "dev", available: false };
+}
+/** Procura agora no repositório de releases. */
+export async function updateCheck(): Promise<UpdateInfo> {
+  return isTauri() ? invoke<UpdateInfo>("update_check") : { current: "dev", available: false, checkedAt: Math.floor(Date.now() / 1000) };
+}
+/** Baixa, confere a assinatura, instala e reabre a Kira. */
+export async function updateInstall(): Promise<void> {
+  if (isTauri()) await invoke("update_install");
+}
+
 /** Erro ao registrar os atalhos de fatia, ou null. */
 export async function getHotkeysError(): Promise<string | null> {
   return isTauri() ? invoke<string | null>("hotkeys_error") : null;

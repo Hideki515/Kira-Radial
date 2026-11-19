@@ -29,6 +29,7 @@ mod shot;
 mod recent;
 mod power;
 mod stats;
+mod updater;
 mod winlist;
 mod winops;
 
@@ -49,7 +50,7 @@ macro_rules! handlers {
 #[cfg(feature = "qa")]
 macro_rules! handlers {
     ($($cmd:path),* $(,)?) => {
-        tauri::generate_handler![$($cmd,)* qa::commands::qa_show_menu, qa::commands::qa_open_settings, qa::commands::qa_close_settings, qa::commands::qa_state, qa::commands::qa_knob, shot::qa_fake_shot, hotkeys::qa_hotkey]
+        tauri::generate_handler![$($cmd,)* qa::commands::qa_show_menu, qa::commands::qa_open_settings, qa::commands::qa_close_settings, qa::commands::qa_state, qa::commands::qa_knob, shot::qa_fake_shot, hotkeys::qa_hotkey, updater::qa_fake_update]
     };
 }
 
@@ -72,6 +73,7 @@ pub fn run() {
         )
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, None))
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(AppState::new(cfg.clone()))
         .setup(move |app| {
             let handle = app.handle().clone();
@@ -120,6 +122,7 @@ pub fn run() {
             if !qa::ENABLED {
                 build_tray(app)?;
             }
+            updater::spawn_periodic(handle.clone());
             stats::spawn(handle);
             Ok(())
         })
@@ -170,6 +173,9 @@ pub fn run() {
             commands::discord_disconnect,
             commands::knob_error,
             commands::hotkeys_error,
+            updater::update_check,
+            updater::update_status,
+            updater::update_install,
             shot::shot_current,
             shot::shot_copy,
             shot::shot_save,

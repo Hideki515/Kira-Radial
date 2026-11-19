@@ -4,6 +4,7 @@ import { useSystemStats } from "../hooks/useSystemStats";
 import { getConfig, getHotkeyError, saveConfig } from "../shared/ipc";
 import { wantsOrb, type Config, type Profile } from "../shared/types";
 import { IconPage } from "./pages/IconPage";
+import { useUpdateInfo } from "./pages/UpdatesSection";
 import { PreviewEditor } from "./PreviewEditor";
 import { DiagnosticsPage } from "./pages/DiagnosticsPage";
 import { DiscordPage } from "./pages/DiscordPage";
@@ -40,6 +41,7 @@ export function SettingsApp() {
   const [saved, setSaved] = useState<Config | null>(null);
   const [draft, setDraft] = useState<Config | null>(null);
   const [page, setPage] = useState<Page>("items");
+  const [updateInfo] = useUpdateInfo();
   const [profileIdx, setProfileIdx] = useState(0);
   const [selection, setSelection] = useState<Selection>({ main: 0, child: null });
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
@@ -130,6 +132,14 @@ export function SettingsApp() {
       </nav>
 
       <main className="content">
+        {updateInfo?.available && page !== "general" && (
+          <div className="banner-info" role="note" data-testid="update-banner">
+            <span>
+              <strong>Versão {updateInfo.version} disponível.</strong>{" "}
+              <button type="button" className="link" onClick={() => setPage("general")}>Ver e atualizar em Geral</button>
+            </span>
+          </div>
+        )}
         {hotkeyError && (
           <div className="banner-error" role="alert">
             <AlertTriangle size={16} />

@@ -679,4 +679,47 @@ describe("Kira de teste — ponta a ponta", () => {
     await browser.execute(() => document.querySelector(".tree-row.is-selected").dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", altKey: true, bubbles: true })));
     expect(await $("button=Salvar").isEnabled()).toBe(false);
   });
+  it("20. atualização (simulada): aviso no topo, seção em Geral e a Kira de teste não instala", async () => {
+    await nav("Itens do menu");
+    await invoke("qa_fake_update", { version: "9.9.9", notes: "- Teste do aviso" });
+    await $('[data-testid="update-banner"]').waitForExist({ timeout: 5000 });
+    expect(await $('[data-testid="update-banner"]').getText()).toContain("9.9.9");
+    await $('[data-testid="update-banner"] button.link').click();
+    await $('[data-testid="update-box"]').waitForExist({ timeout: 5000 });
+    expect(await $('[data-testid="update-box"]').getText()).toContain("Versão 9.9.9 disponível");
+    expect(await $('[data-testid="update-banner"]').isExisting()).toBe(false);
+    await $("button*=Atualizar e reiniciar").click();
+    await browser.waitUntil(async () => (await $('[data-testid="update-box"]').getText()).includes("não instala"), {
+      timeoutMsg: "a Kira de teste deveria recusar a instalação",
+    });
+  });
+  it("20b. (QA) Atualizações em Geral: toggle grava checkUpdates e 'Procurar agora' não procura de verdade na Kira de teste", async () => {
+    await nav("Geral");
+    const row = await $("label.toggle-row*=Procurar atualizações automaticamente");
+    await row.waitForExist({ timeout: 5000 });
+    const box = await row.$("input.toggle");
+    if (!(await box.isSelected())) {
+      await row.click();
+      await save();
+    }
+    expect(await box.isSelected()).toBe(true);
+    await row.click();
+    expect(await box.isSelected()).toBe(false);
+    await save();
+    expect(qaConfig().behavior.checkUpdates).toBe(false);
+    await row.click();
+    await save();
+    expect(qaConfig().behavior.checkUpdates).not.toBe(false); // ausente ou true (padrão)
+
+    const before = await invoke("update_status");
+    await $("button*=Procurar agora").click();
+    await browser.waitUntil(async () => !(await $('[data-testid="update-box"]').getText()).includes("Procurando"), {
+      timeoutMsg: "'Procurar agora' não terminou",
+    });
+    const after = await invoke("update_status");
+    // Kira de teste: check() devolve o último estado (o aviso simulado do cenário 20), sem rede.
+    expect(after.version).toBe(before.version);
+    expect(after.error ?? null).toBe(null);
+    expect(await $('[data-testid="update-box"]').getText()).toContain("Procurar agora");
+  });
 });

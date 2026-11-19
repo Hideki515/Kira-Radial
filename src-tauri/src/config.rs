@@ -92,6 +92,10 @@ fn lenient_screenshot<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Screensh
     Ok(serde_json::from_value(v).unwrap_or_default())
 }
 
+fn default_true() -> bool {
+    true
+}
+
 fn lenient_knob<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Knob, D::Error> {
     let v = Value::deserialize(d)?;
     Ok(serde_json::from_value(v).unwrap_or_default())
@@ -218,6 +222,9 @@ pub struct Behavior {
     /// Histórico da área de transferência (só memória). Desligado por padrão.
     #[serde(default)]
     pub clipboard_history: bool,
+    /// Procurar versão nova ao iniciar e a cada 24 h (só avisa; instalar é com um clique).
+    #[serde(default = "default_true")]
+    pub check_updates: bool,
     /// Navegador geral para "Abrir site" (id em StartMenuInternet); ausente = padrão do Windows.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub browser: Option<String>,
@@ -537,6 +544,17 @@ mod lenient_when_tests {
 #[cfg(test)]
 mod knob_config_tests {
     use super::*;
+
+    #[test]
+    fn procurar_atualizacoes_vem_ligado_em_config_antiga() {
+        let mut v: Value = serde_json::to_value(Config::default_config()).unwrap();
+        v["behavior"].as_object_mut().unwrap().remove("checkUpdates");
+        let c: Config = serde_json::from_value(v.clone()).unwrap();
+        assert!(c.behavior.check_updates);
+        v["behavior"]["checkUpdates"] = serde_json::json!(false);
+        let c: Config = serde_json::from_value(v).unwrap();
+        assert!(!c.behavior.check_updates);
+    }
 
     #[test]
     fn screenshot_ausente_ou_quebrado_vira_padrao_ligado() {
