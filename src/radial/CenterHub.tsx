@@ -12,6 +12,8 @@ interface Props {
   nowPlaying?: NowPlaying | null;
   /** Volume (0–1) exibido por um instante ao girar a roda sobre o centro. */
   volume?: number | null;
+  /** Busca por digitação: mostra o texto digitado no lugar do relógio/mídia. */
+  search?: { query: string; count: number } | null;
 }
 
 const GAUGE_R = 88;
@@ -32,7 +34,9 @@ function Gauge({ c, value, className }: { c: number; value: number; className: s
   );
 }
 
-export function CenterHub({ stats, showCpu, showClock, hovered, inSubmenu, nowPlaying, volume }: Props) {
+export function CenterHub({ stats, showCpu, showClock, hovered, inSubmenu, nowPlaying: np, volume, search }: Props) {
+  // Durante a busca o centro é dela (sem capa de mídia).
+  const nowPlaying = search ? null : np;
   const { time, date } = useClock();
   const c = LAYOUT.size / 2;
   const cpu = stats ? Math.round(stats.cpu) : null;
@@ -47,7 +51,7 @@ export function CenterHub({ stats, showCpu, showClock, hovered, inSubmenu, nowPl
           <Gauge c={c} value={volume} className="hub-vol" />
         </g>
       ) : (
-        showCpu && !nowPlaying && <Gauge c={c} value={(cpu ?? 0) / 100} className="hub-cpu-gauge" />
+        showCpu && !nowPlaying && !search && <Gauge c={c} value={(cpu ?? 0) / 100} className="hub-cpu-gauge" />
       )}
 
       {nowPlaying ? (
@@ -78,6 +82,16 @@ export function CenterHub({ stats, showCpu, showClock, hovered, inSubmenu, nowPl
           <text x={c} y={c + 42} className="hub-np-title" textAnchor="middle">{clip(nowPlaying.title, 22)}</text>
           <text x={c} y={c + 58} className="hub-np-artist" textAnchor="middle">{clip(nowPlaying.artist || nowPlaying.app, 28)}</text>
           {showClock && <text x={c} y={c - 70} className="hub-np-time" textAnchor="middle">{time}</text>}
+        </g>
+      ) : search ? (
+        <g data-testid="hub-search">
+          <text x={c} y={c - 30} className="hub-date" textAnchor="middle">BUSCAR</text>
+          <text x={c} y={c + 4} className="hub-time hub-search-text" textAnchor="middle">{clip(search.query, 14)}</text>
+          <rect x={c - 46} y={c + 22} width={92} height={18} rx={9} className="hub-pill" />
+          <text x={c} y={c + 34.5} className="hub-pill-text" textAnchor="middle">
+            {search.count === 0 ? "NENHUM" : `${search.count} ${search.count === 1 ? "RESULTADO" : "RESULTADOS"}`}
+          </text>
+          <text x={c} y={c + 62} className="hub-date" textAnchor="middle">ESC LIMPA</text>
         </g>
       ) : (
         <>

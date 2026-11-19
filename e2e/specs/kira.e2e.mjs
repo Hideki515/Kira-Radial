@@ -567,4 +567,21 @@ describe("Kira de teste — ponta a ponta", () => {
     await invoke("save_config", { config: cfg });
     expect(await invoke("hotkeys_error")).toMatch(/ctrl\+alt\+shift\+f9/i);
   });
+  it("18. busca por digitação: resultados viram as fatias; Esc limpa e o 2º Esc fecha", async () => {
+    await toWindow("settings.html");
+    await invoke("hide_menu");
+    await invoke("qa_show_menu", { fromOrb: false });
+    await toWindow("");
+    for (const k of "desm") await pressKey(k, `Key${k.toUpperCase()}`);
+    await browser.waitUntil(async () => (await $$(".main-slice")).length > 0 && (await $$(".main-slice")[0].getAttribute("aria-label")) === "Desmutar", {
+      timeoutMsg: "a fatia do cenário 17 não apareceu na busca",
+    });
+    expect(await $('[data-testid="hub-search"]').getText()).toContain("desm");
+    await pressKey("Escape");
+    await browser.waitUntil(async () => !(await $('[data-testid="hub-search"]').isExisting()), { timeoutMsg: "Esc não limpou a busca" });
+    expect((await qaState()).menuVisible).toBe(true);
+    await pressKey("Escape");
+    await toWindow("settings.html");
+    await browser.waitUntil(async () => !(await qaState()).menuVisible, { timeoutMsg: "o 2º Esc não fechou o menu" });
+  });
 });

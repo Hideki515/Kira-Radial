@@ -4,13 +4,14 @@ import { isTauri } from "../shared/ipc";
 import { LAYOUT } from "./geometry";
 import type { MenuControls } from "./menuControls";
 import { digitIndex, stepIndex, wheelIndex } from "./navigation";
+import { isSearchChar } from "./search";
 
 /** Clique além deste raio (em px do canvas) fecha o menu em vez de escolher uma fatia. */
 const OUTSIDE_RADIUS = LAYOUT.subOuter + 60;
 
 export function useMenuInput(c: MenuControls): void {
   const {
-    state, clickedId, setActiveMain, setActiveSub, setHubHovered, openSub, closeSub, close, showAt, execute, executeSelection,
+    state, clickedId, setActiveMain, setActiveSub, setHubHovered, setQuery, openSub, closeSub, close, showAt, execute, executeSelection,
     computeHit, nudgeVolume, closeOnBlur,
   } = c;
   // Só as partes estáveis do diálogo (o objeto muda a cada renderização).
@@ -71,6 +72,17 @@ export function useMenuInput(c: MenuControls): void {
           else if (ready()) void execute(pending.item, true);
         }
         return;
+      }
+      // Busca por digitação: letras (e números/espaço depois de começar) entram no texto.
+      const q = s.query;
+      if (isSearchChar(e) && !(q === "" && (digitIndex(e) !== null || e.key === " "))) {
+        e.preventDefault();
+        return setQuery(q + e.key);
+      }
+      if (q && (e.key === "Backspace" || e.key === "Escape")) {
+        // Backspace apaga uma letra; Esc limpa a busca (um 2º Esc fecha o menu).
+        e.preventDefault();
+        return setQuery(e.key === "Escape" ? "" : q.slice(0, -1));
       }
       // 1–9 (linha de números ou teclado numérico): escolhe a fatia/subitem direto.
       const n = digitIndex(e);
@@ -151,7 +163,7 @@ export function useMenuInput(c: MenuControls): void {
       window.removeEventListener("blur", onBlur);
     };
   }, [
-    state, clickedId, confirmRef, setChoice, cancel, ready, setActiveMain, setActiveSub, setHubHovered, openSub, closeSub, close, showAt,
+    state, clickedId, confirmRef, setChoice, cancel, ready, setActiveMain, setActiveSub, setHubHovered, setQuery, openSub, closeSub, close, showAt,
     execute, executeSelection, computeHit, nudgeVolume, closeOnBlur,
   ]);
 }

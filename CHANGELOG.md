@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.28.0
+
+- **Busca por digitação:** com o menu aberto, comece a digitar e as fatias viram os resultados.
+  - Procura fatias e subitens de **todos os perfis**, pelo nome e pelo que fazem (ex.: "github.com" acha a fatia do site).
+  - Ignora acentos e maiúsculas e entende iniciais: "cs" acha "Configurações do Sistema".
+  - Até 8 resultados. O 1º já vem escolhido: Enter executa. Setas, roda e knob navegam, e um resultado com subitens abre o sub-anel.
+  - O centro mostra o texto digitado e quantos resultados há.
+  - Backspace apaga uma letra, Esc limpa a busca e um 2º Esc fecha o menu.
+  - Sem busca, as teclas 1–9 continuam escolhendo a fatia direto. Depois de começar a digitar, os números entram no texto.
+  - Submenus automáticos (áudio, janelas etc.) ficam de fora, porque o conteúdo deles é gerado na hora.
+
 ## 0.27.0
 
 - **Atalho global por fatia:** uma fatia (ou subitem) pode ter um atalho de teclado próprio, que executa a ação dela **sem abrir o menu**, de qualquer lugar do Windows e em qualquer perfil.

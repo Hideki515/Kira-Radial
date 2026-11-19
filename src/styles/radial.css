@@ -511,3 +511,6 @@ html.is-tauri body { background: transparent; }
 .confirm-btn.is-danger.is-selected { border-color: rgba(255, 107, 94, 0.7); background: rgba(255, 69, 58, 0.28); }
 .confirm-btn:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.6); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .confirm-card { animation: none; } }
+
+/* --- busca por digitação (texto no centro) --- */
+.hub-time.hub-search-text { font-size: 24px; letter-spacing: 0.02em; }

@@ -25,6 +25,8 @@ export interface RadialCanvasProps {
   nowPlaying?: NowPlaying | null;
   volume?: number | null;
   appearance: Config["appearance"];
+  /** Busca por digitação em andamento: o centro mostra o texto e quantos resultados. */
+  search?: { query: string; count: number } | null;
 }
 
 const C = LAYOUT.size / 2;
@@ -45,7 +47,7 @@ const ORBIT_ARCS: [number, number, number][] = [
 ];
 
 /** Componente puramente visual — reutilizado pela janela radial e pelo preview das configurações. */
-export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovered, stats, appearance, nowPlaying, volume }: RadialCanvasProps) {
+export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovered, stats, appearance, nowPlaying, volume, search }: RadialCanvasProps) {
   const subParent = openMain === undefined ? activeMain : openMain;
   const parentItem = subParent !== null ? items[subParent] : undefined;
   const children = parentItem?.children ?? [];
@@ -177,6 +179,7 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
         inSubmenu={openMain === undefined ? activeSub !== null : subOpen}
         nowPlaying={appearance.showMedia === false ? null : nowPlaying}
         volume={volume}
+        search={search}
       />
       {holo && <HoloFront />}
       {theme === "reactor" && <ReactorFront />}

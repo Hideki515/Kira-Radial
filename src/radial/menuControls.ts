@@ -16,6 +16,8 @@ export interface MenuState {
   items: MenuItem[];
   open: boolean;
   origin: Point | null;
+  /** Texto da busca por digitação ("" = sem busca; os resultados viram as fatias). */
+  query: string;
 }
 
 export interface MenuControls {
@@ -26,6 +28,7 @@ export interface MenuControls {
   setActiveMain: (i: number | null) => void;
   setActiveSub: (i: number | null) => void;
   setHubHovered: (v: boolean) => void;
+  setQuery: (q: string) => void;
   openSub: (index: number, selectFirst: boolean) => void;
   closeSub: () => void;
   close: () => void;

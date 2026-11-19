@@ -16,6 +16,7 @@ import type { MenuControls, MenuState, Point } from "./menuControls";
 import { useConfirm } from "./useConfirm";
 import { useKnobInput } from "./useKnobInput";
 import { useMenuInput } from "./useMenuInput";
+import { asSlices, buildIndex, search } from "./search";
 
 export { MEDIA_POLL_MS, TOAST_MS, VOLUME_SHOW_MS } from "./menuHooks";
 
@@ -58,8 +59,13 @@ function RadialMenu({ config }: { config: Config }) {
   // Submenus automáticos (áudio, janelas, energia...): relidos a cada abertura.
   const sources = useDynamicSources(profile.items, open, openKey);
   const resolved = useMemo(() => resolveItems(profile.items, sources), [profile.items, sources]);
+  // Busca por digitação: os resultados (todos os perfis) viram as fatias do anel.
+  const [query, setQueryState] = useState("");
+  const index = useMemo(() => buildIndex(config.profiles), [config.profiles]);
+  const results = useMemo(() => (query ? search(index, query, profile.id) : []), [index, query, profile.id]);
+  const shownBase = useMemo(() => (query ? asSlices(results) : resolved), [query, results, resolved]);
   // Ícones próprios (iconFile) viram imagem assim que carregam.
-  const items = useIconFiles(resolved);
+  const items = useIconFiles(shownBase);
   /** Aberto pelo ícone: ponto (px da janela) de onde o menu nasce e para onde se recolhe. */
   const [origin, setOrigin] = useState<Point | null>(null);
   /** Animação de recolher em andamento (o menu já não aceita entrada). */
@@ -89,8 +95,19 @@ function RadialMenu({ config }: { config: Config }) {
   const children: MenuItem[] = openMain !== null ? items[openMain]?.children ?? [] : [];
 
   // Refs para os handlers globais lerem o estado atual sem re-registrar listeners.
-  const state = useRef<MenuState>({ activeMain, activeSub, openMain, children, center, items, open, origin });
-  state.current = { activeMain, activeSub, openMain, children, center, items, open, origin };
+  const state = useRef<MenuState>({ activeMain, activeSub, openMain, children, center, items, open, origin, query });
+  state.current = { activeMain, activeSub, openMain, children, center, items, open, origin, query };
+
+  /** Texto novo: o 1º resultado fica escolhido (Enter executa), sem sub-anel aberto. */
+  const setQuery = useCallback(
+    (q: string) => {
+      setQueryState(q);
+      setOpenMain(null);
+      setActiveSub(null);
+      setActiveMain(q && search(index, q, profile.id).length ? 0 : null);
+    },
+    [index, profile.id],
+  );
 
   /** Desligar/reiniciar/sair aguardando confirmação (diálogo sobre o menu). */
   const confirm = useConfirm();
@@ -101,6 +118,7 @@ function RadialMenu({ config }: { config: Config }) {
     setActiveSub(null);
     setOpenMain(null);
     setHubHovered(false);
+    setQueryState("");
     cancelConfirm();
   }, [cancelConfirm]);
 
@@ -240,7 +258,7 @@ function RadialMenu({ config }: { config: Config }) {
 
   // --- Entrada: mouse/teclado/roda e knob ---
   const controls: MenuControls = {
-    state, confirm, clickedId, setActiveMain, setActiveSub, setHubHovered, openSub, closeSub, close, showAt, execute, executeSelection,
+    state, confirm, clickedId, setActiveMain, setActiveSub, setHubHovered, setQuery, openSub, closeSub, close, showAt, execute, executeSelection,
     computeHit, nudgeVolume, closeOnBlur: config.behavior.closeOnBlur,
   };
   useMenuInput(controls);
@@ -276,6 +294,7 @@ function RadialMenu({ config }: { config: Config }) {
             nowPlaying={media}
             volume={volume}
             appearance={config.appearance}
+            search={query ? { query, count: results.length } : null}
           />
         </div>
       )}
