@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.29.1
+
+- **Arrastar na pré-visualização:**
+  - Esc cancela o arrasto sem mudar nada, assim como quando o Windows toma o ponteiro (ex.: a janela perde o foco no meio do arrasto);
+  - a seleção depois de soltar passa a ser calculada antes de alterar o rascunho, o que deixa mais robusto o "o item continua escolhido onde caiu".
+
 ## 0.29.0
 
 - **Editar arrastando na pré-visualização** (Configurações → Itens):

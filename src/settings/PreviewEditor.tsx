@@ -109,15 +109,33 @@ export function PreviewEditor({ items, profile, selection, onSelect, edit, deadZ
       clearSpring();
       setDrag(null);
       if (!d?.started || !d.target || moveError(profileRef.current, d.from, d.target)) return;
-      let landed: Loc | null = null;
-      edit((p) => void (landed = moveItem(p, d.from, d.target!)));
-      if (landed) onSelect(landed);
+      // Onde o item vai parar: calculado numa cópia, antes de alterar o rascunho (não depende
+      // de quando o React executa o updater de `edit`).
+      const landed = moveItem(structuredClone(profileRef.current), d.from, d.target);
+      if (!landed) return;
+      edit((p) => void moveItem(p, d.from, d.target!));
+      onSelect(landed);
+    };
+    // Esc ou o sistema tomando o ponteiro: cancela sem mudar nada.
+    const cancel = () => {
+      clearSpring();
+      setDrag(null);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        cancel();
+      }
     };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", cancel);
+    window.addEventListener("keydown", onKey);
     return () => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", cancel);
+      window.removeEventListener("keydown", onKey);
     };
     // Só registra ao começar/terminar um arrasto (o resto é lido pelos refs).
   }, [drag === null]); // eslint-disable-line react-hooks/exhaustive-deps

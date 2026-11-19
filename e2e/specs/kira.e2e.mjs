@@ -623,6 +623,16 @@ describe("Kira de teste — ponta a ponta", () => {
     expect(await browser.execute(() => document.querySelector(".item-editor input").value)).toBe("C");
     expect(await $("button=Salvar").isEnabled()).toBe(false);
 
+    // (QA v0.29.1) Esc no meio do arrasto cancela: some a dica e o fantasma, soltar não move nada.
+    await ptr().move({ ...main(0, 6), origin: "viewport" }).down().move({ ...main(1, 6), origin: "viewport", duration: 150 }).move({ ...main(2, 6), origin: "viewport", duration: 150 }).pause(150).perform(true);
+    expect(await hint()).toBe("Mover para a posição 3");
+    await pressKey("Escape");
+    await browser.waitUntil(async () => (await hint()) === null && !(await $(".preview-ghost").isExisting()), { timeoutMsg: "Esc não cancelou o arrasto" });
+    await ptr().move({ ...main(2, 6), origin: "viewport" }).up().perform();
+    expect(await rows()).toEqual(["A*", "B", "C", "S", "  s1", "  s2", "T", "  t1", "D"]);
+    expect(await $("button=Salvar").isEnabled()).toBe(false);
+    expect(labels(qaConfig().profiles[0].items)).toBe("A B C S[s1,s2] T[t1] D");
+
     // Fatia 1 → posição 3 (com captura no meio do arrasto).
     await ptr().move({ ...main(0, 6), origin: "viewport" }).down().move({ ...main(1, 6), origin: "viewport", duration: 150 }).move({ ...main(2, 6), origin: "viewport", duration: 150 }).pause(150).perform(true);
     expect(await hint()).toBe("Mover para a posição 3");

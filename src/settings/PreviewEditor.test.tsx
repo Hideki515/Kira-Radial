@@ -83,6 +83,21 @@ describe("arrastar na pré-visualização", () => {
     expect(latestSel).toEqual({ main: 0, child: 1 });
   });
 
+  it("Esc (ou o sistema cancelar o ponteiro) desiste do arrasto sem mudar nada", () => {
+    render(<Harness initial={{ id: "p", name: "P", items: [a("A"), a("B"), a("C"), a("D")] }} />);
+    down(mainPt(0, 4));
+    move(mainPt(2, 4));
+    act(() => void fireEvent.keyDown(window, { key: "Escape" }));
+    expect(screen.queryByRole("status")).toBeNull();
+    up();
+    expect(latest.items.map((i) => i.id)).toEqual(["A", "B", "C", "D"]);
+    down(mainPt(0, 4));
+    move(mainPt(2, 4));
+    act(() => void window.dispatchEvent(new Event("pointercancel")));
+    up();
+    expect(latest.items.map((i) => i.id)).toEqual(["A", "B", "C", "D"]);
+  });
+
   it("movimento inválido mostra o motivo e não altera nada", () => {
     vi.useFakeTimers();
     const sub: MenuItem = { id: "S", label: "S", icon: "code", children: [a("s1")] };
