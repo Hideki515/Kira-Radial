@@ -1,76 +1,64 @@
 // Textos e contas para a interface (funções puras, sem chamar o backend).
 // Reexportado por ipc.ts: quem já importa de lá continua funcionando.
 import type { Action, DiscordCmd, WindowCmd } from "./types";
+import { t, type Key } from "./i18n";
 
-const MEDIA_LABEL: Record<string, string> = {
-  playpause: "play/pause",
-  next: "próxima faixa",
-  prev: "faixa anterior",
-  volup: "volume +",
-  voldown: "volume −",
-  mute: "mudo",
-};
+/** Tabela que lê o texto no idioma atual a cada acesso (`prefix.<chave>`); chave desconhecida = undefined. */
+function labels<K extends string>(prefix: string, keys: readonly K[]): Record<K, string> {
+  return new Proxy({} as Record<K, string>, {
+    get: (_, k) => ((keys as readonly string[]).includes(String(k)) ? t(`${prefix}.${String(k)}` as Key) : undefined),
+    has: (_, k) => (keys as readonly string[]).includes(String(k)),
+    ownKeys: () => [...keys],
+    getOwnPropertyDescriptor: (_, k) =>
+      (keys as readonly string[]).includes(String(k)) ? { enumerable: true, configurable: true, value: t(`${prefix}.${String(k)}` as Key) } : undefined,
+  });
+}
 
-export const WINDOW_LABEL: Record<WindowCmd, string> = {
-  topmost: "Sempre no topo (liga/desliga)",
-  nextMonitor: "Mover para o próximo monitor",
-  snapLeft: "Encaixar à esquerda",
-  snapRight: "Encaixar à direita",
-  maximize: "Maximizar / restaurar",
-  minimize: "Minimizar",
-  minimizeAll: "Minimizar todas as janelas",
-};
+const MEDIA_LABEL: Record<string, string> = labels("d.media", ["playpause", "next", "prev", "volup", "voldown", "mute"]);
 
-export const DISCORD_LABEL: Record<DiscordCmd, string> = {
-  toggleMute: "Alternar microfone (mudo)",
-  mute: "Mutar microfone",
-  unmute: "Desmutar microfone",
-  toggleDeafen: "Alternar fone (ensurdecer)",
-  deafen: "Ensurdecer",
-  undeafen: "Reativar o áudio",
-  setInput: "Usar dispositivo de entrada",
-  setOutput: "Usar dispositivo de saída",
-};
+export const WINDOW_LABEL: Record<WindowCmd, string> = labels<WindowCmd>("d.win", ["topmost", "nextMonitor", "snapLeft", "snapRight", "maximize", "minimize", "minimizeAll"]);
+
+export const DISCORD_LABEL: Record<DiscordCmd, string> = labels<DiscordCmd>("d.dc", ["toggleMute", "mute", "unmute", "toggleDeafen", "deafen", "undeafen", "setInput", "setOutput"]);
 
 export function describeAction(a: Action): string {
   switch (a.type) {
-    case "launch": return `Executar ${a.path}`;
-    case "folder": return `Abrir pasta ${a.path}`;
+    case "launch": return t("d.launch", { path: a.path });
+    case "folder": return t("d.folder", { path: a.path });
     case "url": {
-      const where = [a.browser && a.browser !== "system" ? `no ${a.browserName ?? a.browser}` : "", a.private ? "(anônima)" : ""].filter(Boolean).join(" ");
-      return `Abrir ${a.url}${where ? ` ${where}` : ""}`;
+      const where = [a.browser && a.browser !== "system" ? t("d.url.in", { browser: a.browserName ?? a.browser }) : "", a.private ? t("d.url.private") : ""].filter(Boolean).join(" ");
+      return t("d.url", { url: a.url }) + (where ? ` ${where}` : "");
     }
-    case "keys": return `Enviar ${a.combo}`;
-    case "media": return MEDIA_LABEL[a.cmd] ?? `Mídia: ${a.cmd}`;
-    case "system": return `Sistema: ${a.cmd}`;
-    case "script": return `Script (${a.shell})`;
-    case "openSettings": return "Abrir configurações";
+    case "keys": return t("d.keys", { combo: a.combo });
+    case "media": return MEDIA_LABEL[a.cmd] ?? t("d.media", { cmd: a.cmd });
+    case "system": return t("d.system", { cmd: a.cmd });
+    case "script": return t("d.script", { shell: a.shell });
+    case "openSettings": return t("d.openSettings");
     case "window":
       return WINDOW_LABEL[a.cmd];
     case "paste":
-      return `Colar "${a.preview ?? "texto"}"`;
+      return t("d.paste", { text: a.preview ?? t("d.paste.default") });
     case "radio": {
       const what = a.kind === "wifi" ? "Wi-Fi" : "Bluetooth";
-      return a.mode === "on" ? `Ligar ${what}` : a.mode === "off" ? `Desligar ${what}` : `Ligar/desligar ${what}`;
+      return t(a.mode === "on" ? "d.radio.on" : a.mode === "off" ? "d.radio.off" : "d.radio.toggle", { what });
     }
     case "brightness":
     {
-      const what = a.mode === "up" ? "Aumentar brilho" : a.mode === "down" ? "Diminuir brilho" : `Brilho ${a.value ?? 100}%`;
-      const where = a.target === "cursor" ? " (tela do menu)" : a.target && a.target !== "all" ? ` (${a.targetName ?? (a.target === "lcd" ? "notebook" : "monitor")})` : "";
+      const what = a.mode === "up" ? t("d.bright.up") : a.mode === "down" ? t("d.bright.down") : t("d.bright.set", { pct: a.value ?? 100 });
+      const where = a.target === "cursor" ? t("d.bright.cursor") : a.target && a.target !== "all" ? ` (${a.targetName ?? t(a.target === "lcd" ? "d.bright.lcd" : "d.bright.monitor")})` : "";
       return what + where;
     }
     case "powerPlan":
-      return `Plano de energia: ${a.name ?? a.guid}`;
+      return t("d.power", { name: a.name ?? a.guid });
     case "focusWindow":
-      return `Ir para ${a.title ?? "a janela"}`;
+      return t("d.focus", { title: a.title ?? t("d.focus.default") });
     case "discord":
       return a.cmd === "setInput" || a.cmd === "setOutput"
-        ? `Discord: ${a.cmd === "setInput" ? "entrada" : "saída"} ${a.deviceName ?? a.deviceId ?? "?"}`
-        : `Discord: ${(DISCORD_LABEL[a.cmd] ?? a.cmd).toLowerCase()}`;
+        ? t("d.dc.device", { kind: t(a.cmd === "setInput" ? "d.dc.input" : "d.dc.output"), name: a.deviceName ?? a.deviceId ?? "?" })
+        : t("d.dc.cmd", { cmd: (DISCORD_LABEL[a.cmd] ?? a.cmd).toLowerCase() });
     case "sequence":
-      return `Sequência: ${a.steps.length} ${a.steps.length === 1 ? "ação" : "ações"}`;
+      return a.steps.length === 1 ? t("d.seq.one") : t("d.seq.many", { n: a.steps.length });
     case "audioOutput":
-      return a.mode === "cycle" ? "Alternar saída de áudio" : `Saída de áudio: ${a.deviceName ?? a.deviceId ?? "?"}`;
+      return a.mode === "cycle" ? t("d.audio.cycle") : t("d.audio.set", { name: a.deviceName ?? a.deviceId ?? "?" });
   }
 }
 
@@ -93,7 +81,8 @@ export interface OpenStats {
 
 /** "média 42 ms · 90% abaixo de 60 ms · pior 120 ms (últimas 18)" ou "ainda não aberto". */
 export function describeOpenStats(s: OpenStats | undefined): string {
-  if (!s || !s.count) return "o menu ainda não foi aberto nesta sessão";
+  if (!s || !s.count) return t("d.open.none");
   const ms = (v: number) => `${Math.round(v)} ms`;
-  return `média ${ms(s.avgMs)} · 90% abaixo de ${ms(s.p90Ms)} · pior ${ms(s.maxMs)} · última ${ms(s.lastMs)} (${s.count} ${s.count === 1 ? "abertura" : "aberturas"})`;
+  const v = { avg: ms(s.avgMs), p90: ms(s.p90Ms), max: ms(s.maxMs), last: ms(s.lastMs), n: s.count };
+  return s.count === 1 ? t("d.open.stats.one", v) : t("d.open.stats.many", v);
 }

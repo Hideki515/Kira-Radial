@@ -40,7 +40,7 @@ fn store(app: &AppHandle, info: UpdateInfo) -> UpdateInfo {
     let newly = info.available && was.as_ref().and_then(|w| w.version.clone()) != info.version;
     if newly {
         if let Some(tray) = app.tray_by_id("main") {
-            let _ = tray.set_tooltip(Some(format!("Kira Radial — versão {} disponível", info.version.clone().unwrap_or_default())));
+            let _ = tray.set_tooltip(Some(trf!("Kira Radial — versão {} disponível", "Kira Radial — version {} available", info.version.clone().unwrap_or_default())));
         }
     }
     let _ = app.emit("update:status", info.clone());
@@ -69,7 +69,7 @@ pub async fn check(app: &AppHandle) -> UpdateInfo {
         }
         Err(e) => {
             crate::perf::log_level(crate::perf::Level::Warn, "rust", &format!("atualização: {e}"));
-            UpdateInfo { error: Some(format!("não foi possível procurar atualizações: {e}")), ..base }
+            UpdateInfo { error: Some(trf!("não foi possível procurar atualizações: {e}", "couldn't check for updates: {e}")), ..base }
         }
     };
     store(app, info)
@@ -114,19 +114,19 @@ pub fn update_status(app: AppHandle) -> UpdateInfo {
 #[cfg(not(feature = "qa"))]
 #[tauri::command]
 pub async fn update_install(app: AppHandle) -> Result<(), String> {
-    let update = PENDING.lock_ok().take().ok_or("nenhuma atualização pendente: procure de novo")?;
+    let update = PENDING.lock_ok().take().ok_or(tr!("nenhuma atualização pendente: procure de novo", "no pending update: check again"))?;
     crate::perf::log("rust", &format!("instalando a versão {}", update.version));
     update
         .download_and_install(|_, _| {}, || {})
         .await
-        .map_err(|e| format!("falha ao instalar a atualização: {e}"))?;
+        .map_err(|e| trf!("falha ao instalar a atualização: {e}", "couldn't install the update: {e}"))?;
     app.restart();
 }
 
 #[cfg(feature = "qa")]
 #[tauri::command]
 pub async fn update_install(_app: AppHandle) -> Result<(), String> {
-    Err("a Kira de teste não instala atualizações".into())
+    Err(tr!("a Kira de teste não instala atualizações", "the test Kira doesn't install updates").into())
 }
 
 /// Kira de teste: simula "há versão nova" para testar o aviso sem baixar nada.

@@ -1,7 +1,9 @@
 // "Quando usar" dos perfis (dias, horário, monitores): validação e resumo legível.
 import type { ProfileWhen } from "./types";
+import { t } from "./i18n";
 
-export const DAY_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"] as const;
+/** Dias curtos (domingo = 0), no idioma atual. */
+export const dayShort = (): string[] => t("s.days").split(",");
 
 /** "08:30" → 510; inválido → null. */
 export function parseHHMM(s: string | undefined): number | null {
@@ -20,23 +22,24 @@ export function hasCriteria(w: ProfileWhen | undefined): boolean {
 export function whenErrors(w: ProfileWhen | undefined): string[] {
   if (!w) return [];
   const out: string[] = [];
-  if (!!w.from !== !!w.to) out.push("informe o horário de início e de fim.");
+  if (!!w.from !== !!w.to) out.push(t("s.bothTimes"));
   else if (w.from && w.to) {
     const f = parseHHMM(w.from);
-    const t = parseHHMM(w.to);
-    if (f === null || t === null) out.push("horário inválido (use HH:MM).");
-    else if (f === t) out.push("o início e o fim do horário não podem ser iguais.");
+    const to = parseHHMM(w.to);
+    if (f === null || to === null) out.push(t("s.badTime"));
+    else if (f === to) out.push(t("s.sameTime"));
   }
-  if (w.days?.some((d) => !Number.isInteger(d) || d < 0 || d > 6)) out.push("dia da semana inválido.");
+  if (w.days?.some((d) => !Number.isInteger(d) || d < 0 || d > 6)) out.push(t("s.badDay"));
   return out;
 }
 
 /** Dias em texto curto: [1..5] → "Seg–Sex"; [0,6] → "Dom, Sáb". */
 export function describeDays(days: number[] | undefined): string {
   const d = [...new Set(days ?? [])].sort((a, b) => a - b);
-  if (!d.length || d.length === 7) return "todos os dias";
+  if (!d.length || d.length === 7) return t("s.everyDay");
   const consecutive = d.length > 2 && d.every((x, i) => i === 0 || x === d[i - 1] + 1);
-  return consecutive ? `${DAY_SHORT[d[0]]}–${DAY_SHORT[d[d.length - 1]]}` : d.map((x) => DAY_SHORT[x]).join(", ");
+  const names = dayShort();
+  return consecutive ? `${names[d[0]]}–${names[d[d.length - 1]]}` : d.map((x) => names[x]).join(", ");
 }
 
 /** Resumo para o cartão do perfil: "Seg–Sex 09:00–18:00 · Monitor 2". */

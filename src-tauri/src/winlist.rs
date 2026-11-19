@@ -256,7 +256,7 @@ pub fn focus(hwnd: i64) -> Result<(), String> {
     let h = HWND(hwnd as isize as *mut _);
     unsafe {
         if !IsWindow(Some(h)).as_bool() {
-            return Err("a janela foi fechada".into());
+            return Err(tr!("a janela foi fechada", "the window was closed").into());
         }
         if IsIconic(h).as_bool() {
             let _ = ShowWindow(h, SW_RESTORE);

@@ -58,13 +58,13 @@ static REGISTERED: Mutex<Registered> = Mutex::new(Registered { keys: Vec::new(),
 pub fn shortcuts(k: &Knob, menu_hotkey: Option<&str>) -> Result<Vec<(Shortcut, Input)>, String> {
     let mut out: Vec<(Shortcut, Input)> = Vec::new();
     let menu_sc = menu_hotkey.and_then(|h| menu::to_shortcut(h).ok());
-    for (acc, input, name) in [(&k.press, Input::Press, "apertar"), (&k.right, Input::Right, "girar para a direita"), (&k.left, Input::Left, "girar para a esquerda")] {
-        let sc = menu::to_shortcut(acc).map_err(|e| format!("tecla de \"{name}\": {e}"))?;
+    for (acc, input, name) in [(&k.press, Input::Press, tr!("apertar", "press")), (&k.right, Input::Right, tr!("girar para a direita", "turn right")), (&k.left, Input::Left, tr!("girar para a esquerda", "turn left"))] {
+        let sc = menu::to_shortcut(acc).map_err(|e| trf!("tecla de \"{name}\": {e}", "key for \"{name}\": {e}"))?;
         if out.iter().any(|(o, _)| *o == sc) {
-            return Err(format!("a tecla {acc} foi usada em mais de um movimento do knob"));
+            return Err(trf!("a tecla {acc} foi usada em mais de um movimento do knob", "the key {acc} is used for more than one knob movement"));
         }
         if menu_sc == Some(sc) {
-            return Err(format!("a tecla {acc} já é o atalho do menu"));
+            return Err(trf!("a tecla {acc} já é o atalho do menu", "the key {acc} is already the menu shortcut"));
         }
         out.push((sc, input));
     }
@@ -94,7 +94,7 @@ pub fn apply(app: &AppHandle, cfg: &crate::config::Config) -> Result<(), String>
                     for (old, _) in done {
                         let _ = gs.unregister(old);
                     }
-                    return Err(format!("não foi possível registrar a tecla do knob {sc} (em uso por outro programa?): {e}"));
+                    return Err(trf!("não foi possível registrar a tecla do knob {sc} (em uso por outro programa?): {e}", "couldn't register the knob key {sc} (in use by another program?): {e}"));
                 }
                 done.push((sc, input));
             }
@@ -131,7 +131,7 @@ pub fn set_paused(app: &AppHandle, paused: bool) {
             let _ = gs.unregister(sc);
         } else if !gs.is_registered(sc) {
             if let Err(e) = gs.register(sc) {
-                failed = Some(format!("a tecla do knob {sc} não voltou a funcionar (em uso por outro programa?): {e}"));
+                failed = Some(trf!("a tecla do knob {sc} não voltou a funcionar (em uso por outro programa?): {e}", "the knob key {sc} didn't start working again (in use by another program?): {e}"));
             }
         }
     }

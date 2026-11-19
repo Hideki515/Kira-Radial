@@ -29,7 +29,7 @@ pub struct Display {
 /// "lcd"; "ddc:N" (configs antigas); "mon:..." pelo id ou, se sumiu, pelo nome (`name`).
 pub fn resolve<'a>(target: &str, name: Option<&str>, list: &'a [Display], cursor_device: &str) -> Result<Vec<&'a Display>, String> {
     if list.is_empty() {
-        return Err("nenhuma tela com brilho ajustável (o monitor pode não suportar DDC/CI)".into());
+        return Err(tr!("nenhuma tela com brilho ajustável (o monitor pode não suportar DDC/CI)", "no screen with adjustable brightness (the monitor may not support DDC/CI)").into());
     }
     let t = target.trim();
     let found: Vec<&Display> = match t {
@@ -54,8 +54,8 @@ pub fn resolve<'a>(target: &str, name: Option<&str>, list: &'a [Display], cursor
     };
     if found.is_empty() {
         return Err(match t {
-            "cursor" => "a tela onde o menu abriu não aceita ajuste de brilho".into(),
-            _ => format!("a tela \"{}\" não foi encontrada (desconectada?)", name.unwrap_or(t)),
+            "cursor" => tr!("a tela onde o menu abriu não aceita ajuste de brilho", "the screen where the menu opened doesn't support brightness adjustment").into(),
+            _ => trf!("a tela \"{}\" não foi encontrada (desconectada?)", "the screen \"{}\" was not found (disconnected?)", name.unwrap_or(t)),
         });
     }
     Ok(found)
@@ -149,7 +149,7 @@ fn lcd_level() -> Option<u32> {
 
 fn lcd_set(pct: u32) -> Result<(), String> {
     use windows::Win32::System::IO::DeviceIoControl;
-    let h = open_lcd().ok_or("tela interna sem controle de brilho")?;
+    let h = open_lcd().ok_or(tr!("tela interna sem controle de brilho", "built-in screen without brightness control"))?;
     let v = pct.min(100) as u8;
     let b = DisplayBrightness { policy: DISPLAYPOLICY_BOTH, ac: v, dc: v };
     let mut ret = 0u32;
@@ -159,7 +159,7 @@ fn lcd_set(pct: u32) -> Result<(), String> {
     unsafe {
         let _ = CloseHandle(h);
     }
-    r.map_err(|e| format!("não foi possível ajustar o brilho: {e}"))
+    r.map_err(|e| trf!("não foi possível ajustar o brilho: {e}", "couldn't adjust the brightness: {e}"))
 }
 
 // ---------------------------------------------------------------------------
@@ -308,7 +308,7 @@ pub fn list() -> Vec<Display> {
     if let Some(level) = lcd_level() {
         let device = internal_device().unwrap_or_else(|| guess_lcd_device(&monitors, &ddc));
         let number = info(&device).map(|m| m.number).unwrap_or(0);
-        out.push(Display { id: "lcd".into(), name: "Tela do notebook".into(), level, device, number, legacy: 0 });
+        out.push(Display { id: "lcd".into(), name: tr!("Tela do notebook", "Laptop screen").into(), level, device, number, legacy: 0 });
     }
     out.extend(ddc);
     out.sort_by_key(|d| (d.number == 0, d.number));
@@ -329,7 +329,7 @@ fn set_one(d: &Display, pct: u32) -> Result<(), String> {
         (unsafe { SetMonitorBrightness(h, from_percent(min, max, pct)) } != 0).then_some(())
     });
     if done.is_empty() {
-        return Err(format!("\"{}\" não aceitou o ajuste de brilho", d.name));
+        return Err(trf!("\"{}\" não aceitou o ajuste de brilho", "\"{}\" didn't accept the brightness adjustment", d.name));
     }
     Ok(())
 }

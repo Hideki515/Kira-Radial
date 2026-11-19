@@ -26,8 +26,8 @@ pub fn icon_mime(path: &str) -> Option<&'static str> {
 
 /// Imagem do ícone como data URL.
 pub fn read(path: &str) -> Result<String, String> {
-    let mime = icon_mime(path).ok_or("formato não suportado (use PNG, SVG, ICO ou WebP)")?;
-    crate::orb::read_data_url(path, mime, MAX_ICON_BYTES, "ícone")
+    let mime = icon_mime(path).ok_or(tr!("formato não suportado (use PNG, SVG, ICO ou WebP)", "unsupported format (use PNG, SVG, ICO or WebP)"))?;
+    crate::orb::read_data_url(path, mime, MAX_ICON_BYTES, tr!("ícone", "icon"))
 }
 
 /// Nome estável do arquivo extraído: o mesmo programa gera sempre o mesmo PNG (FNV-1a).
@@ -66,7 +66,7 @@ fn render_png(raw: &str) -> Result<Vec<u8>, String> {
     use windows::Win32::UI::WindowsAndMessaging::DestroyIcon;
 
     if raw.is_empty() {
-        return Err("informe o programa primeiro".into());
+        return Err(tr!("informe o programa primeiro", "enter the program first").into());
     }
     // Nome solto ("wt.exe", "notepad"): o shell só acha o ícone com o caminho completo.
     let resolved = resolve_program(raw);
@@ -82,14 +82,14 @@ fn render_png(raw: &str) -> Result<Vec<u8>, String> {
         )
     };
     if ok == 0 || info.hIcon.is_invalid() {
-        return Err(format!("não foi possível ler o ícone de \"{src}\""));
+        return Err(trf!("não foi possível ler o ícone de \"{src}\"", "couldn't read the icon of \"{src}\""));
     }
     let pixels = crate::winlist::render_icon(info.hIcon);
     unsafe {
         let _ = DestroyIcon(info.hIcon);
     }
-    let bgra = pixels.ok_or("não foi possível desenhar o ícone")?;
-    crate::winlist::png_bytes(&crate::winlist::bgra_to_rgba(&bgra), crate::winlist::ICON_SIZE).ok_or_else(|| "falha ao gerar o PNG".into())
+    let bgra = pixels.ok_or(tr!("não foi possível desenhar o ícone", "couldn't draw the icon"))?;
+    crate::winlist::png_bytes(&crate::winlist::bgra_to_rgba(&bgra), crate::winlist::ICON_SIZE).ok_or_else(|| tr!("falha ao gerar o PNG", "couldn't create the PNG").into())
 }
 
 /// Nome solto de programa ("wt.exe", "notepad") → caminho completo pelo PATH do Windows

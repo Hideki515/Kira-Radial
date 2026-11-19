@@ -12,7 +12,10 @@ vi.mock("../ipc", async (orig) => ({
     return sys.langs;
   },
 }));
-const flush = () => new Promise((r) => setTimeout(r, 0));
+// applyLangSetting carrega o ipc com import dinâmico: espera alguns ciclos.
+const flush = async () => {
+  for (let i = 0; i < 10; i++) await new Promise((r) => setTimeout(r, 0));
+};
 
 afterEach(() => setLang("pt"));
 

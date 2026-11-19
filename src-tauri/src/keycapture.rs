@@ -148,7 +148,7 @@ pub fn start(app: AppHandle) -> Result<(), String> {
         let hook = match SetWindowsHookExW(WH_KEYBOARD_LL, Some(hook_proc), Some(module.into()), 0) {
             Ok(h) => h,
             Err(e) => {
-                let _ = tx.send(Err(format!("não foi possível capturar o teclado: {e}")));
+                let _ = tx.send(Err(trf!("não foi possível capturar o teclado: {e}", "couldn't capture the keyboard: {e}")));
                 return;
             }
         };

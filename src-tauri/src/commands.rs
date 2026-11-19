@@ -25,6 +25,10 @@ pub fn get_config(state: State<'_, AppState>) -> Config {
 pub fn save_config(app: AppHandle, state: State<'_, AppState>, mut config: Config) -> Result<(), String> {
     config.validate()?;
     let old = state.config();
+    // Idioma primeiro: as mensagens a partir daqui (e a bandeja) já saem no novo.
+    if crate::i18n::apply(config.behavior.language.as_deref()) {
+        crate::relabel_tray();
+    }
     // A posição do ícone é do backend (muda ao arrastar); o rascunho das configurações
     // pode estar desatualizado.
     config.launcher.orb.x = old.launcher.orb.x;
@@ -238,7 +242,7 @@ pub fn orb_reset_position(app: AppHandle) {
 pub fn apply_autostart(app: &AppHandle, enabled: bool) -> Result<(), String> {
     let al = app.autolaunch();
     let r = if enabled { al.enable() } else { al.disable() };
-    r.map_err(|e| format!("falha ao configurar inicialização com o Windows: {e}"))
+    r.map_err(|e| trf!("falha ao configurar inicialização com o Windows: {e}", "couldn't set up starting with Windows: {e}"))
 }
 
 /// Site sem navegador próprio: usa o navegador geral (Configurações → Geral). Vale também
@@ -325,7 +329,7 @@ pub async fn run_action(app: AppHandle, mut action: Action) -> Result<(), String
                         std::thread::sleep(pause);
                     }
                     // Um passo que falha interrompe o resto (e o aviso diz qual foi).
-                    run_step(&app, step, prev).map_err(|e| format!("passo {} de {}: {e}", i + 1, steps.len()))?;
+                    run_step(&app, step, prev).map_err(|e| trf!("passo {} de {}: {e}", "step {} of {}: {e}", i + 1, steps.len()))?;
                 }
                 Ok(())
             }

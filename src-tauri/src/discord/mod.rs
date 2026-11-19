@@ -24,9 +24,17 @@ use std::sync::mpsc;
 use std::sync::OnceLock;
 use std::time::{Duration, Instant};
 
-pub const CLOSED: &str = "O Discord não está aberto.";
-pub const NOT_CONNECTED: &str = "Conecte o Discord em Configurações → Discord.";
-const TIMEOUT: &str = "O Discord não respondeu a tempo.";
+/// "Discord fechado" no idioma atual (comparado em `status`).
+pub fn closed() -> &'static str {
+    tr!("O Discord não está aberto.", "Discord isn't open.")
+}
+/// "Não conectado" no idioma atual (comparado em `status`).
+pub fn not_connected() -> &'static str {
+    tr!("Conecte o Discord em Configurações → Discord.", "Connect Discord in Settings → Discord.")
+}
+fn timeout_msg() -> &'static str {
+    tr!("O Discord não respondeu a tempo.", "Discord didn't respond in time.")
+}
 
 #[derive(Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -150,7 +158,7 @@ impl Service {
     /// Conexão autenticada (abre e autentica se preciso; renova o token vencido).
     fn session(&mut self) -> Result<&mut Client, String> {
         if self.client.is_none() {
-            let mut sec = secrets::load_from(&self.env.secrets_path).ok_or(NOT_CONNECTED)?;
+            let mut sec = secrets::load_from(&self.env.secrets_path).ok_or(not_connected())?;
             let mut c = Client::new((self.env.open)()?);
             c.handshake(&sec.client_id).map_err(|e| e.text())?;
             if sec.needs_refresh(secrets::now_secs()) {
@@ -203,7 +211,7 @@ impl Service {
         match self.voice() {
             Ok(v) => VoiceState { status: "ok", message: None, voice: Some(v) },
             Err(m) => VoiceState {
-                status: if m == NOT_CONNECTED { "notConnected" } else if m == CLOSED { "closed" } else { "error" },
+                status: if m == not_connected() { "notConnected" } else if m == closed() { "closed" } else { "error" },
                 message: Some(m),
                 voice: None,
             },
@@ -223,7 +231,7 @@ impl Service {
                 let v = self.voice()?;
                 let (key, list) = if cmd == DiscordCmd::SetInput { ("input", &v.input) } else { ("output", &v.output) };
                 let d = pick(&list.devices, device_id, device_name).ok_or_else(|| {
-                    format!("dispositivo não encontrado no Discord: {}", device_name.or(device_id).unwrap_or("?"))
+                    trf!("dispositivo não encontrado no Discord: {}", "device not found in Discord: {}", device_name.or(device_id).unwrap_or("?"))
                 })?;
                 json!({ key: { "device_id": d.id } })
             }
@@ -236,10 +244,10 @@ impl Service {
         let id = client_id.trim();
         let secret = client_secret.trim();
         if id.is_empty() || !id.bytes().all(|b| b.is_ascii_digit()) {
-            return Err("O Client ID tem só números (copie em General Information no portal do Discord).".into());
+            return Err(tr!("O Client ID tem só números (copie em General Information no portal do Discord).", "The Client ID is only digits (copy it from General Information in the Discord portal).").into());
         }
         if secret.is_empty() {
-            return Err("Informe o Client Secret (OAuth2 → Reset Secret no portal do Discord).".into());
+            return Err(tr!("Informe o Client Secret (OAuth2 → Reset Secret no portal do Discord).", "Enter the Client Secret (OAuth2 → Reset Secret in the Discord portal).").into());
         }
         self.client = None;
         let mut c = Client::new((self.env.open)()?);
@@ -247,12 +255,12 @@ impl Service {
         let code = c
             .command("AUTHORIZE", json!({ "client_id": id, "scopes": auth::SCOPES }))
             .map_err(|e| match e {
-                RpcError::Rpc { message, .. } => format!("autorização não concluída no Discord: {message}"),
+                RpcError::Rpc { message, .. } => trf!("autorização não concluída no Discord: {message}", "authorization not completed in Discord: {message}"),
                 e => e.text(),
             })?["code"]
             .as_str()
             .map(str::to_string)
-            .ok_or("o Discord não devolveu o código de autorização")?;
+            .ok_or(tr!("o Discord não devolveu o código de autorização", "Discord didn't return the authorization code"))?;
         let t = auth::exchange_code(&*self.env.tokens, id, secret, &code)?;
         let data = c.command("AUTHENTICATE", json!({ "access_token": t.access_token })).map_err(|e| e.text())?;
         let user = data["user"]["global_name"].as_str().or(data["user"]["username"].as_str()).unwrap_or("?").to_string();
@@ -341,8 +349,8 @@ fn call<T: Send + 'static>(timeout: Duration, f: impl FnOnce(&mut Service) -> T 
                 let _ = tx.send(f(s));
             }
         }))
-        .map_err(|_| TIMEOUT.to_string())?;
-    rx.recv_timeout(timeout).map_err(|_| TIMEOUT.to_string())
+        .map_err(|_| timeout_msg().to_string())?;
+    rx.recv_timeout(timeout).map_err(|_| timeout_msg().to_string())
 }
 
 const OP_TIMEOUT: Duration = Duration::from_secs(4);
@@ -410,7 +418,7 @@ mod tests {
     #[test]
     fn sem_credenciais_pede_para_conectar() {
         let mut t = setup("sem");
-        assert_eq!(t.svc.voice().unwrap_err(), NOT_CONNECTED);
+        assert_eq!(t.svc.voice().unwrap_err(), not_connected());
         assert_eq!(t.svc.voice_state().status, "notConnected");
         assert!(!t.svc.status().configured);
     }
@@ -459,7 +467,7 @@ mod tests {
     fn discord_fechado_e_reaberto() {
         let mut t = connected("fechado");
         t.state.lock().unwrap().closed = true;
-        assert_eq!(t.svc.voice().unwrap_err(), CLOSED);
+        assert_eq!(t.svc.voice().unwrap_err(), closed());
         assert_eq!(t.svc.voice_state().status, "closed");
         // Reaberto: reconecta e autentica sozinho com o token guardado.
         t.state.lock().unwrap().closed = false;
@@ -486,7 +494,7 @@ mod tests {
         let mut t = connected("desconectar");
         t.svc.disconnect();
         assert!(!t.dir.join("discord.bin").exists());
-        assert_eq!(t.svc.voice().unwrap_err(), NOT_CONNECTED);
+        assert_eq!(t.svc.voice().unwrap_err(), not_connected());
     }
 
     #[test]

@@ -1,5 +1,7 @@
 //! Kira Radial — menu radial para Windows.
 
+#[macro_use]
+mod i18n;
 mod actions;
 mod audio;
 mod backup;
@@ -58,6 +60,7 @@ macro_rules! handlers {
 pub fn run() {
     perf::install_panic_hook();
     let cfg = config::load();
+    i18n::apply(cfg.behavior.language.as_deref());
 
     tauri::Builder::default()
         // Uma segunda execução apenas abre as configurações da instância existente.
@@ -213,12 +216,46 @@ pub fn run() {
         .expect("erro ao iniciar o Kira Radial");
 }
 
+/// Itens da bandeja (para trocar os textos quando o idioma muda).
+struct TrayItems {
+    open: MenuItem<tauri::Wry>,
+    settings: MenuItem<tauri::Wry>,
+    pause: CheckMenuItem<tauri::Wry>,
+    orb: MenuItem<tauri::Wry>,
+    quit: MenuItem<tauri::Wry>,
+}
+static TRAY_ITEMS: std::sync::OnceLock<TrayItems> = std::sync::OnceLock::new();
+
+fn tray_texts() -> [&'static str; 5] {
+    [
+        tr!("Abrir menu", "Open menu"),
+        tr!("Configurações", "Settings"),
+        tr!("Pausar atalho", "Pause shortcut"),
+        tr!("Mostrar/esconder ícone", "Show/hide icon"),
+        tr!("Sair", "Quit"),
+    ]
+}
+
+/// Reescreve os textos da bandeja no idioma atual (depois de salvar com outro idioma).
+pub fn relabel_tray() {
+    if let Some(t) = TRAY_ITEMS.get() {
+        let [open, settings, pause, orb, quit] = tray_texts();
+        let _ = t.open.set_text(open);
+        let _ = t.settings.set_text(settings);
+        let _ = t.pause.set_text(pause);
+        let _ = t.orb.set_text(orb);
+        let _ = t.quit.set_text(quit);
+    }
+}
+
 fn build_tray(app: &tauri::App) -> tauri::Result<()> {
-    let open = MenuItem::with_id(app, "open", "Abrir menu", true, None::<&str>)?;
-    let settings = MenuItem::with_id(app, "settings", "Configurações", true, None::<&str>)?;
-    let pause = CheckMenuItem::with_id(app, "pause", "Pausar atalho", true, false, None::<&str>)?;
-    let orb_toggle = MenuItem::with_id(app, "orb", "Mostrar/esconder ícone", true, None::<&str>)?;
-    let quit = MenuItem::with_id(app, "quit", "Sair", true, None::<&str>)?;
+    let [t_open, t_settings, t_pause, t_orb, t_quit] = tray_texts();
+    let open = MenuItem::with_id(app, "open", t_open, true, None::<&str>)?;
+    let settings = MenuItem::with_id(app, "settings", t_settings, true, None::<&str>)?;
+    let pause = CheckMenuItem::with_id(app, "pause", t_pause, true, false, None::<&str>)?;
+    let orb_toggle = MenuItem::with_id(app, "orb", t_orb, true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", t_quit, true, None::<&str>)?;
+    let _ = TRAY_ITEMS.set(TrayItems { open: open.clone(), settings: settings.clone(), pause: pause.clone(), orb: orb_toggle.clone(), quit: quit.clone() });
     let sep = PredefinedMenuItem::separator(app)?;
     let tray_menu = Menu::with_items(app, &[&open, &settings, &pause, &orb_toggle, &sep, &quit])?;
 

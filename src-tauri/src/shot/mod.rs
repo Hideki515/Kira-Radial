@@ -276,7 +276,7 @@ fn window(app: &AppHandle, label: &str) -> Result<WebviewWindow, String> {
     let pin = label == PIN;
     let url = if pin { "shot.html?pin=1" } else { "shot.html" };
     WebviewWindowBuilder::new(app, label, WebviewUrl::App(url.into()))
-        .title(if pin { "Kira Radial — Print fixado" } else { "Kira Radial — Print" })
+        .title(if pin { tr!("Kira Radial — Print fixado", "Kira Radial — Pinned screenshot") } else { tr!("Kira Radial — Print", "Kira Radial — Screenshot") })
         .inner_size(if pin { 480.0 } else { 360.0 }, if pin { 320.0 } else { 300.0 })
         .decorations(false)
         .transparent(!pin)
@@ -287,7 +287,7 @@ fn window(app: &AppHandle, label: &str) -> Result<WebviewWindow, String> {
         .focused(false)
         .visible(false)
         .build()
-        .map_err(|e| format!("não foi possível abrir a janela do print: {e}"))
+        .map_err(|e| trf!("não foi possível abrir a janela do print: {e}", "couldn't open the screenshot window: {e}"))
 }
 
 fn set_visible(w: &WebviewWindow, visible: bool) {
@@ -432,7 +432,7 @@ mod clip {
             let p = GlobalLock(g) as *mut u8;
             if p.is_null() {
                 let _ = GlobalFree(Some(g));
-                return Err("memória indisponível".into());
+                return Err(tr!("memória indisponível", "out of memory").into());
             }
             std::ptr::copy_nonoverlapping(data.as_ptr(), p, data.len());
             let _ = GlobalUnlock(g);
@@ -455,7 +455,7 @@ mod clip {
             if !open() {
                 let _ = GlobalFree(Some(dib));
                 let _ = GlobalFree(Some(png));
-                return Err("a área de transferência está ocupada por outro programa".into());
+                return Err(tr!("a área de transferência está ocupada por outro programa", "the clipboard is busy with another program").into());
             }
             let _ = EmptyClipboard();
             // Depois de SetClipboardData o Windows é o dono da memória; se falhar, ela é nossa.
@@ -480,7 +480,7 @@ fn with_shot<T>(id: u64, f: impl FnOnce(&Shot) -> Result<T, String>) -> Result<T
     let cur = CURRENT.lock_ok();
     let pin = PINNED.lock_ok();
     let s = cur.as_ref().filter(|s| s.id == id).or(pin.as_ref().filter(|s| s.id == id));
-    f(s.ok_or("este print não está mais disponível")?)
+    f(s.ok_or(tr!("este print não está mais disponível", "this screenshot is no longer available"))?)
 }
 
 #[tauri::command]
@@ -500,13 +500,13 @@ pub async fn shot_save(id: u64, path: String) -> Result<String, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let mut p = PathBuf::from(path.trim());
         if p.as_os_str().is_empty() {
-            return Err("caminho vazio".into());
+            return Err(tr!("caminho vazio", "empty path").into());
         }
         if !p.extension().is_some_and(|e| e.eq_ignore_ascii_case("png")) {
             p.set_extension("png");
         }
         let png = with_shot(id, |s| image::encode_png(&s.img))?;
-        std::fs::write(&p, png).map_err(|e| format!("não foi possível salvar: {e}"))?;
+        std::fs::write(&p, png).map_err(|e| trf!("não foi possível salvar: {e}", "couldn't save: {e}"))?;
         Ok(p.to_string_lossy().into_owned())
     })
     .await
@@ -515,7 +515,7 @@ pub async fn shot_save(id: u64, path: String) -> Result<String, String> {
 
 #[tauri::command]
 pub fn shot_open_folder(id: u64) -> Result<(), String> {
-    let path = with_shot(id, |s| s.path.clone().ok_or("este print não foi salvo em arquivo".into()))?;
+    let path = with_shot(id, |s| s.path.clone().ok_or(tr!("este print não foi salvo em arquivo", "this screenshot wasn't saved to a file").into()))?;
     std::process::Command::new("explorer.exe")
         .arg(format!("/select,{}", path.display()))
         .spawn()
@@ -544,7 +544,7 @@ pub async fn shot_edit(id: u64) -> Result<(), String> {
                 Ok(p)
             }
         })?;
-        std::process::Command::new("mspaint.exe").arg(&path).spawn().map(|_| ()).map_err(|e| format!("não foi possível abrir o Paint: {e}"))
+        std::process::Command::new("mspaint.exe").arg(&path).spawn().map(|_| ()).map_err(|e| trf!("não foi possível abrir o Paint: {e}", "couldn't open Paint: {e}"))
     })
     .await
     .map_err(|e| e.to_string())?

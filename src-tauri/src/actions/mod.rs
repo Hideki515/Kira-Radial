@@ -167,13 +167,13 @@ pub const SEQUENCE_MAX_DELAY_MS: u64 = 5_000;
 /// desligar/reiniciar/encerrar sessão (esses pedem confirmação e não rodam encadeados).
 pub fn sequence_error(steps: &[Action]) -> Option<String> {
     if !(SEQUENCE_MIN..=SEQUENCE_MAX).contains(&steps.len()) {
-        return Some(format!("a sequência precisa de {SEQUENCE_MIN} a {SEQUENCE_MAX} ações"));
+        return Some(trf!("a sequência precisa de {SEQUENCE_MIN} a {SEQUENCE_MAX} ações", "the sequence needs {SEQUENCE_MIN} to {SEQUENCE_MAX} actions"));
     }
     for (i, s) in steps.iter().enumerate() {
         match s {
-            Action::Sequence { .. } => return Some(format!("passo {}: sequência dentro de sequência não é permitida", i + 1)),
+            Action::Sequence { .. } => return Some(trf!("passo {}: sequência dentro de sequência não é permitida", "step {}: a sequence inside a sequence isn't allowed", i + 1)),
             Action::System { cmd: SystemCmd::Shutdown | SystemCmd::Restart | SystemCmd::SignOut } => {
-                return Some(format!("passo {}: desligar, reiniciar e encerrar sessão não entram numa sequência", i + 1))
+                return Some(trf!("passo {}: desligar, reiniciar e encerrar sessão não entram numa sequência", "step {}: shut down, restart and sign out can't be part of a sequence", i + 1))
             }
             _ => {}
         }
@@ -230,7 +230,7 @@ pub fn execute(action: &Action) -> Result<(), String> {
             let u = url.trim();
             let lower = u.to_ascii_lowercase();
             if !(lower.starts_with("http://") || lower.starts_with("https://") || lower.starts_with("mailto:")) {
-                return Err("só são aceitas URLs http(s) ou mailto".into());
+                return Err(tr!("só são aceitas URLs http(s) ou mailto", "only http(s) or mailto URLs are accepted").into());
             }
             // mailto sempre vai para o app de e-mail; "system"/ausente = navegador padrão.
             // Janela anônima sem navegador escolhido: usa o padrão do Windows pelo exe dele.
@@ -274,7 +274,7 @@ pub fn execute(action: &Action) -> Result<(), String> {
             if *hidden {
                 c.creation_flags(CREATE_NO_WINDOW);
             }
-            c.spawn().map(|_| ()).map_err(|e| format!("falha ao iniciar script: {e}"))
+            c.spawn().map(|_| ()).map_err(|e| trf!("falha ao iniciar script: {e}", "couldn't start the script: {e}"))
         }
         Action::OpenSettings => Ok(()),
         Action::AudioOutput { mode, device_id, device_name } => {
@@ -298,15 +298,15 @@ pub fn execute(action: &Action) -> Result<(), String> {
             }
         }
         // Precisa da janela anterior: executado por run_action (commands.rs).
-        Action::Window { .. } => Err("ação de janela sem janela-alvo".into()),
+        Action::Window { .. } => Err(tr!("ação de janela sem janela-alvo", "window action without a target window").into()),
         // Passo a passo (foco, atrasos, janela) em commands::run_action.
-        Action::Sequence { .. } => Err("sequência só pode rodar pelo menu".into()),
+        Action::Sequence { .. } => Err(tr!("sequência só pode rodar pelo menu", "a sequence can only run from the menu").into()),
     }
 }
 
 pub(super) fn shell_execute(file: &str, params: Option<&str>, dir: Option<&str>, verb: &str) -> Result<(), String> {
     if file.trim().is_empty() {
-        return Err("caminho vazio".into());
+        return Err(tr!("caminho vazio", "empty path").into());
     }
     let file_h = HSTRING::from(file);
     let verb_h = HSTRING::from(verb);
@@ -320,10 +320,10 @@ pub(super) fn shell_execute(file: &str, params: Option<&str>, dir: Option<&str>,
         Ok(())
     } else {
         Err(match code {
-            2 | 3 => format!("não encontrado: {file}"),
-            5 => "acesso negado".into(),
-            1223 => "cancelado pelo usuário".into(),
-            _ => format!("falha ao abrir {file} (código {code})"),
+            2 | 3 => trf!("não encontrado: {file}", "not found: {file}"),
+            5 => tr!("acesso negado", "access denied").into(),
+            1223 => tr!("cancelado pelo usuário", "canceled by the user").into(),
+            _ => trf!("falha ao abrir {file} (código {code})", "couldn't open {file} (code {code})"),
         })
     }
 }

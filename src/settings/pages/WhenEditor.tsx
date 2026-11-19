@@ -1,7 +1,7 @@
 import { Monitor, ScanEye } from "lucide-react";
 import { t } from "../../shared/i18n";
 import { identifyMonitors, type MonitorInfo } from "../../shared/ipc";
-import { DAY_SHORT, whenErrors } from "../../shared/schedule";
+import { dayShort, whenErrors } from "../../shared/schedule";
 import type { ProfileWhen } from "../../shared/types";
 import { Field } from "../controls";
 
@@ -44,7 +44,7 @@ export function WhenEditor({ when, monitors, onChange }: Props) {
       <div className="when-row">
         <span className="when-label">{t("when.days")}</span>
         <div className="day-chips" role="group" aria-label={t("when.days.aria")}>
-          {DAY_SHORT.map((label, d) => (
+          {dayShort().map((label, d) => (
             <button
               key={label}
               type="button"

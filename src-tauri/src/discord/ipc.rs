@@ -27,18 +27,18 @@ pub fn encode(op: u32, payload: &Value) -> Vec<u8> {
 /// Lê um quadro inteiro. Erro se o pipe fechou, o tamanho passa do limite ou o JSON é inválido.
 pub fn read_frame(r: &mut impl Read) -> Result<(u32, Value), String> {
     let mut head = [0u8; 8];
-    r.read_exact(&mut head).map_err(|e| format!("conexão com o Discord encerrada ({e})"))?;
+    r.read_exact(&mut head).map_err(|e| trf!("conexão com o Discord encerrada ({e})", "connection to Discord closed ({e})"))?;
     let op = u32::from_le_bytes([head[0], head[1], head[2], head[3]]);
     let len = u32::from_le_bytes([head[4], head[5], head[6], head[7]]) as usize;
     if len > MAX_FRAME {
-        return Err(format!("quadro do Discord grande demais ({len} bytes)"));
+        return Err(trf!("quadro do Discord grande demais ({len} bytes)", "Discord frame too large ({len} bytes)"));
     }
     if op > OP_PONG {
-        return Err(format!("opcode desconhecido do Discord: {op}"));
+        return Err(trf!("opcode desconhecido do Discord: {op}", "unknown Discord opcode: {op}"));
     }
     let mut body = vec![0u8; len];
-    r.read_exact(&mut body).map_err(|e| format!("conexão com o Discord encerrada ({e})"))?;
-    let v = serde_json::from_slice(&body).map_err(|e| format!("resposta inválida do Discord: {e}"))?;
+    r.read_exact(&mut body).map_err(|e| trf!("conexão com o Discord encerrada ({e})", "connection to Discord closed ({e})"))?;
+    let v = serde_json::from_slice(&body).map_err(|e| trf!("resposta inválida do Discord: {e}", "invalid response from Discord: {e}"))?;
     Ok((op, v))
 }
 
@@ -56,7 +56,7 @@ impl<T: Read + Write + Send> Transport for Stream<T> {
         self.0
             .write_all(&encode(op, payload))
             .and_then(|_| self.0.flush())
-            .map_err(|e| format!("conexão com o Discord encerrada ({e})"))
+            .map_err(|e| trf!("conexão com o Discord encerrada ({e})", "connection to Discord closed ({e})"))
     }
     fn recv(&mut self) -> Result<(u32, Value), String> {
         read_frame(&mut self.0)
@@ -71,7 +71,7 @@ pub fn open_pipe(base: &str) -> Result<Stream<std::fs::File>, String> {
             return Ok(Stream(f));
         }
     }
-    Err(super::CLOSED.into())
+    Err(super::closed().into())
 }
 
 #[cfg(test)]
@@ -120,6 +120,6 @@ mod tests {
     #[test]
     fn pipe_inexistente_vira_discord_fechado() {
         let e = open_pipe("kira-teste-pipe-que-nao-existe").err().unwrap();
-        assert_eq!(e, crate::discord::CLOSED);
+        assert_eq!(e, crate::discord::closed());
     }
 }

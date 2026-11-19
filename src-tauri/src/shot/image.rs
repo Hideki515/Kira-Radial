@@ -148,7 +148,7 @@ pub fn decode_file(path: &std::path::Path) -> Result<Rgba, String> {
     use windows::Win32::Foundation::GENERIC_READ;
     use windows::Win32::Graphics::Imaging::*;
     use windows::Win32::System::Com::{CoCreateInstance, CoInitializeEx, CLSCTX_INPROC_SERVER, COINIT_MULTITHREADED};
-    let err = |e: windows::core::Error| format!("não foi possível ler a imagem: {e}");
+    let err = |e: windows::core::Error| trf!("não foi possível ler a imagem: {e}", "couldn't read the image: {e}");
     unsafe {
         let _ = CoInitializeEx(None, COINIT_MULTITHREADED);
         let factory: IWICImagingFactory = CoCreateInstance(&CLSID_WICImagingFactory, None, CLSCTX_INPROC_SERVER).map_err(err)?;
@@ -162,7 +162,7 @@ pub fn decode_file(path: &std::path::Path) -> Result<Rgba, String> {
         let (mut w, mut h) = (0u32, 0u32);
         conv.GetSize(&mut w, &mut h).map_err(err)?;
         if w == 0 || h == 0 || w > MAX_SIDE || h > MAX_SIDE {
-            return Err("imagem vazia ou grande demais".into());
+            return Err(tr!("imagem vazia ou grande demais", "empty or too large image").into());
         }
         let mut pixels = vec![0u8; (w * h * 4) as usize];
         conv.CopyPixels(std::ptr::null(), w * 4, &mut pixels).map_err(err)?;

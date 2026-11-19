@@ -46,7 +46,7 @@ pub struct FakeDiscord {
 impl FakeDiscord {
     pub fn open(state: &Shared) -> Result<Self, String> {
         if state.lock().unwrap().closed {
-            return Err(super::CLOSED.into());
+            return Err(super::closed().into());
         }
         Ok(FakeDiscord { state: state.clone(), authed: false, out: VecDeque::new() })
     }

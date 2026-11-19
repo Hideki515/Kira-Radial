@@ -1,5 +1,6 @@
 // English texts. Same keys as pt.ts (TypeScript fails if one is missing).
 import { enSettings } from "./en.settings";
+import { enShared } from "./en.shared";
 import type { Key } from "./pt";
 
 export const en: Record<Key, string> = {
@@ -107,4 +108,5 @@ export const en: Record<Key, string> = {
 
   // --- Settings (en.settings.ts)
   ...enSettings,
+  ...enShared,
 };

@@ -16,7 +16,7 @@ impl RpcError {
     pub fn text(&self) -> String {
         match self {
             RpcError::Closed(m) => m.clone(),
-            RpcError::Rpc { code, message } => format!("o Discord recusou ({code}): {message}"),
+            RpcError::Rpc { code, message } => trf!("o Discord recusou ({code}): {message}", "Discord refused ({code}): {message}"),
         }
     }
 }
@@ -77,7 +77,7 @@ fn rpc_error(v: &Value) -> RpcError {
 
 fn close_error(v: &Value) -> RpcError {
     let msg = v["message"].as_str().unwrap_or("conexão encerrada");
-    RpcError::Closed(format!("o Discord encerrou a conexão: {msg}"))
+    RpcError::Closed(trf!("o Discord encerrou a conexão: {msg}", "Discord closed the connection: {msg}"))
 }
 
 #[cfg(test)]

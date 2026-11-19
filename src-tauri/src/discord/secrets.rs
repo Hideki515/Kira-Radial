@@ -68,7 +68,7 @@ pub fn protect(data: &[u8]) -> Result<Vec<u8>, String> {
     let mut out = CRYPT_INTEGER_BLOB::default();
     unsafe {
         CryptProtectData(&input, windows::core::w!("Kira Radial — Discord"), None, None, None, CRYPTPROTECT_UI_FORBIDDEN, &mut out)
-            .map_err(|e| format!("falha ao cifrar as credenciais: {e}"))?;
+            .map_err(|e| trf!("falha ao cifrar as credenciais: {e}", "couldn't encrypt the credentials: {e}"))?;
         Ok(take(out))
     }
 }
@@ -78,7 +78,7 @@ pub fn unprotect(data: &[u8]) -> Result<Vec<u8>, String> {
     let mut out = CRYPT_INTEGER_BLOB::default();
     unsafe {
         CryptUnprotectData(&input, None, None, None, None, CRYPTPROTECT_UI_FORBIDDEN, &mut out)
-            .map_err(|e| format!("falha ao decifrar as credenciais: {e}"))?;
+            .map_err(|e| trf!("falha ao decifrar as credenciais: {e}", "couldn't decrypt the credentials: {e}"))?;
         Ok(take(out))
     }
 }
@@ -97,8 +97,8 @@ pub fn save_to(p: &Path, s: &Secrets) -> Result<(), String> {
     }
     // Grava num temporário e renomeia: um corte de energia não deixa o arquivo pela metade.
     let tmp = p.with_extension("bin.tmp");
-    std::fs::write(&tmp, enc).map_err(|e| format!("falha ao gravar as credenciais: {e}"))?;
-    std::fs::rename(&tmp, p).map_err(|e| format!("falha ao gravar as credenciais: {e}"))
+    std::fs::write(&tmp, enc).map_err(|e| trf!("falha ao gravar as credenciais: {e}", "couldn't save the credentials: {e}"))?;
+    std::fs::rename(&tmp, p).map_err(|e| trf!("falha ao gravar as credenciais: {e}", "couldn't save the credentials: {e}"))
 }
 
 #[cfg(test)]

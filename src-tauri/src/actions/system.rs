@@ -15,7 +15,7 @@ fn exit_windows(flags: EXIT_WINDOWS_FLAGS, needs_privilege: bool) -> Result<(), 
         enable_shutdown_privilege()?;
     }
     unsafe { ExitWindowsEx(flags, SHTDN_REASON_MAJOR_OTHER | SHTDN_REASON_FLAG_PLANNED) }
-        .map_err(|e| format!("o Windows recusou o comando: {e}"))
+        .map_err(|e| trf!("o Windows recusou o comando: {e}", "Windows refused the command: {e}"))
 }
 
 fn enable_shutdown_privilege() -> Result<(), String> {
@@ -40,7 +40,7 @@ fn enable_shutdown_privilege() -> Result<(), String> {
         let _ = CloseHandle(token);
         match r {
             Ok(last_error) => privilege_result(last_error),
-            Err(e) => Err(format!("sem permissão para desligar: {e}")),
+            Err(e) => Err(trf!("sem permissão para desligar: {e}", "no permission to shut down: {e}")),
         }
     }
 }
@@ -50,7 +50,7 @@ pub fn privilege_result(last_error: u32) -> Result<(), String> {
     const ERROR_NOT_ALL_ASSIGNED: u32 = 1300;
     match last_error {
         ERROR_NOT_ALL_ASSIGNED => Err(
-            "sem permissão para desligar/reiniciar: a conta não tem o privilégio de desligamento (política do Windows)".into(),
+            tr!("sem permissão para desligar/reiniciar: a conta não tem o privilégio de desligamento (política do Windows)", "no permission to shut down/restart: the account doesn't have the shutdown privilege (Windows policy)").into(),
         ),
         _ => Ok(()),
     }
@@ -64,7 +64,7 @@ pub fn blocked_in_qa(cmd: SystemCmd) -> bool {
 
 pub(super) fn system(cmd: SystemCmd) -> Result<(), String> {
     if blocked_in_qa(cmd) {
-        return Err(format!("{cmd:?} bloqueado na Kira de teste"));
+        return Err(trf!("{cmd:?} bloqueado na Kira de teste", "{cmd:?} blocked in the test Kira"));
     }
     match cmd {
         SystemCmd::Lock => unsafe { LockWorkStation().map_err(|e| e.to_string()) },
@@ -73,7 +73,7 @@ pub(super) fn system(cmd: SystemCmd) -> Result<(), String> {
             if unsafe { SetSuspendState(false, false, false) } {
                 Ok(())
             } else {
-                Err("não foi possível suspender".into())
+                Err(tr!("não foi possível suspender", "couldn't sleep").into())
             }
         }
         SystemCmd::Shutdown => exit_windows(EWX_SHUTDOWN | EWX_POWEROFF, true),

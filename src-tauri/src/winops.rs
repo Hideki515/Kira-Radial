@@ -116,7 +116,7 @@ fn rects(hwnd: HWND) -> Option<(Rect, Rect)> {
 
 fn place(hwnd: HWND, target_visual: Rect) -> Result<(), String> {
     use windows::Win32::UI::WindowsAndMessaging::{SetWindowPos, SWP_NOACTIVATE, SWP_NOZORDER};
-    let (window, visual) = rects(hwnd).ok_or("não foi possível ler a posição da janela")?;
+    let (window, visual) = rects(hwnd).ok_or(tr!("não foi possível ler a posição da janela", "couldn't read the window position"))?;
     let r = compensate(target_visual, window, visual);
     unsafe { SetWindowPos(hwnd, None, r.left, r.top, r.width(), r.height(), SWP_NOZORDER | SWP_NOACTIVATE) }
         .map_err(|e| e.to_string())
@@ -149,7 +149,7 @@ pub fn run(cmd: WindowCmd, prev: isize) -> Result<(), String> {
     }
     let hwnd = HWND(prev as *mut _);
     if prev == 0 || !unsafe { IsWindow(Some(hwnd)) }.as_bool() {
-        return Err("nenhuma janela ativa para controlar".into());
+        return Err(tr!("nenhuma janela ativa para controlar", "no active window to control").into());
     }
     unsafe {
         match cmd {
@@ -171,15 +171,15 @@ pub fn run(cmd: WindowCmd, prev: isize) -> Result<(), String> {
                     let _ = ShowWindow(hwnd, SW_RESTORE);
                 }
                 restore_if_maximized(hwnd);
-                let work = work_area_of(hwnd).ok_or("monitor não encontrado")?;
+                let work = work_area_of(hwnd).ok_or(tr!("monitor não encontrado", "monitor not found"))?;
                 let side = if cmd == WindowCmd::SnapLeft { Side::Left } else { Side::Right };
                 place(hwnd, snap_rect(work, side))
             }
             WindowCmd::NextMonitor => {
-                let from = work_area_of(hwnd).ok_or("monitor não encontrado")?;
-                let to = next_monitor(&all_work_areas(), from).ok_or("só há um monitor")?;
+                let from = work_area_of(hwnd).ok_or(tr!("monitor não encontrado", "monitor not found"))?;
+                let to = next_monitor(&all_work_areas(), from).ok_or(tr!("só há um monitor", "there is only one monitor"))?;
                 let was_max = restore_if_maximized(hwnd);
-                let (_, visual) = rects(hwnd).ok_or("não foi possível ler a posição da janela")?;
+                let (_, visual) = rects(hwnd).ok_or(tr!("não foi possível ler a posição da janela", "couldn't read the window position"))?;
                 place(hwnd, move_between(visual, from, to))?;
                 if was_max {
                     let _ = ShowWindow(hwnd, SW_MAXIMIZE);

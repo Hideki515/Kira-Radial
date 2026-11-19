@@ -68,7 +68,7 @@ pub enum Origin {
 }
 
 fn radial(app: &AppHandle) -> Result<WebviewWindow, String> {
-    app.get_webview_window(RADIAL).ok_or_else(|| "janela do menu não encontrada".to_string())
+    app.get_webview_window(RADIAL).ok_or_else(|| tr!("janela do menu não encontrada", "menu window not found").to_string())
 }
 
 pub fn show(app: &AppHandle) -> Result<(), String> {
@@ -265,7 +265,7 @@ pub fn to_shortcut(accelerator: &str) -> Result<Shortcut, String> {
     parts
         .join("+")
         .parse::<Shortcut>()
-        .map_err(|e| format!("atalho inválido \"{accelerator}\": {e}"))
+        .map_err(|e| trf!("atalho inválido \"{accelerator}\": {e}", "invalid shortcut \"{accelerator}\": {e}"))
 }
 
 /// Liga ou desliga o atalho global conforme o modo de abertura (atalho / ícone / ambos).
@@ -296,11 +296,11 @@ pub fn register_hotkey(app: &AppHandle, accelerator: &str) -> Result<(), String>
         if let Err(e) = gs.register(new) {
             let _ = gs.register(old);
             *current = Some(old);
-            return Err(format!("não foi possível registrar {accelerator} (em uso por outro programa?): {e}"));
+            return Err(trf!("não foi possível registrar {accelerator} (em uso por outro programa?): {e}", "couldn't register {accelerator} (in use by another program?): {e}"));
         }
     } else {
         gs.register(new)
-            .map_err(|e| format!("não foi possível registrar {accelerator} (em uso por outro programa?): {e}"))?;
+            .map_err(|e| trf!("não foi possível registrar {accelerator} (em uso por outro programa?): {e}", "couldn't register {accelerator} (in use by another program?): {e}"))?;
     }
     *current = Some(new);
     *state.hotkey_error.lock_ok() = None;

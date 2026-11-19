@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.31.2
+
+- **Interface em inglês (parte 3, final):** com o idioma em English, passam a sair em inglês também:
+  - as mensagens de validação (a lista de problemas que impedem salvar);
+  - as descrições automáticas das ações (busca, listas), os horários dos perfis ("Mon–Fri"), as cores do tema personalizado e as diferenças de backup;
+  - as mensagens de erro vindas do sistema (ações, Discord, print, áudio, brilho, rádios, atualizações) e o menu da bandeja, que muda de idioma assim que você salva.
+- O log de diagnóstico continua em português.
+
 ## 0.31.1
 
 - **Interface em inglês (parte 2): as Configurações inteiras** seguem o idioma escolhido em Geral → Idioma / Language.

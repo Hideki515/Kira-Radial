@@ -18,7 +18,7 @@ pub fn parse_combo(combo: &str) -> Result<Vec<u16>, String> {
     for raw in combo.split('+') {
         let part = raw.trim();
         if part.is_empty() {
-            return Err(format!("combinação inválida: \"{combo}\""));
+            return Err(trf!("combinação inválida: \"{combo}\"", "invalid combination: \"{combo}\""));
         }
         let lower = part.to_ascii_lowercase();
         let m = match lower.as_str() {
@@ -35,9 +35,9 @@ pub fn parse_combo(combo: &str) -> Result<Vec<u16>, String> {
             continue;
         }
         if key.is_some() {
-            return Err(format!("mais de uma tecla principal em \"{combo}\""));
+            return Err(trf!("mais de uma tecla principal em \"{combo}\"", "more than one main key in \"{combo}\""));
         }
-        key = Some(key_vk(&lower).ok_or_else(|| format!("tecla desconhecida: \"{part}\""))?);
+        key = Some(key_vk(&lower).ok_or_else(|| trf!("tecla desconhecida: \"{part}\"", "unknown key: \"{part}\""))?);
     }
     match key {
         Some(k) => {
@@ -46,7 +46,7 @@ pub fn parse_combo(combo: &str) -> Result<Vec<u16>, String> {
         }
         // "Win" sozinho abre o menu Iniciar.
         None if mods == [VK_LWIN] => Ok(mods),
-        None => Err(format!("combinação sem tecla principal: \"{combo}\"")),
+        None => Err(trf!("combinação sem tecla principal: \"{combo}\"", "combination without a main key: \"{combo}\"")),
     }
 }
 
@@ -160,7 +160,7 @@ pub fn send_vks(vks: &[u16]) -> Result<(), String> {
     inputs.extend(vks.iter().rev().map(|&v| input(v, true)));
     let sent = unsafe { SendInput(&inputs, std::mem::size_of::<INPUT>() as i32) };
     if sent as usize != inputs.len() {
-        return Err("SendInput bloqueado (app com privilégio maior em foco?)".into());
+        return Err(tr!("SendInput bloqueado (app com privilégio maior em foco?)", "SendInput blocked (a higher-privilege app in focus?)").into());
     }
     Ok(())
 }

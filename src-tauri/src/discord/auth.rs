@@ -44,12 +44,12 @@ pub fn parse_tokens(v: &Value) -> Result<Tokens, String> {
     if let Some(err) = v["error"].as_str() {
         let why = v["error_description"].as_str().unwrap_or(err);
         return Err(match err {
-            "invalid_client" => "Client ID ou Client Secret incorretos.".into(),
-            "invalid_grant" => format!("autorização expirada ou recusada ({why}); clique em Conectar de novo."),
-            _ => format!("o Discord recusou a autorização: {why}"),
+            "invalid_client" => tr!("Client ID ou Client Secret incorretos.", "Wrong Client ID or Client Secret.").into(),
+            "invalid_grant" => trf!("autorização expirada ou recusada ({why}); clique em Conectar de novo.", "authorization expired or refused ({why}); click Connect again."),
+            _ => trf!("o Discord recusou a autorização: {why}", "Discord refused the authorization: {why}"),
         });
     }
-    let access = v["access_token"].as_str().filter(|s| !s.is_empty()).ok_or("resposta do Discord sem access_token")?;
+    let access = v["access_token"].as_str().filter(|s| !s.is_empty()).ok_or(tr!("resposta do Discord sem access_token", "Discord response without access_token"))?;
     Ok(Tokens {
         access_token: access.to_string(),
         refresh_token: v["refresh_token"].as_str().unwrap_or_default().to_string(),
@@ -79,7 +79,7 @@ impl TokenApi for WinHttp {
         let (status, text) = winhttp::post("discord.com", "/api/oauth2/token", "application/x-www-form-urlencoded", body.as_bytes())?;
         match serde_json::from_slice::<Value>(&text) {
             Ok(v) => Ok(v),
-            Err(_) => Err(format!("resposta inesperada do Discord (HTTP {status})")),
+            Err(_) => Err(trf!("resposta inesperada do Discord (HTTP {status})", "unexpected response from Discord (HTTP {status})")),
         }
     }
 }
@@ -102,14 +102,14 @@ mod winhttp {
 
     fn check(h: *mut core::ffi::c_void, what: &str) -> Result<H, String> {
         if h.is_null() {
-            Err(format!("sem conexão com o Discord ({what}: {})", windows::core::Error::from_win32()))
+            Err(trf!("sem conexão com o Discord ({what}: {})", "no connection to Discord ({what}: {})", windows::core::Error::from_win32()))
         } else {
             Ok(H(h))
         }
     }
 
     pub fn post(host: &str, path: &str, content_type: &str, body: &[u8]) -> Result<(u32, Vec<u8>), String> {
-        let net = |e: windows::core::Error| format!("sem conexão com o Discord: {e}");
+        let net = |e: windows::core::Error| trf!("sem conexão com o Discord: {e}", "no connection to Discord: {e}");
         unsafe {
             let session = check(
                 WinHttpOpen(w!("KiraRadial"), WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, PCWSTR::null(), PCWSTR::null(), 0),
@@ -144,7 +144,7 @@ mod winhttp {
                     break;
                 }
                 if out.len() + avail as usize > super::super::ipc::MAX_FRAME {
-                    return Err("resposta do Discord grande demais".into());
+                    return Err(tr!("resposta do Discord grande demais", "Discord response too large").into());
                 }
                 let mut buf = vec![0u8; avail as usize];
                 let mut read = 0u32;

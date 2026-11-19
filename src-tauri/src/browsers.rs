@@ -104,20 +104,20 @@ pub fn profile_ok(dir: &str) -> bool {
 /// Argumentos para abrir `url` no navegador da família `f`.
 pub fn build_args(f: Family, url: &str, private: bool, profile: Option<&str>) -> Result<Vec<String>, String> {
     if !url_ok(url) {
-        return Err("endereço inválido para abrir no navegador (use http:// ou https://, sem espaços)".into());
+        return Err(tr!("endereço inválido para abrir no navegador (use http:// ou https://, sem espaços)", "invalid address to open in the browser (use http:// or https://, no spaces)").into());
     }
     let mut a = Vec::new();
     if let Some(p) = profile.filter(|p| !p.is_empty()) {
         if f.user_data().is_none() {
-            return Err("este navegador não aceita escolher o perfil".into());
+            return Err(tr!("este navegador não aceita escolher o perfil", "this browser doesn't support choosing a profile").into());
         }
         if !profile_ok(p) {
-            return Err("nome de perfil inválido".into());
+            return Err(tr!("nome de perfil inválido", "invalid profile name").into());
         }
         a.push(format!("--profile-directory={p}"));
     }
     if private {
-        a.push(f.private_flag().ok_or("este navegador não tem janela anônima conhecida")?.to_string());
+        a.push(f.private_flag().ok_or(tr!("este navegador não tem janela anônima conhecida", "this browser has no known private window"))?.to_string());
     }
     a.push(url.to_string());
     Ok(a)
@@ -266,7 +266,7 @@ pub fn open(id: &str, name: Option<&str>, url: &str, private: bool, profile: Opt
     let list = list(false);
     let Some(b) = pick(&list, id, name) else { return Ok(false) };
     let args = build_args(b.family, url, private, profile)?;
-    std::process::Command::new(&b.exe).args(&args).spawn().map(|_| true).map_err(|e| format!("não foi possível abrir {}: {e}", b.name))
+    std::process::Command::new(&b.exe).args(&args).spawn().map(|_| true).map_err(|e| trf!("não foi possível abrir {}: {e}", "couldn't open {}: {e}", b.name))
 }
 
 #[cfg(test)]

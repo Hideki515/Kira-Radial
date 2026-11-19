@@ -125,11 +125,11 @@ pub fn write_text(text: &str) -> Result<(), String> {
         let g = GlobalAlloc(GMEM_MOVEABLE, wide.len() * 2).map_err(|e| e.to_string())?;
         let p = GlobalLock(g) as *mut u16;
         if p.is_null() {
-            return Err("memória indisponível".into());
+            return Err(tr!("memória indisponível", "out of memory").into());
         }
         std::ptr::copy_nonoverlapping(wide.as_ptr(), p, wide.len());
         let _ = GlobalUnlock(g);
-        OpenClipboard(None).map_err(|e| format!("área de transferência ocupada: {e}"))?;
+        OpenClipboard(None).map_err(|e| trf!("área de transferência ocupada: {e}", "clipboard busy: {e}"))?;
         let _ = EmptyClipboard();
         // Após SetClipboardData o Windows passa a ser dono da memória.
         let r = SetClipboardData(CF_UNICODETEXT, Some(HANDLE(g.0))).map(|_| ()).map_err(|e| e.to_string());
@@ -206,7 +206,7 @@ pub fn clear() {
 
 /// Coloca o item `index` na área de transferência (o envio do Ctrl+V é feito por quem chama).
 pub fn put(index: usize) -> Result<(), String> {
-    let text = HISTORY.lock_ok().get(index).cloned().ok_or("item do histórico não existe mais")?;
+    let text = HISTORY.lock_ok().get(index).cloned().ok_or(tr!("item do histórico não existe mais", "the history item no longer exists"))?;
     write_text(&text)
 }
 

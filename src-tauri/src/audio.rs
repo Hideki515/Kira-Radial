@@ -64,7 +64,7 @@ impl ComGuard {
             // Thread já está em MTA: COM utilizável, mas não é nossa para desfazer.
             return Ok(ComGuard(false));
         }
-        hr.ok().map_err(|e| format!("falha ao inicializar COM: {e}"))?;
+        hr.ok().map_err(|e| trf!("falha ao inicializar COM: {e}", "couldn't initialize COM: {e}"))?;
         Ok(ComGuard(true)) // S_OK ou S_FALSE: ambos exigem CoUninitialize
     }
 }
@@ -79,7 +79,7 @@ impl Drop for ComGuard {
 
 fn enumerator() -> Result<IMMDeviceEnumerator, String> {
     unsafe { CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL) }
-        .map_err(|e| format!("falha ao acessar os dispositivos de áudio: {e}"))
+        .map_err(|e| trf!("falha ao acessar os dispositivos de áudio: {e}", "couldn't access the audio devices: {e}"))
 }
 
 fn device_id(d: &IMMDevice) -> windows::core::Result<String> {
@@ -104,7 +104,7 @@ fn device_name(d: &IMMDevice) -> windows::core::Result<String> {
 fn list_outputs_inner() -> Result<Vec<AudioDevice>, String> {
     let _com = ComGuard::new()?;
     let en = enumerator()?;
-    let err = |e: windows::core::Error| format!("falha ao listar dispositivos de áudio: {e}");
+    let err = |e: windows::core::Error| trf!("falha ao listar dispositivos de áudio: {e}", "couldn't list audio devices: {e}");
     unsafe {
         // Sem dispositivo padrão (nenhuma saída ativa) não é erro: apenas nenhum marcado.
         let default_id = en
@@ -130,7 +130,7 @@ pub fn master_volume() -> Result<(f32, bool), String> {
     use windows::Win32::Media::Audio::Endpoints::IAudioEndpointVolume;
     let _com = ComGuard::new()?;
     let en = enumerator()?;
-    let err = |e: windows::core::Error| format!("falha ao ler o volume: {e}");
+    let err = |e: windows::core::Error| trf!("falha ao ler o volume: {e}", "couldn't read the volume: {e}");
     unsafe {
         let dev = en.GetDefaultAudioEndpoint(eRender, eConsole).map_err(err)?;
         let vol: IAudioEndpointVolume = dev.Activate(CLSCTX_ALL, None).map_err(err)?;
@@ -145,18 +145,18 @@ pub fn list_outputs() -> Result<Vec<AudioDevice>, String> {
     // Thread dedicada: não interfere no modelo COM de quem chamou.
     std::thread::spawn(list_outputs_inner)
         .join()
-        .map_err(|_| "falha ao listar dispositivos de áudio".to_string())?
+        .map_err(|_| tr!("falha ao listar dispositivos de áudio", "couldn't list audio devices").to_string())?
 }
 
 fn set_default_inner(id: &str) -> Result<(), String> {
     let _com = ComGuard::new()?;
     let config: IPolicyConfig = unsafe { CoCreateInstance(&CLSID_POLICY_CONFIG_CLIENT, None, CLSCTX_ALL) }
-        .map_err(|e| format!("falha ao acessar a configuração de áudio do Windows: {e}"))?;
+        .map_err(|e| trf!("falha ao acessar a configuração de áudio do Windows: {e}", "couldn't access the Windows audio settings: {e}"))?;
     let wide = windows::core::HSTRING::from(id);
     for role in [eConsole, eMultimedia, eCommunications] {
         policy::set_default_endpoint(&config, PCWSTR(wide.as_ptr()), role)
             .ok()
-            .map_err(|e| format!("falha ao trocar a saída de áudio: {e}"))?;
+            .map_err(|e| trf!("falha ao trocar a saída de áudio: {e}", "couldn't switch the audio output: {e}"))?;
     }
     Ok(())
 }
@@ -166,7 +166,7 @@ pub fn set_default(id: &str) -> Result<(), String> {
     let id = id.to_string();
     std::thread::spawn(move || set_default_inner(&id))
         .join()
-        .map_err(|_| "falha ao trocar a saída de áudio".to_string())?
+        .map_err(|_| tr!("falha ao trocar a saída de áudio", "couldn't switch the audio output").to_string())?
 }
 
 /// Escolhe o dispositivo pelo id; se não existir mais (ex.: driver reinstalado), pelo nome.
@@ -194,11 +194,11 @@ pub fn next_in_cycle(devices: &[AudioDevice]) -> Option<&AudioDevice> {
 pub fn run(cycle: bool, id: Option<&str>, name: Option<&str>) -> Result<(), String> {
     let devices = list_outputs()?;
     let target = if cycle {
-        next_in_cycle(&devices).ok_or_else(|| "Nenhum dispositivo de saída de áudio ativo.".to_string())?
+        next_in_cycle(&devices).ok_or_else(|| tr!("Nenhum dispositivo de saída de áudio ativo.", "No active audio output device.").to_string())?
     } else {
         pick(&devices, id, name).ok_or_else(|| {
             let label = name.or(id).unwrap_or("");
-            format!("Dispositivo de áudio \"{label}\" não encontrado.")
+            trf!("Dispositivo de áudio \"{label}\" não encontrado.", "Audio device \"{label}\" not found.")
         })?
     };
     if target.is_default {

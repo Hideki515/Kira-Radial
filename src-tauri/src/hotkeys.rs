@@ -54,13 +54,13 @@ pub fn collect(cfg: &Config) -> Result<Vec<Binding>, String> {
     let mut taken: Vec<(Shortcut, String)> = Vec::new();
     if cfg.launcher.mode.wants_hotkey() {
         if let Ok(sc) = menu::to_shortcut(&cfg.hotkey.accelerator) {
-            taken.push((sc, "atalho do menu".into()));
+            taken.push((sc, tr!("atalho do menu", "the menu shortcut").into()));
         }
     }
     if cfg.knob.enabled {
         for acc in [&cfg.knob.press, &cfg.knob.right, &cfg.knob.left] {
             if let Ok(sc) = menu::to_shortcut(acc) {
-                taken.push((sc, "teclas do knob".into()));
+                taken.push((sc, tr!("teclas do knob", "the knob keys").into()));
             }
         }
     }
@@ -70,21 +70,21 @@ pub fn collect(cfg: &Config) -> Result<Vec<Binding>, String> {
         };
         let label = item.get("label").and_then(Value::as_str).unwrap_or("?").to_string();
         if !combo_ok(acc) {
-            return Err(format!("\"{label}\": o atalho {acc} precisa de Ctrl, Alt, Shift ou Win (ou ser uma tecla F)"));
+            return Err(trf!("\"{label}\": o atalho {acc} precisa de Ctrl, Alt, Shift ou Win (ou ser uma tecla F)", "\"{label}\": the shortcut {acc} needs Ctrl, Alt, Shift or Win (or to be an F key)"));
         }
         if item.get("dynamic").is_some_and(|d| !d.is_null()) {
-            return Err(format!("\"{label}\": submenu automático não aceita atalho global"));
+            return Err(trf!("\"{label}\": submenu automático não aceita atalho global", "\"{label}\": automatic submenus can't have a global shortcut"));
         }
         let Some(action_json) = item.get("action") else {
-            return Err(format!("\"{label}\": só fatias com ação aceitam atalho global"));
+            return Err(trf!("\"{label}\": só fatias com ação aceitam atalho global", "\"{label}\": only slices with an action can have a global shortcut"));
         };
-        let action: Action = serde_json::from_value(action_json.clone()).map_err(|e| format!("\"{label}\": ação inválida ({e})"))?;
+        let action: Action = serde_json::from_value(action_json.clone()).map_err(|e| trf!("\"{label}\": ação inválida ({e})", "\"{label}\": invalid action ({e})"))?;
         if dangerous(&action) {
-            return Err(format!("\"{label}\": desligar, reiniciar e encerrar sessão não aceitam atalho global"));
+            return Err(trf!("\"{label}\": desligar, reiniciar e encerrar sessão não aceitam atalho global", "\"{label}\": shut down, restart and sign out can't have a global shortcut"));
         }
         let sc = menu::to_shortcut(acc).map_err(|e| format!("\"{label}\": {e}"))?;
         if let Some((_, who)) = taken.iter().find(|(s, _)| *s == sc) {
-            return Err(format!("o atalho {acc} de \"{label}\" já é usado por {who}"));
+            return Err(trf!("o atalho {acc} de \"{label}\" já é usado por {who}", "the shortcut {acc} of \"{label}\" is already used by {who}"));
         }
         taken.push((sc, format!("\"{label}\"")));
         out.push(Binding { accelerator: acc.to_string(), shortcut: sc, action, label });
@@ -116,7 +116,7 @@ pub fn apply(app: &AppHandle, cfg: &Config) -> Result<(), String> {
                     for sc in active {
                         let _ = gs.unregister(sc);
                     }
-                    return Err(format!("não foi possível registrar {} de \"{}\" (em uso por outro programa?): {e}", b.accelerator, b.label));
+                    return Err(trf!("não foi possível registrar {} de \"{}\" (em uso por outro programa?): {e}", "couldn't register {} of \"{}\" (in use by another program?): {e}", b.accelerator, b.label));
                 }
                 active.push(b.shortcut);
             }
@@ -150,7 +150,7 @@ pub fn set_paused(app: &AppHandle, paused: bool) {
             let _ = gs.unregister(sc);
         } else if !gs.is_registered(sc) {
             if let Err(e) = gs.register(sc) {
-                failed = Some(format!("o atalho {sc} de uma fatia não voltou a funcionar: {e}"));
+                failed = Some(trf!("o atalho {sc} de uma fatia não voltou a funcionar: {e}", "a slice's shortcut {sc} didn't start working again: {e}"));
             }
         }
     }
@@ -195,7 +195,7 @@ fn run(app: &AppHandle, b: Binding) {
 #[tauri::command]
 pub async fn qa_hotkey(app: AppHandle, accelerator: String) -> Result<(), String> {
     let sc = menu::to_shortcut(&accelerator)?;
-    let b = STATE.lock_ok().bindings.iter().find(|b| b.shortcut == sc).cloned().ok_or("nenhuma fatia com esse atalho")?;
+    let b = STATE.lock_ok().bindings.iter().find(|b| b.shortcut == sc).cloned().ok_or(tr!("nenhuma fatia com esse atalho", "no slice with that shortcut"))?;
     crate::commands::run_action(app, b.action).await
 }
 

@@ -102,7 +102,7 @@ pub fn clicked(app: &AppHandle) -> Result<(), String> {
         menu::hide(app);
         return Ok(());
     }
-    let (x, y) = center(app).ok_or("ícone não encontrado")?;
+    let (x, y) = center(app).ok_or(tr!("ícone não encontrado", "icon not found"))?;
     menu::show_from(app, menu::Origin::Point(x, y))
 }
 
@@ -231,8 +231,8 @@ pub fn base64(data: &[u8]) -> String {
 
 /// Lê a imagem do ícone e devolve `data:<mime>;base64,...`.
 pub fn read_image(path: &str) -> Result<String, String> {
-    let mime = image_mime(path).ok_or("formato não suportado (use GIF, WebP ou PNG)")?;
-    read_data_url(path, mime, MAX_IMAGE_BYTES, "imagem")
+    let mime = image_mime(path).ok_or(tr!("formato não suportado (use GIF, WebP ou PNG)", "unsupported format (use GIF, WebP or PNG)"))?;
+    read_data_url(path, mime, MAX_IMAGE_BYTES, tr!("imagem", "image"))
 }
 
 /// Limite de tamanho dos sons próprios.
@@ -251,18 +251,19 @@ pub fn sound_mime(path: &str) -> Option<&'static str> {
 
 /// Lê um som próprio (WAV/MP3/OGG, até 2 MB) como data URL.
 pub fn read_sound(path: &str) -> Result<String, String> {
-    let mime = sound_mime(path).ok_or("formato não suportado (use WAV, MP3 ou OGG)")?;
-    read_data_url(path, mime, MAX_SOUND_BYTES, "som")
+    let mime = sound_mime(path).ok_or(tr!("formato não suportado (use WAV, MP3 ou OGG)", "unsupported format (use WAV, MP3 or OGG)"))?;
+    read_data_url(path, mime, MAX_SOUND_BYTES, tr!("som", "sound"))
 }
 
 pub fn read_data_url(path: &str, mime: &str, max: u64, what: &str) -> Result<String, String> {
-    let meta = std::fs::metadata(path).map_err(|e| format!("não foi possível abrir o arquivo de {what}: {e}"))?;
+    let meta = std::fs::metadata(path).map_err(|e| trf!("não foi possível abrir o arquivo de {what}: {e}", "couldn't open the {what} file: {e}"))?;
     if !meta.is_file() {
-        return Err("o caminho não é um arquivo".into());
+        return Err(tr!("o caminho não é um arquivo", "the path isn't a file").into());
     }
     if meta.len() > max {
-        return Err(format!(
+        return Err(trf!(
             "{what} muito grande ({:.1} MB; máximo {} MB)",
+            "{what} too large ({:.1} MB; max {} MB)",
             meta.len() as f64 / 1_048_576.0,
             max / 1_048_576
         ));
@@ -279,10 +280,10 @@ pub const MENU_HIDE: &str = "orb-hide";
 
 pub fn context_menu(app: &AppHandle) -> Result<(), String> {
     use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
-    let win = window(app).ok_or("ícone não encontrado")?;
+    let win = window(app).ok_or(tr!("ícone não encontrado", "icon not found"))?;
     let settings = MenuItem::with_id(app, MENU_SETTINGS, "Configurações", true, None::<&str>).map_err(|e| e.to_string())?;
     let sep = PredefinedMenuItem::separator(app).map_err(|e| e.to_string())?;
-    let hide = MenuItem::with_id(app, MENU_HIDE, "Esconder ícone (volta pela bandeja)", true, None::<&str>)
+    let hide = MenuItem::with_id(app, MENU_HIDE, tr!("Esconder ícone (volta pela bandeja)", "Hide icon (bring it back from the tray)"), true, None::<&str>)
         .map_err(|e| e.to_string())?;
     let menu = Menu::with_items(app, &[&settings, &sep, &hide]).map_err(|e| e.to_string())?;
     // Win32: o dono de um menu de contexto precisa estar em primeiro plano, senão o menu

@@ -1,6 +1,7 @@
 // Textos em português (idioma de origem). As chaves daqui definem o tipo `Key`:
 // faltar uma chave em en.ts é erro de TypeScript.
 import { ptSettings } from "./pt.settings";
+import { ptShared } from "./pt.shared";
 
 export const pt = {
   // --- comum
@@ -107,6 +108,7 @@ export const pt = {
 
   // --- Configurações (pt.settings.ts)
   ...ptSettings,
+  ...ptShared,
 } as const;
 
 export type Key = keyof typeof pt;

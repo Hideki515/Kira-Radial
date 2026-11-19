@@ -915,4 +915,66 @@ describe("Kira de teste — ponta a ponta", () => {
     expect("language" in qaConfig().behavior).toBe(false);
     await browser.waitUntil(async () => (await browser.execute(() => document.documentElement.lang)) === "pt-BR", { timeoutMsg: "Automático não voltou ao português" });
   });
+  it("23. (QA) mensagens do Rust no idioma: erros de ação/salvar em inglês e português; Discord FALSO desconectado = notConnected nos dois idiomas, trocando com a Kira aberta", async () => {
+    const PT = /[ãõçáéíóúâêôà]/i;
+    await toWindow("settings.html");
+    const original = await invoke("get_config");
+    const setLangRust = async (lang) => {
+      const c = await invoke("get_config");
+      if (lang) c.behavior.language = lang;
+      else delete c.behavior.language;
+      await invoke("save_config", { config: c });
+    };
+    const fail = (fn) => browser.execute((f) => eval(f)().then(() => "OK", (e) => String(e)), `() => ${fn}`);
+    // Só erros que acontecem antes de qualquer efeito: URL inválida (checada antes de abrir navegador),
+    // desligar dentro de sequência (recusado antes de rodar) e config inválida (validação).
+    const probes = async () => ({
+      url: await fail(`window.__TAURI_INTERNALS__.invoke("run_action", { action: { type: "url", url: "ftp://qa.invalid" } })`),
+      seq: await fail(`window.__TAURI_INTERNALS__.invoke("run_action", { action: { type: "sequence", steps: [{ type: "system", cmd: "shutdown" }, { type: "media", cmd: "next" }] } })`),
+      seqStep: await fail(`window.__TAURI_INTERNALS__.invoke("run_action", { action: { type: "sequence", steps: [{ type: "url", url: "ftp://qa.invalid" }, { type: "url", url: "ftp://qa.invalid" }] } })`),
+      cfg: await fail(`window.__TAURI_INTERNALS__.invoke("get_config").then((c) => { c.profiles = []; return window.__TAURI_INTERNALS__.invoke("save_config", { config: c }); })`),
+    });
+
+    await setLangRust("en");
+    const en = await probes();
+    console.log("[23] en:", JSON.stringify(en));
+    expect(Object.entries(en).filter(([, v]) => v === "OK" || PT.test(v))).toEqual([]);
+    expect(en.cfg).toContain("at least one profile is required");
+    expect(en.seqStep).toMatch(/^step 1 of 2: /);
+
+    await setLangRust("pt");
+    const pt = await probes();
+    console.log("[23] pt:", JSON.stringify(pt));
+    expect(Object.entries(pt).filter(([, v]) => v === "OK")).toEqual([]);
+    expect(pt.cfg).toContain("é necessário ao menos um perfil");
+    expect(pt.seqStep).toMatch(/^passo 1 de 2: /);
+
+    // Discord FALSO: desconectar → notConnected; o status continua certo trocando o idioma com a Kira aberta.
+    await invoke("discord_disconnect");
+    const v1 = await invoke("discord_voice");
+    await setLangRust("en");
+    const v2 = await invoke("discord_voice");
+    await setLangRust("pt");
+    const v3 = await invoke("discord_voice");
+    console.log("[23] discord:", JSON.stringify([v1, v2, v3].map((v) => [v.status, v.message])));
+    expect([v1.status, v2.status, v3.status]).toEqual(["notConnected", "notConnected", "notConnected"]);
+    expect(v2.message).not.toMatch(PT);
+    expect(v3.message).toMatch(PT);
+    // Página Discord em inglês mostra "não conectado" em inglês.
+    await setLangRust("en");
+    await browser.refresh();
+    await toWindow("settings.html");
+    const b = await $("button.nav-item*=Discord");
+    await b.waitForExist();
+    await b.click();
+    await $('[data-testid="discord-status"]').waitForExist();
+    const st = await $('[data-testid="discord-status"]').getText();
+    console.log("[23] página Discord:", st);
+    expect(st).not.toMatch(PT);
+
+    // Volta a config de antes (idioma automático).
+    delete original.behavior.language;
+    await invoke("save_config", { config: original });
+    expect("language" in qaConfig().behavior).toBe(false);
+  });
 });

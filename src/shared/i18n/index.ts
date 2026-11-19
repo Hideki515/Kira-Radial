@@ -3,7 +3,6 @@
 // - `useT()` faz o componente redesenhar quando o idioma muda.
 // - O idioma vem da config (behavior.language: "auto" | "pt" | "en"); "auto" segue o Windows.
 import { useSyncExternalStore } from "react";
-import { systemLanguages } from "../ipc";
 import { en } from "./en";
 import { pt, type Key } from "./pt";
 
@@ -36,7 +35,8 @@ let lastSetting: LangSetting | undefined;
 export function applyLangSetting(setting: LangSetting | undefined): void {
   lastSetting = setting;
   if (setting === "pt" || setting === "en") return setLang(setting);
-  sysLangs ??= Promise.resolve().then(systemLanguages).catch(() => [] as string[]);
+  // Import tardio: ipc → describe → i18n formaria um ciclo de módulos.
+  sysLangs ??= import("../ipc").then((m) => m.systemLanguages()).catch(() => [] as string[]);
   void sysLangs.then((l) => {
     if (lastSetting === setting) setLang(resolveLang("auto", l.length ? l : undefined));
   });

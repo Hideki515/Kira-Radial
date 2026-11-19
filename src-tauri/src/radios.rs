@@ -45,7 +45,7 @@ pub fn target(mode: Mode, currently_on: bool) -> bool {
 }
 
 fn radios() -> Result<Vec<Radio>, String> {
-    let err = |e: windows::core::Error| format!("não foi possível ler os rádios: {e}");
+    let err = |e: windows::core::Error| trf!("não foi possível ler os rádios: {e}", "couldn't read the radios: {e}");
     let list = Radio::GetRadiosAsync().map_err(err)?.get().map_err(err)?;
     Ok(list.into_iter().collect())
 }
@@ -68,23 +68,23 @@ pub fn list() -> Vec<RadioInfo> {
 pub fn set(kind: Kind, mode: Mode) -> Result<bool, String> {
     let access = Radio::RequestAccessAsync()
         .and_then(|op| op.get())
-        .map_err(|e| format!("sem acesso aos rádios: {e}"))?;
+        .map_err(|e| trf!("sem acesso aos rádios: {e}", "no access to the radios: {e}"))?;
     if access != RadioAccessStatus::Allowed {
-        return Err("o Windows negou acesso ao controle de rádios (Configurações → Privacidade → Rádios)".into());
+        return Err(tr!("o Windows negou acesso ao controle de rádios (Configurações → Privacidade → Rádios)", "Windows denied access to radio control (Settings → Privacy → Radios)").into());
     }
     let radio = radios()?
         .into_iter()
         .find(|r| r.Kind().ok().and_then(kind_of) == Some(kind))
-        .ok_or_else(|| if kind == Kind::Wifi { "Wi-Fi não encontrado".to_string() } else { "Bluetooth não encontrado".to_string() })?;
+        .ok_or_else(|| if kind == Kind::Wifi { tr!("Wi-Fi não encontrado", "Wi-Fi not found").to_string() } else { tr!("Bluetooth não encontrado", "Bluetooth not found").to_string() })?;
     let on = radio.State().map(|s| s == RadioState::On).unwrap_or(false);
     let want = target(mode, on);
     let state = if want { RadioState::On } else { RadioState::Off };
     let status = radio
         .SetStateAsync(state)
         .and_then(|op| op.get())
-        .map_err(|e| format!("não foi possível mudar o rádio: {e}"))?;
+        .map_err(|e| trf!("não foi possível mudar o rádio: {e}", "couldn't change the radio: {e}"))?;
     if status != RadioAccessStatus::Allowed {
-        return Err("o Windows recusou a mudança do rádio".into());
+        return Err(tr!("o Windows recusou a mudança do rádio", "Windows refused the radio change").into());
     }
     Ok(want)
 }

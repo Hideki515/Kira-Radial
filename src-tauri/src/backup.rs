@@ -180,10 +180,10 @@ pub fn list() -> Vec<BackupInfo> {
 /// Conteúdo de um backup (só nomes válidos; nada fora da pasta de dados).
 pub fn read(name: &str) -> Result<String, String> {
     if !valid_name(name) {
-        return Err("nome de backup inválido".into());
+        return Err(tr!("nome de backup inválido", "invalid backup name").into());
     }
     let path = if name == INVALID_NAME { crate::config::config_dir().join(name) } else { backups_dir().join(name) };
-    fs::read_to_string(path).map_err(|e| format!("não foi possível ler o backup: {e}"))
+    fs::read_to_string(path).map_err(|e| trf!("não foi possível ler o backup: {e}", "couldn't read the backup: {e}"))
 }
 
 #[cfg(test)]

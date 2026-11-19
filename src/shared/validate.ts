@@ -1,4 +1,5 @@
 import { MAX_CUSTOM_THEMES, customThemeErrors, findCustom } from "./customTheme";
+import { t } from "./i18n";
 import { DISCORD_LABEL } from "./describe";
 import { formatCombo, parseCombo } from "./keys";
 import { hasCriteria, whenErrors } from "./schedule";
@@ -9,21 +10,21 @@ export function knobErrors(c: Config): string[] {
   const k = knobOf(c);
   if (!k.enabled) return [];
   const errors: string[] = [];
-  const names: [string, string][] = [["apertar", k.press], ["girar para a direita", k.right], ["girar para a esquerda", k.left]];
+  const names: [string, string][] = [[t("v.knob.press"), k.press], [t("v.knob.right"), k.right], [t("v.knob.left"), k.left]];
   const seen = new Map<string, string>();
   for (const [what, combo] of names) {
     const parsed = parseCombo(combo);
     if (!parsed) {
-      errors.push(`Knob: tecla de "${what}" inválida.`);
+      errors.push(t("v.knob.badKey", { what }));
       continue;
     }
     const key = formatCombo(parsed).toLowerCase();
-    if (seen.has(key)) errors.push(`Knob: a tecla ${combo} está em "${seen.get(key)}" e em "${what}".`);
+    if (seen.has(key)) errors.push(t("v.knob.dupKey", { combo, a: seen.get(key) ?? "", b: what }));
     seen.set(key, what);
   }
   const menu = parseCombo(c.hotkey.accelerator);
   if (wantsHotkey(c.launcher?.mode ?? "hotkey") && menu && seen.has(formatCombo(menu).toLowerCase()))
-    errors.push(`Knob: ${c.hotkey.accelerator} já é o atalho que abre o menu.`);
+    errors.push(t("v.knob.menuKey", { combo: c.hotkey.accelerator }));
   return errors;
 }
 
@@ -41,20 +42,20 @@ export function itemHotkeyErrors(c: Config): string[] {
     const p = parseCombo(s);
     return p ? formatCombo(p).toLowerCase() : s.toLowerCase();
   };
-  if (wantsHotkey(c.launcher?.mode ?? "hotkey") && parseCombo(c.hotkey.accelerator)) taken.set(norm(c.hotkey.accelerator), "o atalho do menu");
+  if (wantsHotkey(c.launcher?.mode ?? "hotkey") && parseCombo(c.hotkey.accelerator)) taken.set(norm(c.hotkey.accelerator), t("v.hk.menu"));
   const k = knobOf(c);
-  if (k.enabled) for (const key of [k.press, k.right, k.left]) if (parseCombo(key)) taken.set(norm(key), "as teclas do knob");
+  if (k.enabled) for (const key of [k.press, k.right, k.left]) if (parseCombo(key)) taken.set(norm(key), t("v.hk.knob"));
   const visit = (it: MenuItem) => {
     const hk = it.hotkey?.trim();
     if (!hk) return;
-    const name = `Atalho de "${it.label || "?"}"`;
-    if (!hotkeyComboOk(hk)) return void errors.push(`${name}: "${hk}" inválido (use Ctrl, Alt, Shift ou Win, ou uma tecla F).`);
-    if (!it.action || it.children || it.dynamic) return void errors.push(`${name}: só fatias que executam uma ação aceitam atalho.`);
+    const name = t("v.hk.name", { label: it.label || "?" });
+    if (!hotkeyComboOk(hk)) return void errors.push(t("v.hk.bad", { name, hk }));
+    if (!it.action || it.children || it.dynamic) return void errors.push(t("v.hk.onlyActions", { name }));
     if (it.action.type === "system" && DANGEROUS_SYSTEM.includes(it.action.cmd))
-      return void errors.push(`${name}: desligar, reiniciar e encerrar sessão não aceitam atalho global.`);
+      return void errors.push(t("v.hk.dangerous", { name }));
     const n = norm(hk);
     const other = taken.get(n);
-    if (other) return void errors.push(`${name}: ${hk} já é usado por ${other}.`);
+    if (other) return void errors.push(t("v.hk.taken", { name, hk, other }));
     taken.set(n, `"${it.label}"`);
   };
   for (const p of c.profiles ?? []) for (const it of p.items ?? []) {
@@ -68,69 +69,69 @@ export function itemHotkeyErrors(c: Config): string[] {
 export function validateConfig(c: Config): string[] {
   const errors: string[] = [...knobErrors(c), ...itemHotkeyErrors(c)];
   const mode = c.launcher?.mode ?? "hotkey";
-  if (!LAUNCHER_MODES.includes(mode)) errors.push(`Modo de abertura desconhecido: "${mode}".`);
+  if (!LAUNCHER_MODES.includes(mode)) errors.push(t("v.launcherMode", { mode }));
   // No modo "só ícone" o atalho fica desligado: não bloqueia salvar.
   if (wantsHotkey(mode)) {
-    if (!parseCombo(c.hotkey.accelerator)) errors.push(`Atalho inválido: "${c.hotkey.accelerator}"`);
+    if (!parseCombo(c.hotkey.accelerator)) errors.push(t("v.hotkey.bad", { combo: c.hotkey.accelerator }));
     else if (!parseCombo(c.hotkey.accelerator)!.mods.length)
-      errors.push("O atalho global precisa de pelo menos um modificador (Ctrl, Alt, Shift ou Win).");
+      errors.push(t("v.hotkey.mod"));
   }
   const orb = c.launcher?.orb;
   if (orb) {
     if (!(orb.size >= ORB_LIMITS.minSize && orb.size <= ORB_LIMITS.maxSize))
-      errors.push(`Tamanho do ícone deve estar entre ${ORB_LIMITS.minSize} e ${ORB_LIMITS.maxSize} px.`);
+      errors.push(t("v.orb.size", { min: ORB_LIMITS.minSize, max: ORB_LIMITS.maxSize }));
     if (!(orb.opacityIdle >= ORB_LIMITS.minOpacity && orb.opacityIdle <= ORB_LIMITS.maxOpacity))
-      errors.push("Opacidade do ícone deve estar entre 40% e 100%.");
-    if (orb.animation !== undefined && !ORB_ANIMATIONS.includes(orb.animation)) errors.push(`Animação do ícone desconhecida ("${orb.animation}").`);
+      errors.push(t("v.orb.opacity"));
+    if (orb.animation !== undefined && !ORB_ANIMATIONS.includes(orb.animation)) errors.push(t("v.orb.anim", { anim: String(orb.animation) }));
   }
   if (!(c.appearance.scale >= SCALE_LIMITS.min && c.appearance.scale <= SCALE_LIMITS.max))
-    errors.push(`Tamanho do menu deve estar entre ${SCALE_LIMITS.min * 100}% e ${SCALE_LIMITS.max * 100}%.`);
+    errors.push(t("v.scale", { min: SCALE_LIMITS.min * 100, max: SCALE_LIMITS.max * 100 }));
   const theme = c.appearance.theme;
   if (theme !== undefined && !THEMES.includes(theme as Theme) && !findCustom(theme, c.appearance.customThemes))
-    errors.push(`Tema desconhecido: "${theme}".`);
+    errors.push(t("v.theme", { theme }));
   const rawCustoms: unknown = c.appearance.customThemes;
-  if (rawCustoms !== undefined && !Array.isArray(rawCustoms)) errors.push("Temas personalizados em formato inválido.");
+  if (rawCustoms !== undefined && !Array.isArray(rawCustoms)) errors.push(t("v.customs.format"));
   const customs = Array.isArray(rawCustoms) ? (rawCustoms as NonNullable<typeof c.appearance.customThemes>) : [];
-  if (customs.length > MAX_CUSTOM_THEMES) errors.push(`No máximo ${MAX_CUSTOM_THEMES} temas personalizados.`);
-  customs.forEach((ct) => customThemeErrors(ct).forEach((e) => errors.push(`Tema "${(ct && (ct.name || ct.id)) || "?"}": ${e}`)));
+  if (customs.length > MAX_CUSTOM_THEMES) errors.push(t("v.customs.max", { max: MAX_CUSTOM_THEMES }));
+  customs.forEach((ct) => customThemeErrors(ct).forEach((e) => errors.push(t("v.customs.item", { name: (ct && (ct.name || ct.id)) || "?", error: e }))));
   const snd = c.appearance.sounds;
-  if (snd && !(snd.volume >= 0 && snd.volume <= 1)) errors.push("Volume dos sons deve estar entre 0% e 100%.");
-  if (!c.profiles.length) errors.push("É necessário ao menos um perfil.");
+  if (snd && !(snd.volume >= 0 && snd.volume <= 1)) errors.push(t("v.sound.volume"));
+  if (!c.profiles.length) errors.push(t("v.profiles.none"));
 
   const ids = new Set<string>();
   c.profiles.forEach((p, pi) => {
-    const where = `Perfil "${p.name || pi + 1}"`;
-    if (!p.name.trim()) errors.push(`${where}: nome vazio.`);
-    if (ids.has(p.id)) errors.push(`${where}: id duplicado.`);
+    const where = t("v.profile.where", { name: p.name || pi + 1 });
+    if (!p.name.trim()) errors.push(t("v.profile.noName", { where }));
+    if (ids.has(p.id)) errors.push(t("v.profile.dupId", { where }));
     ids.add(p.id);
     if (pi > 0 && !(p.matchExe ?? []).length && !hasCriteria(p.when))
-      errors.push(`${where}: associe um executável ou defina "Quando usar".`);
-    whenErrors(p.when).forEach((e) => errors.push(`${where}: ${e}`));
+      errors.push(t("v.profile.noRule", { where }));
+    whenErrors(p.when).forEach((e) => errors.push(t("v.item.err", { where, error: e })));
     if (p.items.length < LIMITS.minSlices || p.items.length > LIMITS.maxSlices)
-      errors.push(`${where}: use de ${LIMITS.minSlices} a ${LIMITS.maxSlices} fatias (tem ${p.items.length}).`);
-    p.items.forEach((it) => validateItem(it, `${where} › ${it.label || "(sem nome)"}`, true, errors));
+      errors.push(t("v.profile.slices", { where, min: LIMITS.minSlices, max: LIMITS.maxSlices, n: p.items.length }));
+    p.items.forEach((it) => validateItem(it, `${where} › ${it.label || t("v.noName")}`, true, errors));
   });
   return errors;
 }
 
 function validateItem(it: MenuItem, where: string, allowChildren: boolean, errors: string[]) {
-  if (!it.label.trim()) errors.push(`${where}: rótulo vazio.`);
+  if (!it.label.trim()) errors.push(t("v.item.noLabel", { where }));
   if (it.dynamic) {
-    if (!allowChildren) errors.push(`${where}: submenu automático só em fatias principais.`);
-    if (!DYNAMIC_KINDS.includes(it.dynamic)) errors.push(`${where}: submenu automático desconhecido ("${it.dynamic}").`);
-    if (it.dynamicTarget !== undefined && !validBrightnessTarget(it.dynamicTarget)) errors.push(`${where}: tela do brilho inválida.`);
+    if (!allowChildren) errors.push(t("v.item.dynOnlyMain", { where }));
+    if (!DYNAMIC_KINDS.includes(it.dynamic)) errors.push(t("v.item.dynUnknown", { where, kind: it.dynamic }));
+    if (it.dynamicTarget !== undefined && !validBrightnessTarget(it.dynamicTarget)) errors.push(t("v.item.brightTarget", { where }));
     return;
   }
   const kids = it.children ?? [];
   if (kids.length) {
-    if (!allowChildren) errors.push(`${where}: submenus só têm um nível.`);
-    if (kids.length > LIMITS.maxChildren) errors.push(`${where}: máximo de ${LIMITS.maxChildren} subitens.`);
-    kids.forEach((k) => validateItem(k, `${where} › ${k.label || "(sem nome)"}`, false, errors));
+    if (!allowChildren) errors.push(t("v.item.oneLevel", { where }));
+    if (kids.length > LIMITS.maxChildren) errors.push(t("v.item.maxChildren", { where, max: LIMITS.maxChildren }));
+    kids.forEach((k) => validateItem(k, `${where} › ${k.label || t("v.noName")}`, false, errors));
   } else if (!it.action) {
-    errors.push(`${where}: defina uma ação ou subitens.`);
+    errors.push(t("v.item.noAction", { where }));
   } else {
     const e = validateAction(it.action);
-    if (e) errors.push(`${where}: ${e}`);
+    if (e) errors.push(t("v.item.err", { where, error: e }));
   }
 }
 
@@ -141,50 +142,50 @@ export function validBrightnessTarget(t: unknown): boolean {
 
 export function validateAction(a: Action): string | null {
   switch (a.type) {
-    case "launch": return a.path.trim() ? null : "informe o programa/arquivo.";
-    case "folder": return a.path.trim() ? null : "informe a pasta.";
+    case "launch": return a.path.trim() ? null : t("v.a.launch");
+    case "folder": return a.path.trim() ? null : t("v.a.folder");
     case "url": {
       const u = a.url.trim();
-      if (!/^(https?:\/\/|mailto:)/i.test(u)) return "URL deve começar com http://, https:// ou mailto:.";
+      if (!/^(https?:\/\/|mailto:)/i.test(u)) return t("v.a.urlScheme");
       const inBrowser = (!!a.browser && a.browser !== "system") || !!a.private;
       // Num navegador escolhido o endereço vai como um único argumento: sem espaços nem aspas.
-      if (inBrowser && /^https?:/i.test(u) && /[\s"]/.test(u)) return 'endereço com espaço ou aspas (troque o espaço por %20).';
+      if (inBrowser && /^https?:/i.test(u) && /[\s"]/.test(u)) return t("v.a.urlSpace");
       // Mesmo limite do Rust, que conta bytes UTF-8 (acentos ocupam mais de um).
-      if (inBrowser && new TextEncoder().encode(u).length > 2048) return "endereço longo demais para abrir num navegador escolhido (máx. 2048 caracteres).";
-      if (a.profile !== undefined && !/^[A-Za-z0-9 _-]{1,64}$/.test(a.profile)) return "perfil do navegador inválido.";
+      if (inBrowser && new TextEncoder().encode(u).length > 2048) return t("v.a.urlLong");
+      if (a.profile !== undefined && !/^[A-Za-z0-9 _-]{1,64}$/.test(a.profile)) return t("v.a.browserProfile");
       return null;
     }
     case "keys":
-      if (!parseCombo(a.combo)) return `combinação inválida "${a.combo}".`;
+      if (!parseCombo(a.combo)) return t("v.a.combo", { combo: a.combo });
       if (a.delayMs !== undefined && (!Number.isInteger(a.delayMs) || a.delayMs < 0 || a.delayMs > 10000))
-        return "o atraso deve ser um número inteiro entre 0 e 10000 ms.";
+        return t("v.a.delay");
       return null;
-    case "script": return a.command.trim() ? null : "comando vazio.";
+    case "script": return a.command.trim() ? null : t("v.a.script");
     case "brightness":
-      if (a.mode === "set" && !(Number.isInteger(a.value) && a.value! >= 0 && a.value! <= 100)) return "o brilho deve ser um inteiro de 0 a 100.";
-      if (a.target !== undefined && !validBrightnessTarget(a.target)) return "tela do brilho inválida.";
+      if (a.mode === "set" && !(Number.isInteger(a.value) && a.value! >= 0 && a.value! <= 100)) return t("v.a.bright");
+      if (a.target !== undefined && !validBrightnessTarget(a.target)) return t("v.a.brightTarget");
       return null;
     case "audioOutput":
-      if (a.mode === "set" && !a.deviceId?.trim() && !a.deviceName?.trim()) return "escolha o dispositivo de saída.";
+      if (a.mode === "set" && !a.deviceId?.trim() && !a.deviceName?.trim()) return t("v.a.audioDevice");
       return null;
     case "sequence": {
       if (!Array.isArray(a.steps) || a.steps.length < SEQUENCE_LIMITS.min || a.steps.length > SEQUENCE_LIMITS.max)
-        return `a sequência precisa de ${SEQUENCE_LIMITS.min} a ${SEQUENCE_LIMITS.max} ações.`;
+        return t("v.a.seqCount", { min: SEQUENCE_LIMITS.min, max: SEQUENCE_LIMITS.max });
       if (a.delayMs !== undefined && (!Number.isInteger(a.delayMs) || a.delayMs < 0 || a.delayMs > SEQUENCE_LIMITS.maxDelayMs))
-        return `o intervalo entre as ações deve ser de 0 a ${SEQUENCE_LIMITS.maxDelayMs} ms.`;
+        return t("v.a.seqDelay", { max: SEQUENCE_LIMITS.maxDelayMs });
       for (const [i, s] of a.steps.entries()) {
-        if (s.type === "sequence") return `passo ${i + 1}: sequência dentro de sequência não é permitida.`;
+        if (s.type === "sequence") return t("v.a.seqNested", { n: i + 1 });
         if (s.type === "system" && DANGEROUS_SYSTEM.includes(s.cmd))
-          return `passo ${i + 1}: desligar, reiniciar e encerrar sessão não entram numa sequência.`;
+          return t("v.a.seqDangerous", { n: i + 1 });
         const e = validateAction(s);
-        if (e) return `passo ${i + 1}: ${e}`;
+        if (e) return t("v.a.seqStep", { n: i + 1, error: e });
       }
       return null;
     }
     case "discord":
-      if (!Object.prototype.hasOwnProperty.call(DISCORD_LABEL, a.cmd)) return "comando do Discord inválido.";
+      if (!Object.prototype.hasOwnProperty.call(DISCORD_LABEL, a.cmd)) return t("v.a.discordCmd");
       if ((a.cmd === "setInput" || a.cmd === "setOutput") && !a.deviceId?.trim() && !a.deviceName?.trim())
-        return "escolha o dispositivo do Discord.";
+        return t("v.a.discordDevice");
       return null;
     default: return null;
   }

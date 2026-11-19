@@ -343,9 +343,9 @@ pub fn diagnostics_of(app: &tauri::AppHandle) -> Diagnostics {
     let hotkey_error = state.hotkey_error.lock_ok().clone();
     Diagnostics {
         version: app.package_info().version.to_string(),
-        webview: tauri::webview_version().unwrap_or_else(|e| format!("indisponível ({e})")),
+        webview: tauri::webview_version().unwrap_or_else(|e| trf!("indisponível ({e})", "unavailable ({e})")),
         windows: windows_version(),
-        monitors: mons.iter().map(|m| format!("{}×{} em {},{}", m.width(), m.height(), m.left, m.top)).collect(),
+        monitors: mons.iter().map(|m| trf!("{}×{} em {},{}", "{}×{} at {},{}", m.width(), m.height(), m.left, m.top)).collect(),
         launcher_mode: format!("{:?}", cfg.launcher.mode).to_lowercase(),
         theme: cfg.appearance.get("theme").and_then(|v| v.as_str()).unwrap_or("glass").to_string(),
         hotkey: cfg.hotkey.accelerator.clone(),

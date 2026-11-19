@@ -296,14 +296,14 @@ impl Config {
     /// Validação mínima no backend (a UI faz a validação completa e amigável).
     pub fn validate(&self) -> Result<(), String> {
         if self.version != CURRENT_VERSION {
-            return Err(format!("versão de configuração não suportada: {}", self.version));
+            return Err(trf!("versão de configuração não suportada: {}", "unsupported settings version: {}", self.version));
         }
         if self.profiles.is_empty() {
-            return Err("é necessário ao menos um perfil".into());
+            return Err(tr!("é necessário ao menos um perfil", "at least one profile is required").into());
         }
         for p in &self.profiles {
             if !(3..=10).contains(&p.items.len()) {
-                return Err(format!("perfil \"{}\": use de 3 a 10 fatias", p.name));
+                return Err(trf!("perfil \"{}\": use de 3 a 10 fatias", "profile \"{}\": use 3 to 10 slices", p.name));
             }
         }
         Ok(())

@@ -78,8 +78,8 @@ pub fn list() -> Vec<PowerPlan> {
 
 /// Ativa o plano `guid`.
 pub fn set(guid: &str) -> Result<(), String> {
-    let g = parse_guid(guid).ok_or_else(|| format!("plano de energia inválido: {guid}"))?;
-    unsafe { PowerSetActiveScheme(None, Some(&g)) }.ok().map_err(|e| format!("não foi possível trocar o plano de energia: {e}"))
+    let g = parse_guid(guid).ok_or_else(|| trf!("plano de energia inválido: {guid}", "invalid power plan: {guid}"))?;
+    unsafe { PowerSetActiveScheme(None, Some(&g)) }.ok().map_err(|e| trf!("não foi possível trocar o plano de energia: {e}", "couldn't switch the power plan: {e}"))
 }
 
 #[cfg(test)]
