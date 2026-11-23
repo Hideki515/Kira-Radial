@@ -2028,11 +2028,13 @@ dependencies = [
 
 [[package]]
 name = "kira-radial"
-version = "0.33.0"
+version = "0.34.0"
 dependencies = [
+ "base64 0.23.1",
  "png",
  "serde",
  "serde_json",
+ "sha2",
  "tauri",
  "tauri-build",
  "tauri-plugin-autostart",

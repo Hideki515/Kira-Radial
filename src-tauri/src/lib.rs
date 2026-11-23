@@ -21,6 +21,7 @@ mod lock;
 mod menu;
 mod monitors;
 mod nowplaying;
+mod obs;
 mod orb;
 mod perf;
 mod positioning;
@@ -196,6 +197,9 @@ pub fn run() {
             commands::list_recent_files,
             commands::list_vscode_projects,
             commands::list_vpns,
+            commands::obs_state,
+            commands::obs_settings,
+            commands::obs_save_settings,
             commands::clipboard_list,
             commands::clipboard_clear,
             commands::get_volume,

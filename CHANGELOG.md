@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.34.0
+
+- **Controle do OBS Studio** pelo servidor WebSocket local que já vem no OBS 28 ou mais novo. Nada passa pela internet.
+  - **Página OBS** nas Configurações: porta e senha (guardada cifrada neste PC, fora do backup e da exportação), com o botão **Salvar e testar**, que mostra a versão do OBS e a cena atual.
+  - **Submenu automático "Cenas do OBS"**: as cenas na ordem do OBS, com a atual em verde; clique para trocar.
+  - **Ação "OBS Studio"**: trocar de cena, iniciar/parar/alternar gravação e transmissão, pausar a gravação, salvar o replay, ligar a câmera virtual e mutar uma fonte de áudio. O editor sugere as cenas e as fontes do OBS aberto.
+  - Cada comando abre a conexão, executa e fecha: com o menu fechado, nada fica rodando. A Kira de teste usa um OBS de mentira e nunca toca no OBS de verdade.
+- **Ajustes da 0.33.0:**
+  - a leitura dos projetos do VS Code usa um arquivo temporário diferente a cada vez;
+  - um erro no VS Code comum não impede mais de tentar o Insiders;
+  - a lista de VPNs conectadas não para mais em 8.
+
 ## 0.33.0
 
 - **Dois submenus automáticos novos** (em Itens → fatia → Submenu automático):

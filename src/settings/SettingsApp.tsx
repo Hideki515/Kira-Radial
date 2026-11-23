@@ -1,4 +1,4 @@
-import { CircleDot, Headset, Orbit, Stethoscope, Keyboard, LayoutGrid, Palette, Save, Settings2, Undo2, Users, Archive, AlertTriangle } from "lucide-react";
+import { CircleDot, Clapperboard, Headset, Orbit, Stethoscope, Keyboard, LayoutGrid, Palette, Save, Settings2, Undo2, Users, Archive, AlertTriangle } from "lucide-react";
 import { applyLangSetting, t, useLang } from "../shared/i18n";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useSystemStats } from "../hooks/useSystemStats";
@@ -9,6 +9,7 @@ import { useUpdateInfo } from "./pages/UpdatesSection";
 import { PreviewEditor } from "./PreviewEditor";
 import { DiagnosticsPage } from "./pages/DiagnosticsPage";
 import { DiscordPage } from "./pages/DiscordPage";
+import { ObsPage } from "./pages/ObsPage";
 import { validateConfig } from "../shared/validate";
 import { RadialCanvas, type RadialCanvasProps } from "../radial/RadialCanvas";
 import { useIconFiles } from "../shared/iconFiles";
@@ -24,7 +25,7 @@ import { ItemsPage, type Selection } from "./pages/ItemsPage";
 import { ProfilesPage } from "./pages/ProfilesPage";
 import { AppearancePage, BackupPage, GeneralPage, HotkeyPage } from "./pages/SimplePages";
 
-type Page = "items" | "hotkey" | "icon" | "profiles" | "general" | "appearance" | "backup" | "discord" | "diagnostics";
+type Page = "items" | "hotkey" | "icon" | "profiles" | "general" | "appearance" | "backup" | "discord" | "obs" | "diagnostics";
 
 const NAV: { id: Page; icon: typeof CircleDot }[] = [
   { id: "items", icon: LayoutGrid },
@@ -35,6 +36,7 @@ const NAV: { id: Page; icon: typeof CircleDot }[] = [
   { id: "appearance", icon: Palette },
   { id: "backup", icon: Archive },
   { id: "discord", icon: Headset },
+  { id: "obs", icon: Clapperboard },
   { id: "diagnostics", icon: Stethoscope },
 ];
 
@@ -173,6 +175,7 @@ export function SettingsApp() {
         {page === "general" && <GeneralPage config={draft} update={update} />}
         {page === "diagnostics" && <DiagnosticsPage />}
         {page === "discord" && <DiscordPage />}
+        {page === "obs" && <ObsPage />}
         {page === "appearance" && <AppearancePage config={draft} update={update} />}
         {page === "backup" && <BackupPage config={draft} replace={(c) => { setDraft(c); setProfileIdx(0); setSelection({ main: 0, child: null }); }} />}
       </main>

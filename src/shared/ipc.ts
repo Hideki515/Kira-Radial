@@ -249,6 +249,41 @@ export async function listVpns(): Promise<VpnInfo[]> {
   ];
 }
 
+export interface ObsState {
+  status: "ok" | "closed" | "needPassword" | "authFailed" | "error";
+  message?: string;
+  version?: string;
+  /** Na ordem do OBS (de cima para baixo). */
+  scenes: string[];
+  current?: string;
+  recording: boolean;
+  streaming: boolean;
+  /** Fontes de áudio (para o mudo). */
+  inputs: string[];
+}
+
+/** Estado do OBS (nunca rejeita por OBS fechado: vem em `status`). */
+export async function obsState(): Promise<ObsState> {
+  if (isTauri()) return invoke<ObsState>("obs_state");
+  return { status: "ok", version: "31.0.0", scenes: ["Início", "Jogo", "Pausa"], current: "Jogo", recording: false, streaming: false, inputs: ["Mic/Aux", "Áudio do desktop"] };
+}
+
+export interface ObsSettings {
+  port: number;
+  hasPassword: boolean;
+}
+
+export async function obsSettings(): Promise<ObsSettings> {
+  if (isTauri()) return invoke<ObsSettings>("obs_settings");
+  return { port: 4455, hasPassword: false };
+}
+
+/** Grava porta e senha. `password` ausente = mantém; "" = apaga. */
+export async function obsSaveSettings(port: number, password?: string): Promise<ObsSettings> {
+  if (isTauri()) return invoke<ObsSettings>("obs_save_settings", { port, password: password ?? null });
+  return { port, hasPassword: !!password };
+}
+
 export interface RadioInfo {
   kind: "wifi" | "bluetooth";
   name: string;

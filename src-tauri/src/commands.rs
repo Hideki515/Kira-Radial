@@ -175,6 +175,24 @@ pub async fn list_vpns() -> Result<Vec<crate::vpn::VpnInfo>, String> {
     tauri::async_runtime::spawn_blocking(crate::vpn::list).await.map_err(|e| e.to_string())?
 }
 
+/// OBS: estado (cenas, gravação, transmissão, fontes de áudio). Nunca falha: o erro vem no status.
+#[tauri::command]
+pub async fn obs_state() -> Result<crate::obs::ObsState, String> {
+    tauri::async_runtime::spawn_blocking(crate::obs::state).await.map_err(|e| e.to_string())
+}
+
+/// OBS: porta e se há senha salva (a senha nunca volta para a interface).
+#[tauri::command]
+pub fn obs_settings() -> crate::obs::SettingsView {
+    crate::obs::settings_view()
+}
+
+/// OBS: grava a porta e a senha (None = mantém a senha; "" = apaga).
+#[tauri::command]
+pub fn obs_save_settings(port: u16, password: Option<String>) -> Result<crate::obs::SettingsView, String> {
+    crate::obs::update_settings(port, password)
+}
+
 /// Wi-Fi e Bluetooth (submenu automático "Rádios").
 #[tauri::command]
 pub async fn list_radios() -> Result<Vec<crate::radios::RadioInfo>, String> {

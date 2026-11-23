@@ -1153,4 +1153,92 @@ describe("Kira de teste — ponta a ponta", () => {
     await toWindow("settings.html");
     await invoke("save_config", { config: original });
   });
+
+  it("26. (QA v0.34.0) OBS (FALSO, da Kira de teste): página em pt/en, senha só cifrada, submenu de cenas troca a cena, ação com cena inválida = erro", async function () {
+    this.timeout(120000);
+    await toWindow("settings.html");
+    const original = await invoke("get_config");
+    const SECRET = "segredo-obs-e2e-QA";
+    const runAction = (a) => browser.execute((x) => window.__TAURI_INTERNALS__.invoke("run_action", { action: x }).then(() => "ok", (e) => String(e)), a);
+    const subLabels = () => browser.execute(() => [...document.querySelectorAll(".sub-slice")].map((s) => s.getAttribute("aria-label")));
+
+    // Estado do OBS falso (nunca abre rede na Kira de teste).
+    const st0 = await invoke("obs_state");
+    expect(st0.status).toBe("ok");
+    expect(st0.version).toBe("QA");
+    expect(st0.scenes).toEqual(["Cena QA 1", "Cena QA 2", "Cena QA 3"]);
+    expect(st0.inputs).toEqual(["Mic QA"]);
+
+    // Página OBS em português: status do falso, salvar porta + senha.
+    await nav("OBS");
+    await browser.waitUntil(async () => (await $('[data-testid="obs-status"]').getText()).includes("Conectado ao OBS QA"), { timeoutMsg: "status OBS (pt) não apareceu" });
+    const pw = await $('main input[type="password"]');
+    await pw.setValue(SECRET);
+    await $("button*=Salvar e testar").click();
+    await browser.waitUntil(async () => (await invoke("obs_settings")).hasPassword === true, { timeoutMsg: "senha não salvou" });
+    const view = await invoke("obs_settings");
+    expect(Object.keys(view).sort()).toEqual(["hasPassword", "port"]);
+    expect(JSON.stringify(view)).not.toContain(SECRET);
+    expect(await pw.getValue()).toBe("");
+    // Só cifrada, na pasta de TESTE; nada em config.json, log ou diagnóstico.
+    expect(qaFiles()).toContain("obs.bin");
+    expect(readFileSync(join(QA_DATA, "obs.bin")).includes(Buffer.from(SECRET))).toBe(false);
+    expect(JSON.stringify(qaConfig())).not.toContain(SECRET);
+    expect((await invoke("read_log", { lines: 500 })).join("\n")).not.toContain(SECRET);
+    expect(JSON.stringify(await invoke("diagnostics"))).not.toContain(SECRET);
+    // None mantém, porta inválida = erro, "" apaga.
+    expect((await invoke("obs_save_settings", { port: 4460, password: null })).hasPassword).toBe(true);
+    const bad = await browser.execute(() => window.__TAURI_INTERNALS__.invoke("obs_save_settings", { port: 0, password: null }).then(() => "ok", (e) => String(e)));
+    expect(bad).toContain("porta inválida");
+    expect(await invoke("obs_save_settings", { port: 4455, password: "" })).toEqual({ port: 4455, hasPassword: false });
+
+    // Ação: cena inválida = erro (pt), cena válida troca; validação recusa sem cena.
+    const inval = await runAction({ type: "obs", cmd: "setScene", scene: "Cena Que Nao Existe" });
+    console.log("[26] cena inválida:", inval);
+    expect(inval).toContain("o OBS recusou o pedido");
+    expect(await runAction({ type: "obs", cmd: "explode" })).not.toBe("ok");
+    expect(await runAction({ type: "obs", cmd: "toggleMute", input: "Outro" })).not.toBe("ok");
+    expect(await runAction({ type: "obs", cmd: "setScene", scene: "Cena QA 3" })).toBe("ok");
+    expect((await invoke("obs_state")).current).toBe("Cena QA 3");
+
+    // Submenu automático "Cenas do OBS": ordem do OBS; clicar na 2ª troca a cena do falso.
+    const cfg = structuredClone(original);
+    for (const p of cfg.profiles) {
+      const it = p.items[0];
+      delete it.action;
+      delete it.children;
+      delete it.dynamicTarget;
+      delete it.dynamicTargetName;
+      it.dynamic = "obsScenes";
+    }
+    await invoke("save_config", { config: cfg });
+    await invoke("qa_show_menu", { fromOrb: false });
+    await toWindow("");
+    await pressKey("1", "Digit1");
+    await browser.waitUntil(async () => (await subLabels()).length === 3, { timeoutMsg: "submenu de cenas não listou as 3 cenas" });
+    const labels = await subLabels();
+    console.log("[26] submenu:", JSON.stringify(labels));
+    expect(labels.map((l) => l.replace(/\s*\(.*\)$/, ""))).toEqual(["Cena QA 1", "Cena QA 2", "Cena QA 3"]);
+    await pressKey("2", "Digit2");
+    await toWindow("settings.html");
+    await browser.waitUntil(async () => (await invoke("obs_state")).current === "Cena QA 2", { timeoutMsg: "clicar na cena não trocou" });
+
+    // Página em inglês.
+    const en = structuredClone(original);
+    en.behavior.language = "en";
+    await invoke("save_config", { config: en });
+    await browser.refresh();
+    await toWindow("settings.html");
+    await browser.waitUntil(async () => (await browser.execute(() => document.documentElement.lang)) === "en", { timeoutMsg: "não abriu em inglês" });
+    const b = await $("button.nav-item*=OBS");
+    await b.click();
+    await browser.waitUntil(async () => (await $('[data-testid="obs-status"]').getText()).includes("Connected to OBS QA"), { timeoutMsg: "status OBS (en) não apareceu" });
+    await expect($("button*=Save and test")).toBeExisting();
+    const invalEn = await runAction({ type: "obs", cmd: "setScene", scene: "Nope" });
+    expect(invalEn).toContain("OBS rejected the request");
+
+    await invoke("save_config", { config: original });
+    await browser.refresh();
+    await toWindow("settings.html");
+  });
 });

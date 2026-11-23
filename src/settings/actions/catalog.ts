@@ -1,5 +1,5 @@
 // Tipos de ação editáveis, comandos e a ação padrão de cada tipo.
-import type { Action, MediaCmd, SystemCmd } from "../../shared/types";
+import { OBS_CMDS, type Action, type MediaCmd, type ObsCmd, type SystemCmd } from "../../shared/types";
 import { t, type Key } from "../../shared/i18n";
 
 /** Opção de lista com o rótulo lido no idioma atual a cada acesso. */
@@ -11,7 +11,7 @@ function opt<T extends string>(value: T, key: Key): { value: T; label: string } 
 export type ActionType = Exclude<Action["type"], "focusWindow" | "powerPlan" | "paste">;
 
 export const ACTION_TYPES: { value: ActionType; label: string }[] = (
-  ["launch", "folder", "url", "keys", "media", "system", "script", "audioOutput", "window", "brightness", "radio", "vpn", "discord", "sequence", "openSettings"] as const
+  ["launch", "folder", "url", "keys", "media", "system", "script", "audioOutput", "window", "brightness", "radio", "vpn", "discord", "obs", "sequence", "openSettings"] as const
 ).map((v) => opt(v, `act.type.${v}`));
 
 export const MEDIA: { value: MediaCmd; label: string }[] = (
@@ -21,6 +21,8 @@ export const MEDIA: { value: MediaCmd; label: string }[] = (
 export const SYSTEM: { value: SystemCmd; label: string }[] = (
   ["lock", "sleep", "shutdown", "restart", "signout", "screenshot", "taskmgr", "settings"] as const
 ).map((v) => opt(v, `act.system.${v}`));
+
+export const OBS: { value: ObsCmd; label: string }[] = OBS_CMDS.map((v) => opt(v, `act.obs.${v}`));
 
 export function defaultAction(type: ActionType): Action {
   switch (type) {
@@ -37,6 +39,7 @@ export function defaultAction(type: ActionType): Action {
     case "brightness": return { type, mode: "up" };
     case "radio": return { type, kind: "wifi", mode: "toggle" };
     case "vpn": return { type, name: "", mode: "toggle" };
+    case "obs": return { type, cmd: "toggleRecord" };
     case "discord": return { type, cmd: "toggleMute" };
     case "sequence": return { type, steps: [{ type: "launch", path: "" }, { type: "media", cmd: "playpause" }] };
   }

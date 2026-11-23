@@ -5,6 +5,15 @@ import type { CustomTheme } from "./customTheme";
 /** Discord (RPC local): mudo, ensurdecer e dispositivos de entrada/saída do próprio Discord. */
 export type DiscordCmd = "toggleMute" | "mute" | "unmute" | "toggleDeafen" | "deafen" | "undeafen" | "setInput" | "setOutput";
 
+/** OBS Studio (obs-websocket local). setScene usa `scene`; toggleMute usa `input`. */
+export type ObsCmd =
+  | "setScene" | "toggleRecord" | "startRecord" | "stopRecord" | "toggleRecordPause"
+  | "toggleStream" | "startStream" | "stopStream" | "toggleMute" | "saveReplay" | "toggleVirtualCam";
+export const OBS_CMDS: readonly ObsCmd[] = [
+  "setScene", "toggleRecord", "startRecord", "stopRecord", "toggleRecordPause",
+  "toggleStream", "startStream", "stopStream", "toggleMute", "saveReplay", "toggleVirtualCam",
+];
+
 export type MediaCmd = "playpause" | "next" | "prev" | "volup" | "voldown" | "mute";
 export type SystemCmd =
   | "lock"
@@ -74,6 +83,7 @@ export type Action =
   | { type: "radio"; kind: "wifi" | "bluetooth"; mode: "toggle" | "on" | "off" }
   /** VPN do Windows pelo nome (Configurações → Rede → VPN). */
   | { type: "vpn"; name: string; mode: "toggle" | "connect" | "disconnect" }
+  | { type: "obs"; cmd: ObsCmd; scene?: string; input?: string }
   /** Cola um item do histórico da área de transferência (gerada pelo submenu; não aparece no editor). */
   | { type: "paste"; index: number; preview?: string }
   /** Discord: setInput/setOutput usam o id do dispositivo no Discord (nome = reserva se o id mudar). */
@@ -107,8 +117,8 @@ export interface MenuItem {
   hotkey?: string;
 }
 
-export type DynamicKind = "audioOutputs" | "windows" | "powerPlans" | "brightness" | "radios" | "recentFiles" | "clipboard" | "discordVoice" | "discordInput" | "discordOutput" | "vscodeProjects" | "vpns";
-export const DYNAMIC_KINDS: readonly DynamicKind[] = ["audioOutputs", "windows", "powerPlans", "brightness", "radios", "recentFiles", "clipboard", "discordVoice", "discordInput", "discordOutput", "vscodeProjects", "vpns"];
+export type DynamicKind = "audioOutputs" | "windows" | "powerPlans" | "brightness" | "radios" | "recentFiles" | "clipboard" | "discordVoice" | "discordInput" | "discordOutput" | "vscodeProjects" | "vpns" | "obsScenes";
+export const DYNAMIC_KINDS: readonly DynamicKind[] = ["audioOutputs", "windows", "powerPlans", "brightness", "radios", "recentFiles", "clipboard", "discordVoice", "discordInput", "discordOutput", "vscodeProjects", "vpns", "obsScenes"];
 
 export interface ProfileWhen {
   days?: number[];

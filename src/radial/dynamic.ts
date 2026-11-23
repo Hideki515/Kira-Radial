@@ -1,4 +1,4 @@
-import type { AudioDevice, DiscordVoiceState, DisplayInfo, PowerPlan, RadioInfo, RecentFile, VpnInfo, VsProject, WindowInfo } from "../shared/ipc";
+import type { AudioDevice, DiscordVoiceState, DisplayInfo, ObsState, PowerPlan, RadioInfo, RecentFile, VpnInfo, VsProject, WindowInfo } from "../shared/ipc";
 import { DYNAMIC_KINDS, LIMITS, type DynamicKind, type MenuItem } from "../shared/types";
 import { t, type Key } from "../shared/i18n";
 import { pt } from "../shared/i18n/pt";
@@ -252,6 +252,23 @@ export function vpnChildren(parentId: string, list: VpnInfo[] | null): MenuItem[
   }));
 }
 
+/** Cenas do OBS: a atual em verde; clique troca. OBS fechado/sem senha: uma fatia que explica. */
+export function obsSceneChildren(parentId: string, state: ObsState | null): MenuItem[] {
+  if (state === null) return [{ id: `${parentId}:loading`, label: t("common.loading"), icon: "clapperboard" }];
+  if (state.status !== "ok") {
+    const key = state.status === "closed" ? "dyn.obs.closed" : state.status === "needPassword" || state.status === "authFailed" ? "dyn.obs.password" : "dyn.obs.error";
+    return [{ id: `${parentId}:${state.status}`, label: t(key), icon: "clapperboard" }];
+  }
+  if (!state.scenes.length) return [{ id: `${parentId}:none`, label: t("dyn.none.obs"), icon: "clapperboard" }];
+  return state.scenes.slice(0, LIMITS.maxChildren).map((s, i) => ({
+    id: `${parentId}:${i}`,
+    label: trimLabel(s),
+    icon: "clapperboard",
+    color: s === state.current ? AUDIO_CURRENT_COLOR : AUDIO_OTHER_COLOR,
+    action: { type: "obs", cmd: "setScene", scene: s },
+  }));
+}
+
 /** Dados lidos do sistema para cada tipo de submenu automático (null/ausente = carregando). */
 export interface DynamicSources {
   audio?: AudioDevice[] | null;
@@ -265,6 +282,7 @@ export interface DynamicSources {
   discord?: DiscordVoiceState | null;
   vscode?: VsProject[] | null;
   vpns?: VpnInfo[] | null;
+  obs?: ObsState | null;
 }
 
 /** Texto `dyn.<grupo>.<tipo>` no idioma atual; tipo desconhecido = undefined (como num objeto comum). */
@@ -298,6 +316,7 @@ function childrenFor(it: MenuItem, src: DynamicSources): MenuItem[] {
     case "discordOutput": return discordDeviceChildren(it.id, src.discord ?? null, "output");
     case "vscodeProjects": return vscodeChildren(it.id, src.vscode ?? null);
     case "vpns": return vpnChildren(it.id, src.vpns ?? null);
+    case "obsScenes": return obsSceneChildren(it.id, src.obs ?? null);
   }
 }
 

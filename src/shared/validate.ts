@@ -3,7 +3,7 @@ import { t } from "./i18n";
 import { DISCORD_LABEL } from "./describe";
 import { formatCombo, parseCombo } from "./keys";
 import { hasCriteria, whenErrors } from "./schedule";
-import { DYNAMIC_KINDS, LAUNCHER_MODES, LIMITS, ORB_ANIMATIONS, ORB_LIMITS, SCALE_LIMITS, THEMES, DANGEROUS_SYSTEM, SEQUENCE_LIMITS, knobOf, wantsHotkey, type Action, type Theme, type Config, type MenuItem } from "./types";
+import { OBS_CMDS, DYNAMIC_KINDS, LAUNCHER_MODES, LIMITS, ORB_ANIMATIONS, ORB_LIMITS, SCALE_LIMITS, THEMES, DANGEROUS_SYSTEM, SEQUENCE_LIMITS, knobOf, wantsHotkey, type Action, type Theme, type Config, type MenuItem } from "./types";
 
 /** Teclas do knob: válidas, diferentes entre si e do atalho do menu. */
 export function knobErrors(c: Config): string[] {
@@ -182,6 +182,11 @@ export function validateAction(a: Action): string | null {
       }
       return null;
     }
+    case "obs":
+      if (!(OBS_CMDS as readonly string[]).includes(a.cmd)) return t("v.a.obsCmd");
+      if (a.cmd === "setScene" && !a.scene?.trim()) return t("v.a.obsScene");
+      if (a.cmd === "toggleMute" && !a.input?.trim()) return t("v.a.obsInput");
+      return null;
     case "vpn": {
       const n = a.name.trim();
       if (!n) return t("v.a.vpnName");

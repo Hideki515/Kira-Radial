@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { clipboardList, discordVoice, listAudioOutputs, listDisplays, listPowerPlans, listRadios, listRecentFiles, listVpns, listVscodeProjects, listWindows } from "../shared/ipc";
+import { clipboardList, discordVoice, listAudioOutputs, listDisplays, listPowerPlans, listRadios, listRecentFiles, listVpns, listVscodeProjects, listWindows, obsState } from "../shared/ipc";
 import { perfLog } from "../shared/perf";
 import type { Action, DynamicKind, MenuItem } from "../shared/types";
 import type { DynamicSources } from "./dynamic";
@@ -18,10 +18,11 @@ const LOADERS: { [K in DynamicKind]: { key: keyof DynamicSources; load: () => Pr
   discordOutput: { key: "discord", load: discordVoice },
   vscodeProjects: { key: "vscode", load: listVscodeProjects },
   vpns: { key: "vpns", load: listVpns },
+  obsScenes: { key: "obs", load: obsState },
 };
 
 /** Falha ao ler: o que mostrar (listas vazias; o Discord explica o erro na própria fatia). */
-const FAILED: Partial<Record<keyof DynamicSources, unknown>> = { discord: { status: "error" } };
+const FAILED: Partial<Record<keyof DynamicSources, unknown>> = { discord: { status: "error" }, obs: { status: "error", scenes: [], inputs: [], recording: false, streaming: false } };
 
 /**
  * Leituras lentas que quase não mudam sozinhas: dentro deste prazo, reabrir o menu usa o
@@ -47,6 +48,7 @@ export function kindChangedBy(action: Action | undefined): DynamicKind | undefin
     case "powerPlan": return "powerPlans";
     case "radio": return "radios";
     case "vpn": return "vpns";
+    case "obs": return "obsScenes";
     default: return undefined;
   }
 }

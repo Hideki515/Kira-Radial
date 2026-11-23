@@ -41,6 +41,8 @@ export function describeAction(a: Action): string {
       const what = a.kind === "wifi" ? "Wi-Fi" : "Bluetooth";
       return t(a.mode === "on" ? "d.radio.on" : a.mode === "off" ? "d.radio.off" : "d.radio.toggle", { what });
     }
+    case "obs":
+      return t(`d.obs.${a.cmd}` as Key, { scene: a.scene?.trim() || "?", input: a.input?.trim() || "?" });
     case "vpn":
       return t(a.mode === "connect" ? "d.vpn.connect" : a.mode === "disconnect" ? "d.vpn.disconnect" : "d.vpn.toggle", { name: a.name.trim() || "?" });
     case "brightness":

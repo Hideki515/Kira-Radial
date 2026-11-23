@@ -94,6 +94,14 @@ pub enum Action {
     Radio { kind: crate::radios::Kind, mode: crate::radios::Mode },
     /// Conecta/desconecta uma VPN do Windows pelo nome.
     Vpn { name: String, mode: crate::vpn::Mode },
+    /// OBS Studio (WebSocket local): cena, gravação, transmissão, mudo de fonte...
+    Obs {
+        cmd: crate::obs::ObsCmd,
+        #[serde(default)]
+        scene: Option<String>,
+        #[serde(default)]
+        input: Option<String>,
+    },
     /// Cola o item `index` do histórico da área de transferência no app anterior.
     Paste { index: usize },
     /// Várias ações em ordem (ex.: abrir o VS Code, o terminal e mutar o Discord).
@@ -290,6 +298,7 @@ pub fn execute(action: &Action) -> Result<(), String> {
         }
         Action::Radio { kind, mode } => crate::radios::set(*kind, *mode).map(|_| ()),
         Action::Vpn { name, mode } => crate::vpn::set(name, *mode),
+        Action::Obs { cmd, scene, input } => crate::obs::run(*cmd, scene.as_deref(), input.as_deref()),
         Action::Discord { cmd, device_id, device_name } => crate::discord::run(*cmd, device_id.as_deref(), device_name.as_deref()),
         Action::Brightness { mode, value, target, target_name } => {
             let t = target.as_deref().unwrap_or("all");

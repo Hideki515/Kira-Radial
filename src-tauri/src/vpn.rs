@@ -49,14 +49,23 @@ fn entries() -> Result<Vec<String>, String> {
 /// Nomes das conexões ativas agora.
 fn connected() -> Vec<String> {
     use windows::Win32::NetworkManagement::Rras::{RasEnumConnectionsW, RASCONNW};
-    let mut buf = vec![RASCONNW { dwSize: std::mem::size_of::<RASCONNW>() as u32, ..Default::default() }; 8];
-    let mut cb = (buf.len() * std::mem::size_of::<RASCONNW>()) as u32;
-    let mut count = 0u32;
-    let rc = unsafe { RasEnumConnectionsW(Some(buf.as_mut_ptr()), &mut cb, &mut count) };
-    if rc != 0 {
-        return Vec::new();
+    const ERROR_BUFFER_TOO_SMALL: u32 = 603;
+    let size = std::mem::size_of::<RASCONNW>();
+    let mut len = 8;
+    loop {
+        let mut buf = vec![RASCONNW { dwSize: size as u32, ..Default::default() }; len];
+        let mut cb = (len * size) as u32;
+        let mut count = 0u32;
+        let rc = unsafe { RasEnumConnectionsW(Some(buf.as_mut_ptr()), &mut cb, &mut count) };
+        if rc == ERROR_BUFFER_TOO_SMALL && len < 256 {
+            len = (cb as usize).div_ceil(size).max(len * 2);
+            continue;
+        }
+        if rc != 0 {
+            return Vec::new();
+        }
+        return buf[..count as usize].iter().map(|c| wide_to_string(&c.szEntryName)).collect();
     }
-    buf[..count as usize].iter().map(|c| wide_to_string(&c.szEntryName)).collect()
 }
 
 /// Junta as salvas com o estado, sem repetir (ordem alfabética, sem diferenciar maiúsculas).

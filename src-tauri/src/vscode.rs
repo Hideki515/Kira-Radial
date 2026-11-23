@@ -161,6 +161,8 @@ fn installs() -> Vec<(PathBuf, PathBuf)> {
 /// Projetos recentes da primeira instalação do VS Code encontrada. Chame numa thread bloqueante.
 pub fn list() -> Result<Vec<VsProject>, String> {
     let exists = |p: &str| Path::new(p).exists();
+    // Erro de uma instalação não impede de tentar a próxima (ex.: o Insiders).
+    let mut last_err = None;
     for (dir, exe) in installs() {
         let exe = exe.to_string_lossy();
         // VS Code atual: storage.json.
@@ -173,17 +175,26 @@ pub fn list() -> Result<Vec<VsProject>, String> {
         // Versões antigas: banco state.vscdb (cópia temporária: o VS Code pode estar gravando nele).
         let db = dir.join("state.vscdb");
         if db.is_file() {
-            let tmp = std::env::temp_dir().join(format!("kira-vscode-{}.db", std::process::id()));
-            std::fs::copy(&db, &tmp).map_err(|e| trf!("não foi possível ler o histórico do VS Code: {e}", "couldn't read the VS Code history: {e}"))?;
-            let r = crate::sqlite::query_text(&tmp, &format!("SELECT value FROM ItemTable WHERE key = '{KEY}'"));
+            // Nome único por leitura: duas leituras ao mesmo tempo não usam o mesmo arquivo.
+            static SEQ: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+            let n = SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            let tmp = std::env::temp_dir().join(format!("kira-vscode-{}-{n}.db", std::process::id()));
+            let r = std::fs::copy(&db, &tmp)
+                .map_err(|e| trf!("não foi possível ler o histórico do VS Code: {e}", "couldn't read the VS Code history: {e}"))
+                .and_then(|_| crate::sqlite::query_text(&tmp, &format!("SELECT value FROM ItemTable WHERE key = '{KEY}'")));
             let _ = std::fs::remove_file(&tmp);
-            let got = parse(&r?.unwrap_or_default(), &exe, exists);
-            if !got.is_empty() {
-                return Ok(got);
+            match r {
+                Ok(json) => {
+                    let got = parse(&json.unwrap_or_default(), &exe, exists);
+                    if !got.is_empty() {
+                        return Ok(got);
+                    }
+                }
+                Err(e) => last_err = Some(e),
             }
         }
     }
-    Ok(Vec::new())
+    last_err.map_or(Ok(Vec::new()), Err)
 }
 
 #[cfg(test)]
