@@ -468,6 +468,9 @@ html.is-tauri body { background: transparent; }
 .theme-terminal .slice-num { font-family: var(--font-term); fill: var(--tm-dim); }
 
 /* miniaturas do seletor de tema: sem animação */
+/* Rede no centro: texto menor (cabe "↓ 12,3 MB/s"). */
+.hub-cpu.hub-cpu--small { font-size: 20px; }
+
 .radial-canvas.is-thumb *, .is-thumb .radial-canvas * { animation: none !important; transition: none !important; }
 
 @media (prefers-reduced-motion: reduce) {

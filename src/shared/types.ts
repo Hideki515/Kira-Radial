@@ -98,6 +98,8 @@ export type Action =
   /** VPN do Windows pelo nome (Configurações → Rede → VPN). */
   | { type: "vpn"; name: string; mode: "toggle" | "connect" | "disconnect" }
   | { type: "obs"; cmd: ObsCmd; scene?: string; input?: string }
+  /** Timer/Pomodoro: iniciar/pausar/zerar; o centro do menu mostra o tempo restante. */
+  | { type: "timer"; cmd: "toggle" | "start" | "pause" | "reset"; minutes?: number }
   /** Layout de janelas: devolve cada janela ao lugar guardado (e abre os apps que faltam). */
   | { type: "layout"; windows: LayoutWindow[]; launchMissing?: boolean }
   /** Cola um item do histórico da área de transferência (gerada pelo submenu; não aparece no editor). */
@@ -228,6 +230,8 @@ export interface Config {
     customThemes?: CustomTheme[];
     showCpu: boolean;
     showClock: boolean;
+    /** Medidor do centro: CPU (padrão), RAM ou rede. O timer, quando ativo, tem prioridade. */
+    hubGauge?: "cpu" | "ram" | "net";
     /** Mostra o número (atalho 1–9) em cada fatia. */
     showNumbers?: boolean;
     /** Mostra a música em reprodução no centro (padrão: ligado). */

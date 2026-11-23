@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.37.0
+
+- **Medidor do centro escolhível** (Aparência → Medidor do centro): CPU (como antes), **RAM** ou **Rede**. A rede mostra o download e o upload atuais (↓ 1,2 MB/s, ↑ 35 KB/s). As leituras só são feitas com o menu aberto.
+- **Ação "Timer / Pomodoro"**: iniciar, pausar, continuar ou zerar um timer (1 a 180 min, padrão 25).
+  - O timer continua com o menu fechado. Ativo, o centro do menu mostra o tempo que falta, com o arco esvaziando.
+  - No fim, toca o som do Windows e a dica do ícone da bandeja avisa.
+  - Parado, ele não gasta nada: a thread do timer dorme até o fim.
+- O teste do seletor de temas ganhou mais tempo-limite e conta só os cartões de tema.
+
 ## 0.36.0
 
 - **Ação "Layout de janelas"**: arrume as janelas como quiser (lado a lado, cada uma num monitor, maximizadas) e clique em **Capturar janelas abertas agora**. A fatia devolve cada janela a esse lugar, com o tamanho, o monitor e o estado (normal, maximizada ou minimizada).

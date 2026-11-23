@@ -27,6 +27,11 @@ export interface MenuShowPayload {
 export interface StatsPayload {
   cpu: number;
   ram: number;
+  /** Rede em bytes/s (ausente na 1ª amostra após abrir o menu). */
+  netDown?: number;
+  netUp?: number;
+  /** Timer/Pomodoro ativo (rodando ou pausado). */
+  timer?: { remainingMs: number; totalMs: number; running: boolean } | null;
 }
 
 async function invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {

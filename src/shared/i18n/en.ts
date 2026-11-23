@@ -69,6 +69,9 @@ export const en: Record<Key, string> = {
   "hub.results.none": "NONE",
   "hub.results.one": "{n} RESULT",
   "hub.results.many": "{n} RESULTS",
+  "hub.timer": "TIMER",
+  "hub.timerPaused": "PAUSED",
+  "hub.net": "NET",
   "hub.escClears": "ESC CLEARS",
 
   // --- menu

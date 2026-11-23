@@ -2,11 +2,14 @@ import { useClock } from "../hooks/useClock";
 import type { NowPlaying, StatsPayload } from "../shared/ipc";
 import { LAYOUT } from "./geometry";
 import { useT } from "../shared/i18n";
+import { hubReading, type HubGauge } from "./hubReading";
 
 interface Props {
   stats: StatsPayload | null;
   showCpu: boolean;
   showClock: boolean;
+  /** O que o medidor mostra (CPU, RAM ou rede); o timer ativo tem prioridade. */
+  gauge?: HubGauge;
   hovered: boolean;
   inSubmenu: boolean;
   /** Música/vídeo em reprodução: substitui CPU/relógio grande pela capa + título. */
@@ -35,13 +38,15 @@ function Gauge({ c, value, className }: { c: number; value: number; className: s
   );
 }
 
-export function CenterHub({ stats, showCpu, showClock, hovered, inSubmenu, nowPlaying: np, volume, search }: Props) {
+export function CenterHub({ stats, showCpu, showClock, gauge, hovered, inSubmenu, nowPlaying: np, volume, search }: Props) {
   // Durante a busca o centro é dela (sem capa de mídia).
   const nowPlaying = search ? null : np;
   const { time, date } = useClock();
   const t = useT();
   const c = LAYOUT.size / 2;
-  const cpu = stats ? Math.round(stats.cpu) : null;
+  const reading = hubReading(stats, gauge);
+  // O timer aparece mesmo com o medidor desligado: foi o usuário que o iniciou.
+  const showMeter = showCpu || reading.kind === "timer";
   const showVolume = volume !== null && volume !== undefined;
   return (
     <g className={`center-hub${hovered ? " is-hovered" : ""}${nowPlaying ? " has-media" : ""}`} aria-label={inSubmenu ? t("hub.back") : t("common.close")}>
@@ -53,7 +58,7 @@ export function CenterHub({ stats, showCpu, showClock, hovered, inSubmenu, nowPl
           <Gauge c={c} value={volume} className="hub-vol" />
         </g>
       ) : (
-        showCpu && !nowPlaying && !search && <Gauge c={c} value={(cpu ?? 0) / 100} className="hub-cpu-gauge" />
+        showMeter && !nowPlaying && !search && reading.value !== null && <Gauge c={c} value={reading.value} className={`hub-cpu-gauge hub-gauge--${reading.kind}`} />
       )}
 
       {nowPlaying ? (
@@ -103,12 +108,13 @@ export function CenterHub({ stats, showCpu, showClock, hovered, inSubmenu, nowPl
               <text x={c} y={c - 24} className="hub-date" textAnchor="middle">{date}</text>
             </>
           )}
-          {showCpu && !showVolume && (
-            <>
-              <text x={c} y={c + 18} className="hub-cpu" textAnchor="middle">{cpu === null ? "—" : `${cpu}%`}</text>
-              <rect x={c - 24} y={c + 30} width={48} height={18} rx={9} className="hub-pill" />
-              <text x={c} y={c + 42.5} className="hub-pill-text" textAnchor="middle">CPU</text>
-            </>
+          {showMeter && !showVolume && (
+            <g data-testid={`hub-meter-${reading.kind}`}>
+              <text x={c} y={reading.sub ? c + 10 : c + 18} className={`hub-cpu${reading.kind === "net" ? " hub-cpu--small" : ""}`} textAnchor="middle">{reading.text}</text>
+              {reading.sub && <text x={c} y={c + 28} className="hub-date" textAnchor="middle">{reading.sub}</text>}
+              <rect x={c - 30} y={c + 34} width={60} height={18} rx={9} className="hub-pill" />
+              <text x={c} y={c + 46.5} className="hub-pill-text" textAnchor="middle">{reading.pill}</text>
+            </g>
           )}
         </>
       )}

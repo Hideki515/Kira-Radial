@@ -267,6 +267,15 @@ export function AppearancePage({ config, update }: PageProps) {
         onChange={(v) => update((c) => void (c.appearance.showMedia = v))}
       />
       <Toggle label={t("app.cpu")} checked={a.showCpu} onChange={(v) => update((c) => void (c.appearance.showCpu = v))} />
+      {a.showCpu && (
+        <Field label={t("app.gauge")} group hint={t("app.gauge.hint")}>
+          <Segmented
+            value={a.hubGauge ?? "cpu"}
+            options={[{ value: "cpu", label: "CPU" }, { value: "ram", label: "RAM" }, { value: "net", label: t("app.gauge.net") }]}
+            onChange={(g) => update((c) => void (c.appearance.hubGauge = g))}
+          />
+        </Field>
+      )}
     </Section>
     <SoundsSection config={config} update={update} />
     </>

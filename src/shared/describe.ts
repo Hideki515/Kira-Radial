@@ -35,6 +35,8 @@ export function describeAction(a: Action): string {
     case "openSettings": return t("d.openSettings");
     case "window":
       return WINDOW_LABEL[a.cmd];
+    case "timer":
+      return a.cmd === "reset" ? t("d.timer.reset") : a.cmd === "pause" ? t("d.timer.pause") : t(a.cmd === "start" ? "d.timer.start" : "d.timer.toggle", { n: a.minutes ?? 25 });
     case "layout":
       return t(a.windows.length === 1 ? "d.layout.one" : "d.layout", { n: a.windows.length });
     case "text": {

@@ -160,6 +160,10 @@ export function validateAction(a: Action): string | null {
       if (a.delayMs !== undefined && (!Number.isInteger(a.delayMs) || a.delayMs < 0 || a.delayMs > 10000))
         return t("v.a.delay");
       return null;
+    case "timer":
+      if (!["toggle", "start", "pause", "reset"].includes(a.cmd)) return t("v.a.timerCmd");
+      if (a.minutes !== undefined && !(Number.isInteger(a.minutes) && a.minutes >= 1 && a.minutes <= 180)) return t("v.a.timerMinutes");
+      return null;
     case "layout":
       if (!Array.isArray(a.windows) || a.windows.length < 1 || a.windows.length > LAYOUT_MAX_WINDOWS)
         return t("v.a.layoutCount", { max: LAYOUT_MAX_WINDOWS });

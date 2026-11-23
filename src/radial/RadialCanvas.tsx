@@ -183,6 +183,7 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
         stats={stats}
         showCpu={appearance.showCpu}
         showClock={appearance.showClock}
+        gauge={appearance.hubGauge}
         hovered={hubHovered}
         inSubmenu={openMain === undefined ? activeSub !== null : subOpen}
         nowPlaying={appearance.showMedia === false ? null : nowPlaying}

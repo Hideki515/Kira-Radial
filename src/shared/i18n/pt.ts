@@ -70,6 +70,9 @@ export const pt = {
   "hub.results.one": "{n} RESULTADO",
   "hub.results.many": "{n} RESULTADOS",
   "hub.escClears": "ESC LIMPA",
+  "hub.timer": "TIMER",
+  "hub.timerPaused": "PAUSADO",
+  "hub.net": "REDE",
 
   // --- menu
   "menu.failed": "Falha em {label}: {error}",

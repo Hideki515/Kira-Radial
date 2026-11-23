@@ -110,6 +110,12 @@ pub enum Action {
         #[serde(default, rename = "launchMissing")]
         launch_missing: bool,
     },
+    /// Timer/Pomodoro: iniciar, pausar ou zerar (o centro do menu mostra o tempo).
+    Timer {
+        cmd: crate::timer::TimerCmd,
+        #[serde(default)]
+        minutes: Option<u32>,
+    },
     /// Texto pronto: cola o modelo com as variáveis trocadas ({data}, {hora}...).
     Text {
         text: String,
@@ -310,6 +316,7 @@ pub fn execute(action: &Action) -> Result<(), String> {
             keys::send_combo("Ctrl+V")
         }
         Action::Layout { windows, launch_missing } => crate::layout::restore(windows, *launch_missing),
+        Action::Timer { cmd, minutes } => crate::timer::run(*cmd, *minutes),
         Action::Text { text, restore_clipboard } => crate::snippet::paste(text, *restore_clipboard),
         Action::Radio { kind, mode } => crate::radios::set(*kind, *mode).map(|_| ()),
         Action::Vpn { name, mode } => crate::vpn::set(name, *mode),

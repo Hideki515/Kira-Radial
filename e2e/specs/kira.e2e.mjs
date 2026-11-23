@@ -1414,4 +1414,104 @@ describe("Kira de teste — ponta a ponta", () => {
     await browser.refresh();
     await toWindow("settings.html");
   });
+  it("29. (QA v0.37.0) medidor do centro (CPU/RAM/Rede) e timer via run_action: iniciar, pausar, continuar, zerar, fim no log", async function () {
+    this.timeout(200000);
+    await toWindow("settings.html");
+    expect((await qaState()).qa).toBe(true); // segurança: só na Kira de teste
+    const original = await invoke("get_config");
+    const runAction = (a) => browser.execute((x) => window.__TAURI_INTERNALS__.invoke("run_action", { action: x }).then(() => "ok", (e) => String(e)), a);
+    const meter = () => browser.execute(() => {
+      const g = document.querySelector('[data-testid^="hub-meter-"]');
+      return g ? { kind: g.getAttribute("data-testid").slice(10), text: g.textContent, arc: document.querySelector(".hub-cpu-gauge")?.getAttribute("class") ?? null } : null;
+    });
+    const withGauge = async (gauge, showCpu = true) => {
+      const c = structuredClone(original);
+      c.appearance.showCpu = showCpu;
+      c.appearance.showMedia = false; // mídia tocando no PC tomaria o centro
+      c.appearance.hubGauge = gauge;
+      c.behavior.language = "pt";
+      await invoke("save_config", { config: c });
+    };
+    const openMenu = async () => { await toWindow("settings.html"); await invoke("qa_show_menu", { fromOrb: false }); await toWindow(""); };
+    const closeMenu = async () => { await toWindow(""); await pressKey("Escape"); await toWindow("settings.html"); await browser.waitUntil(async () => !(await qaState()).menuVisible, { timeoutMsg: "menu não fechou" }); };
+
+    expect(await runAction({ type: "timer", cmd: "reset" })).toBe("ok");
+    // Medidores.
+    await withGauge("ram");
+    await openMenu();
+    await browser.waitUntil(async () => { const m = await meter(); return m?.kind === "ram" && /\d+%RAM/.test(m.text); }, { timeoutMsg: "medidor RAM não apareceu" });
+    expect((await meter()).arc).toContain("hub-gauge--ram");
+    await closeMenu();
+    await withGauge("net");
+    await openMenu();
+    // 1ª amostra sem rede ("—"), depois taxa em B/s.
+    await browser.waitUntil(async () => { const m = await meter(); return m?.kind === "net" && /↓ [\d.,]+ (B|KB|MB|GB)\/s↑ [\d.,]+ (B|KB|MB|GB)\/sREDE/.test(m.text); }, { timeout: 8000, timeoutMsg: "medidor de rede sem taxa" });
+    console.log("[29] rede:", (await meter()).text);
+    await closeMenu();
+    await withGauge("cpu");
+    await openMenu();
+    await browser.waitUntil(async () => (await meter())?.kind === "cpu", { timeoutMsg: "medidor CPU não apareceu" });
+    await closeMenu();
+
+    // Timer com o medidor DESLIGADO: aparece mesmo assim. run_action fecha o menu
+    // (fecharAoExecutar), então cada passo reabre o menu para olhar o centro.
+    const act = async (a) => {
+      await toWindow("settings.html");
+      const r = await runAction(a);
+      await browser.waitUntil(async () => !(await qaState()).menuVisible, { timeoutMsg: "menu não fechou após a ação" });
+      await openMenu();
+      return r;
+    };
+    await withGauge("net", false);
+    expect(await act({ type: "timer", cmd: "start", minutes: 1 })).toBe("ok");
+    await browser.waitUntil(async () => { const m = await meter(); return m?.kind === "timer" && /^(1:00|0:5\d)TIMER$/.test(m.text); }, { timeoutMsg: "timer não apareceu no centro" });
+    expect((await meter()).arc).toContain("hub-gauge--timer");
+    // start rodando não muda; pause congela.
+    expect(await act({ type: "timer", cmd: "start", minutes: 30 })).toBe("ok");
+    await browser.waitUntil(async () => (await meter())?.kind === "timer", { timeoutMsg: "timer sumiu após start" });
+    expect((await meter()).text).toMatch(/^(1:00|0:\d\d)TIMER$/);
+    expect(await act({ type: "timer", cmd: "pause" })).toBe("ok");
+    await browser.waitUntil(async () => /PAUSADO$/.test((await meter())?.text ?? ""), { timeoutMsg: "não pausou" });
+    const frozen = (await meter()).text;
+    await browser.pause(2500);
+    expect((await meter()).text).toBe(frozen);
+    // toggle continua de onde parou.
+    expect(await act({ type: "timer", cmd: "toggle" })).toBe("ok");
+    await browser.waitUntil(async () => /TIMER$/.test((await meter())?.text ?? ""), { timeoutMsg: "toggle não continuou" });
+    const secs = (txt) => { const [m, ss] = txt.replace(/[A-Z]+$/, "").split(":").map(Number); return m * 60 + ss; };
+    const resumed = secs((await meter()).text);
+    console.log("[29] pausado:", frozen, "retomado:", (await meter()).text);
+    expect(secs(frozen) - resumed).toBeGreaterThanOrEqual(0); // retomou de onde parou (não recomeçou)
+    expect(secs(frozen) - resumed).toBeLessThanOrEqual(3);
+    await browser.waitUntil(async () => (await meter()).text.replace("TIMER", "") !== frozen.replace("PAUSADO", ""), { timeout: 4000, timeoutMsg: "timer não voltou a correr" });
+    // reset: some do centro (medidor desligado = nada).
+    expect(await act({ type: "timer", cmd: "reset" })).toBe("ok");
+    await browser.pause(1500);
+    expect(await meter()).toBeNull();
+    await closeMenu();
+    // Validação no Rust: comando desconhecido recusado.
+    expect(await runAction({ type: "timer", cmd: "explode" })).not.toBe("ok");
+
+    // Editor: Aparência → "Medidor do centro" → Rede grava hubGauge.
+    await withGauge("cpu");
+    await browser.refresh();
+    await nav("Aparência");
+    await pickRadio("Rede");
+    await save();
+    expect(qaConfig().appearance.hubGauge).toBe("net");
+
+    // Fim do timer (1 min, menu fechado): registra no log (sem som na Kira de teste).
+    const logHas = async () => (await invoke("read_log", { lines: 400 })).filter((l) => l.includes("timer terminou")).length;
+    const ends0 = await logHas();
+    expect(await runAction({ type: "timer", cmd: "start", minutes: 1 })).toBe("ok");
+    await browser.waitUntil(async () => (await logHas()) > ends0, { timeout: 80000, interval: 2000, timeoutMsg: "fim do timer não registrado" });
+    await openMenu();
+    await browser.pause(1500);
+    expect((await meter())?.kind).toBe("net"); // timer acabou: voltou o medidor escolhido
+    await closeMenu();
+
+    await invoke("save_config", { config: original });
+    await browser.refresh();
+    await toWindow("settings.html");
+  });
 });

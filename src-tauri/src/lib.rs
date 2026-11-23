@@ -36,6 +36,7 @@ mod recent;
 mod power;
 mod stats;
 mod syslang;
+mod timer;
 mod updater;
 mod vpn;
 mod vscode;
@@ -133,6 +134,12 @@ pub fn run() {
                 build_tray(app)?;
             }
             updater::spawn_periodic(handle.clone());
+            let tray_app = handle.clone();
+            timer::on_done(move || {
+                if let Some(tray) = tray_app.tray_by_id("main") {
+                    let _ = tray.set_tooltip(Some(tr!("Kira Radial — o timer terminou", "Kira Radial — the timer is done")));
+                }
+            });
             stats::spawn(handle);
             Ok(())
         })

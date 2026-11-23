@@ -112,7 +112,7 @@ describe("QA v0.15.0 — tema personalizado", () => {
       return <AppearancePage config={c} update={update} />;
     }
     const { unmount } = render(<Harness init={cloneConfig(defaultConfig)} />);
-    const radios = screen.getAllByRole("radio");
+    const radios = screen.getAllByRole("radio").filter((r) => r.classList.contains("theme-card"));
     expect(radios.length).toBe(THEMES.length);
     radios.forEach((r, i) => {
       fireEvent.click(r);
@@ -125,5 +125,5 @@ describe("QA v0.15.0 — tema personalizado", () => {
     full.appearance.customThemes = Array.from({ length: MAX_CUSTOM_THEMES }, (_, i) => createTheme("glass", `T${i}`));
     render(<Harness init={full} />);
     expect((screen.getByRole("button", { name: /Criar tema/ }) as HTMLButtonElement).disabled).toBe(true);
-  });
+  }, 60_000); // desenha as miniaturas de todos os temas: lento sob cobertura
 });
