@@ -69,15 +69,22 @@ pub fn system_var(name: &str) -> Option<String> {
     }
 }
 
-/// Cola o texto pronto no app anterior (o foco já voltou para ele antes de chamar).
-pub fn paste(template: &str, restore: bool) -> Result<(), String> {
+/// Texto final (variáveis trocadas) ou o motivo de recusa. Não toca em nada do sistema
+/// além de ler as variáveis.
+pub fn prepare(template: &str, var: impl Fn(&str) -> Option<String>) -> Result<String, String> {
     if template.chars().count() > MAX_CHARS {
         return Err(trf!("texto grande demais (máx. {MAX_CHARS} caracteres)", "text too long (max {MAX_CHARS} characters)"));
     }
-    let text = expand(template, system_var);
+    let text = expand(template, var);
     if text.is_empty() {
         return Err(tr!("o texto ficou vazio", "the text is empty").into());
     }
+    Ok(text)
+}
+
+/// Cola o texto pronto no app anterior (o foco já voltou para ele antes de chamar).
+pub fn paste(template: &str, restore: bool) -> Result<(), String> {
+    let text = prepare(template, system_var)?;
     if crate::qa::ENABLED {
         // Kira de teste: nunca mexe na área de transferência nem no teclado do usuário.
         crate::perf::log("rust", &format!("Kira de teste: texto pronto expandido: {text}"));
@@ -133,7 +140,9 @@ mod tests {
 
     #[test]
     fn texto_grande_ou_vazio_e_recusado() {
-        assert!(paste(&"x".repeat(MAX_CHARS + 1), false).is_err());
-        assert!(paste("", false).is_err());
+        // Só a parte pura: os testes nunca colam nada de verdade.
+        assert!(prepare(&"x".repeat(MAX_CHARS + 1), vars).is_err());
+        assert!(prepare("", vars).is_err());
+        assert_eq!(prepare("{nome}", vars).unwrap(), "Ana");
     }
 }

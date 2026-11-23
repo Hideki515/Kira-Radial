@@ -104,6 +104,12 @@ pub enum Action {
     },
     /// Cola o item `index` do histórico da área de transferência no app anterior.
     Paste { index: usize },
+    /// Devolve as janelas aos lugares guardados (e abre os apps que faltam, se pedido).
+    Layout {
+        windows: Vec<crate::layout::SavedWindow>,
+        #[serde(default, rename = "launchMissing")]
+        launch_missing: bool,
+    },
     /// Texto pronto: cola o modelo com as variáveis trocadas ({data}, {hora}...).
     Text {
         text: String,
@@ -303,6 +309,7 @@ pub fn execute(action: &Action) -> Result<(), String> {
             crate::clipboard::put(*index)?;
             keys::send_combo("Ctrl+V")
         }
+        Action::Layout { windows, launch_missing } => crate::layout::restore(windows, *launch_missing),
         Action::Text { text, restore_clipboard } => crate::snippet::paste(text, *restore_clipboard),
         Action::Radio { kind, mode } => crate::radios::set(*kind, *mode).map(|_| ()),
         Action::Vpn { name, mode } => crate::vpn::set(name, *mode),
@@ -322,6 +329,11 @@ pub fn execute(action: &Action) -> Result<(), String> {
         // Passo a passo (foco, atrasos, janela) em commands::run_action.
         Action::Sequence { .. } => Err(tr!("sequência só pode rodar pelo menu", "a sequence can only run from the menu").into()),
     }
+}
+
+/// Abre um programa pelo caminho (layouts: apps que não estavam abertos).
+pub fn launch_path(path: &str) -> Result<(), String> {
+    shell_execute(path, None, None, "open")
 }
 
 /// Ctrl+V no app em foco (textos prontos).

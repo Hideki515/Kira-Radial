@@ -1322,4 +1322,96 @@ describe("Kira de teste — ponta a ponta", () => {
     await browser.refresh();
     await toWindow("settings.html");
   });
+  it("28. (QA v0.36.0) layout de janelas (Kira de teste nunca move nada): captura só leitura, run_action registra no log, editor pt/en, layout vazio inválido", async function () {
+    this.timeout(120000);
+    await toWindow("settings.html");
+    expect((await qaState()).qa).toBe(true); // segurança: só na Kira de teste
+    const original = await invoke("get_config");
+    const runAction = (a) => browser.execute((x) => window.__TAURI_INTERNALS__.invoke("run_action", { action: x }).then(() => "ok", (e) => String(e)), a);
+    const PREFIX = "Kira de teste: layout com ";
+    const layoutLines = async () => (await invoke("read_log", { lines: 400 })).filter((l) => l.includes(PREFIX));
+
+    // Captura (só leitura): formato certo, até 20; não registra títulos no console.
+    const cap = await invoke("layout_capture");
+    expect(Array.isArray(cap)).toBe(true);
+    expect(cap.length).toBeLessThanOrEqual(20);
+    for (const w of cap) {
+      expect(typeof w.exe).toBe("string");
+      expect(w.exe.length).toBeGreaterThan(0);
+      expect(w.w > 0 && w.h > 0).toBe(true);
+      expect(["normal", "maximized", "minimized"]).toContain(w.state);
+      expect(Number.isInteger(w.x) && Number.isInteger(w.y)).toBe(true);
+    }
+    console.log("[28] capturadas:", cap.length, [...new Set(cap.map((w) => w.exe.split(/[\\/]/).pop().toLowerCase()))].join(","));
+
+    // run_action: plano calculado e registrado, nada movido nem aberto.
+    if (cap.length) {
+      const before = (await layoutLines()).length;
+      expect(await runAction({ type: "layout", windows: cap })).toBe("ok");
+      await browser.waitUntil(async () => (await layoutLines()).length > before, { timeoutMsg: "layout não registrado no log" });
+      const line = (await layoutLines()).pop();
+      const m = line.match(/layout com (\d+) janelas, (\d+) encontradas \(nada foi movido\)/);
+      expect(m).not.toBeNull();
+      expect(Number(m[1])).toBe(cap.length);
+      expect(Number(m[2])).toBeLessThanOrEqual(cap.length);
+      expect(Number(m[2])).toBeGreaterThan(0);
+    }
+    const fake = { exe: "C:\\qa-inexistente\\qa28-nao-existe.exe", title: "QA28", x: 0, y: 0, w: 640, h: 480, state: "normal" };
+    const before2 = (await layoutLines()).length;
+    expect(await runAction({ type: "layout", windows: [fake], launchMissing: true })).toBe("ok");
+    await browser.waitUntil(async () => (await layoutLines()).length > before2, { timeoutMsg: "layout falso não registrado" });
+    expect((await layoutLines()).pop()).toContain("layout com 1 janelas, 0 encontradas (nada foi movido)");
+    // Validação no Rust.
+    expect(await runAction({ type: "layout", windows: [] })).toContain("1 a 20");
+    expect(await runAction({ type: "layout", windows: [{ ...fake, w: 0 }] })).toContain("inválida");
+    expect(await runAction({ type: "layout", windows: Array(21).fill(fake) })).toContain("1 a 20");
+
+    // Editor (pt): layout vazio = inválido (Salvar desabilitado); capturar; tirar uma; salvar.
+    await nav("Itens do menu");
+    await $(".profile-picker select").selectByIndex(0);
+    await $$(".tree-row:not(.is-child)")[0].click();
+    await pickRadio("Executar ação");
+    await $('.item-editor select:has(option[value="layout"])').selectByAttribute("value", "layout");
+    await $(".item-editor").$("button*=Capturar janelas abertas agora").waitForExist();
+    expect(await $(".item-editor").getText()).toContain("Nenhuma janela capturada ainda.");
+    await browser.waitUntil(() => browser.execute(() => [...document.querySelectorAll(".item-editor .inline-error")].some((e) => e.textContent.includes("capture de 1 a 20"))), { timeoutMsg: "sem erro de layout vazio" });
+    expect(await $("button=Salvar").isEnabled()).toBe(false);
+    await (await $(".item-editor").$("button*=Capturar janelas abertas agora")).click();
+    if (cap.length) {
+      await browser.waitUntil(async () => (await $$(".layout-list li")).length > 0, { timeoutMsg: "lista do layout não apareceu" });
+      const n = (await $$(".layout-list li")).length;
+      expect(n).toBeLessThanOrEqual(20);
+      await $(".item-editor").$("button*=Capturar de novo").waitForExist();
+      if (n > 1) {
+        await (await $$(".layout-list li button")[0]).click();
+        await browser.waitUntil(async () => (await $$(".layout-list li")).length === n - 1, { timeoutMsg: "tirar do layout não funcionou" });
+      }
+      await (await $("label.toggle-row*=Abrir os apps que não estiverem abertos")).$("input").click();
+      await save();
+      const item = qaConfig().profiles[0].items.find((i) => i.action?.type === "layout");
+      expect(item.action.windows.length).toBe(n > 1 ? n - 1 : n);
+      expect(item.action.launchMissing).toBe(true);
+
+      // Editor (en).
+      const en = structuredClone(qaConfig());
+      en.behavior.language = "en";
+      await invoke("save_config", { config: en });
+      await browser.refresh();
+      await toWindow("settings.html");
+      await browser.waitUntil(async () => (await browser.execute(() => document.documentElement.lang)) === "en", { timeoutMsg: "não abriu em inglês" });
+      await (await $("button.nav-item*=Menu items")).click();
+      await $(".profile-picker select").selectByIndex(0);
+      await $$(".tree-row:not(.is-child)")[0].click();
+      await $(".item-editor").$("button*=Capture again").waitForExist();
+      const ed = await $(".item-editor").getText();
+      expect(ed).toContain("Open apps that aren't running");
+      expect(await runAction({ type: "layout", windows: [] })).toContain("1 to 20");
+    } else {
+      await browser.waitUntil(async () => (await $(".item-editor").getText()).includes("Nenhuma janela de app aberta para capturar."), { timeoutMsg: "sem aviso de nenhuma janela" });
+    }
+
+    await invoke("save_config", { config: original });
+    await browser.refresh();
+    await toWindow("settings.html");
+  });
 });

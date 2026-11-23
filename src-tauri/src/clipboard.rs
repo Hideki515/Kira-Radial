@@ -152,10 +152,15 @@ fn write_text_with(text: &str, private: bool) -> Result<(), String> {
                 let fmt = RegisterClipboardFormatW(name);
                 if let Ok(h) = GlobalAlloc(GMEM_MOVEABLE, 4) {
                     let p = GlobalLock(h) as *mut u32;
-                    if !p.is_null() {
-                        *p = value;
-                        let _ = GlobalUnlock(h);
-                        let _ = SetClipboardData(fmt, Some(HANDLE(h.0)));
+                    if p.is_null() {
+                        let _ = windows::Win32::Foundation::GlobalFree(Some(h));
+                        continue;
+                    }
+                    *p = value;
+                    let _ = GlobalUnlock(h);
+                    // Recusado: a memória continua nossa e precisa ser liberada.
+                    if SetClipboardData(fmt, Some(HANDLE(h.0))).is_err() {
+                        let _ = windows::Win32::Foundation::GlobalFree(Some(h));
                     }
                 }
             }

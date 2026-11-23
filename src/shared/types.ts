@@ -5,6 +5,20 @@ import type { CustomTheme } from "./customTheme";
 /** Discord (RPC local): mudo, ensurdecer e dispositivos de entrada/saída do próprio Discord. */
 export type DiscordCmd = "toggleMute" | "mute" | "unmute" | "toggleDeafen" | "deafen" | "undeafen" | "setInput" | "setOutput";
 
+/** Uma janela guardada num layout (posição "normal" e estado). */
+export interface LayoutWindow {
+  /** Caminho completo do exe. */
+  exe: string;
+  title: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  state?: "normal" | "maximized" | "minimized";
+}
+/** Máximo de janelas num layout (o Rust usa o mesmo limite). */
+export const LAYOUT_MAX_WINDOWS = 20;
+
 /** OBS Studio (obs-websocket local). setScene usa `scene`; toggleMute usa `input`. */
 export type ObsCmd =
   | "setScene" | "toggleRecord" | "startRecord" | "stopRecord" | "toggleRecordPause"
@@ -84,6 +98,8 @@ export type Action =
   /** VPN do Windows pelo nome (Configurações → Rede → VPN). */
   | { type: "vpn"; name: string; mode: "toggle" | "connect" | "disconnect" }
   | { type: "obs"; cmd: ObsCmd; scene?: string; input?: string }
+  /** Layout de janelas: devolve cada janela ao lugar guardado (e abre os apps que faltam). */
+  | { type: "layout"; windows: LayoutWindow[]; launchMissing?: boolean }
   /** Cola um item do histórico da área de transferência (gerada pelo submenu; não aparece no editor). */
   | { type: "paste"; index: number; preview?: string }
   /** Texto pronto: cola o modelo com as variáveis trocadas na hora ({data}, {hora}, {clipboard}...). */

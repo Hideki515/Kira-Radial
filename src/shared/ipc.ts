@@ -2,7 +2,7 @@
 // o que permite desenvolver o visual e a tela de configuração sem Rust.
 import { cloneConfig, defaultConfig, withDefaults } from "./defaults";
 import type { OpenStats } from "./describe";
-import type { Action, Config, ShotCorner } from "./types";
+import type { Action, Config, ShotCorner, LayoutWindow } from "./types";
 
 export { DISCORD_LABEL, WINDOW_LABEL, describeAction, describeOpenStats, openTimeMs } from "./describe";
 export type { OpenStats } from "./describe";
@@ -246,6 +246,15 @@ export async function listVpns(): Promise<VpnInfo[]> {
   return [
     { name: "Escritório", connected: false },
     { name: "Casa", connected: true },
+  ];
+}
+
+/** Posição e estado das janelas abertas agora (para um layout). */
+export async function layoutCapture(): Promise<LayoutWindow[]> {
+  if (isTauri()) return invoke<LayoutWindow[]>("layout_capture");
+  return [
+    { exe: "C:/Program Files/Microsoft VS Code/Code.exe", title: "Kira-Radial - Visual Studio Code", x: 0, y: 0, w: 960, h: 1040, state: "normal" },
+    { exe: "C:/Program Files/Google/Chrome/Application/chrome.exe", title: "Gmail - Google Chrome", x: 960, y: 0, w: 960, h: 1040, state: "maximized" },
   ];
 }
 

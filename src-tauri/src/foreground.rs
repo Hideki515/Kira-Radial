@@ -65,7 +65,13 @@ pub fn current_app(exclude: &[isize]) -> Foreground {
     Foreground::default()
 }
 
+/// Nome do exe em minúsculas ("code.exe").
 pub fn exe_name(pid: u32) -> Option<String> {
+    exe_path(pid).and_then(|p| p.rsplit(['\\', '/']).next().map(|s| s.to_ascii_lowercase()))
+}
+
+/// Caminho completo do exe do processo.
+pub fn exe_path(pid: u32) -> Option<String> {
     if pid == 0 {
         return None;
     }
@@ -76,8 +82,7 @@ pub fn exe_name(pid: u32) -> Option<String> {
         let ok = QueryFullProcessImageNameW(handle, PROCESS_NAME_WIN32, PWSTR(buf.as_mut_ptr()), &mut len);
         let _ = CloseHandle(handle);
         ok.ok()?;
-        let path = String::from_utf16_lossy(&buf[..len as usize]);
-        path.rsplit(['\\', '/']).next().map(|s| s.to_ascii_lowercase())
+        Some(String::from_utf16_lossy(&buf[..len as usize]))
     }
 }
 

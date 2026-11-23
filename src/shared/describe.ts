@@ -35,6 +35,8 @@ export function describeAction(a: Action): string {
     case "openSettings": return t("d.openSettings");
     case "window":
       return WINDOW_LABEL[a.cmd];
+    case "layout":
+      return t(a.windows.length === 1 ? "d.layout.one" : "d.layout", { n: a.windows.length });
     case "text": {
       const one = a.text.replace(/\s+/g, " ").trim();
       return t("d.text", { text: one.length > 30 ? `${one.slice(0, 29)}…` : one });

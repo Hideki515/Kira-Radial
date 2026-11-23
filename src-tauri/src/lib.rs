@@ -17,6 +17,7 @@ mod hotkeys;
 mod icons;
 mod keycapture;
 mod knob;
+mod layout;
 mod lock;
 mod menu;
 mod monitors;
@@ -199,6 +200,7 @@ pub fn run() {
             commands::list_vscode_projects,
             commands::list_vpns,
             commands::obs_state,
+            commands::layout_capture,
             commands::obs_settings,
             commands::obs_save_settings,
             commands::clipboard_list,

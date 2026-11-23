@@ -175,6 +175,12 @@ pub async fn list_vpns() -> Result<Vec<crate::vpn::VpnInfo>, String> {
     tauri::async_runtime::spawn_blocking(crate::vpn::list).await.map_err(|e| e.to_string())?
 }
 
+/// Layout atual das janelas abertas (para guardar numa ação "Layout de janelas").
+#[tauri::command]
+pub async fn layout_capture() -> Result<Vec<crate::layout::SavedWindow>, String> {
+    tauri::async_runtime::spawn_blocking(crate::layout::capture).await.map_err(|e| e.to_string())
+}
+
 /// OBS: estado (cenas, gravação, transmissão, fontes de áudio). Nunca falha: o erro vem no status.
 #[tauri::command]
 pub async fn obs_state() -> Result<crate::obs::ObsState, String> {

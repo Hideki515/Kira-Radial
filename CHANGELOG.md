@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.36.0
+
+- **Ação "Layout de janelas"**: arrume as janelas como quiser (lado a lado, cada uma num monitor, maximizadas) e clique em **Capturar janelas abertas agora**. A fatia devolve cada janela a esse lugar, com o tamanho, o monitor e o estado (normal, maximizada ou minimizada).
+  - As janelas são reconhecidas pelo programa e pelo título. Com duas janelas do mesmo app, vale a de título mais parecido.
+  - Opção **Abrir os apps que não estiverem abertos**: abre o programa e posiciona a janela quando ela aparece.
+  - A lista do editor mostra cada janela capturada, e dá para tirar as que não interessam.
+- **Ajustes da 0.35.0:**
+  - os testes do texto pronto nunca colam nada de verdade;
+  - a memória dos marcadores da área de transferência é liberada se o Windows recusar.
+
 ## 0.35.0
 
 - **Ação "Texto pronto (colar)"**: cola um texto modelo no app que estava em uso. Bom para respostas e assinaturas.

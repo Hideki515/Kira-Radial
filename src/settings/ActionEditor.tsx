@@ -12,6 +12,7 @@ import { MediaFields, RadioFields, ScriptFields, SystemFields, VpnFields, Window
 import { DiscordFields } from "./actions/DiscordFields";
 import { ObsFields } from "./actions/ObsFields";
 import { TextFields } from "./actions/TextFields";
+import { LayoutFields } from "./actions/LayoutFields";
 import { KeysFields } from "./actions/KeysFields";
 import { FolderFields, LaunchFields, UrlFields } from "./actions/PathFields";
 import { SequenceFields } from "./actions/SequenceFields";
@@ -28,6 +29,7 @@ function TypeFields({ action, onChange }: { action: Action; onChange: (a: Action
     case "url": return <UrlFields action={action} onChange={onChange} />;
     case "keys": return <KeysFields action={action} onChange={onChange} />;
     case "text": return <TextFields action={action} onChange={onChange} />;
+    case "layout": return <LayoutFields action={action} onChange={onChange} />;
     case "media": return <MediaFields action={action} onChange={onChange} />;
     case "system": return <SystemFields action={action} onChange={onChange} />;
     case "window": return <WindowFields action={action} onChange={onChange} />;

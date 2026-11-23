@@ -172,7 +172,7 @@ fn icon_for(hwnd: HWND, exe: Option<&str>) -> Option<String> {
 // ---------------------------------------------------------------------------
 // Enumeração
 
-fn candidate(hwnd: HWND, own_pid: u32) -> (Candidate, u32) {
+pub(crate) fn candidate(hwnd: HWND, own_pid: u32) -> (Candidate, u32) {
     use windows::Win32::Graphics::Dwm::{DwmGetWindowAttribute, DWMWA_CLOAKED};
     use windows::Win32::UI::WindowsAndMessaging::{
         GetClassNameW, GetWindow, GetWindowLongPtrW, GetWindowTextW, GetWindowThreadProcessId, IsWindowVisible,
