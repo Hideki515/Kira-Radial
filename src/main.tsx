@@ -9,6 +9,7 @@ import "./styles/radial.css";
 import "./styles/themes2.css";
 import "./styles/themes3.css";
 import "./styles/themes4.css";
+import "./styles/themes5.css";
 
 if (isTauri()) document.documentElement.classList.add("is-tauri");
 installErrorLogging("radial");

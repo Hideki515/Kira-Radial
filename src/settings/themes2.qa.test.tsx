@@ -12,9 +12,9 @@ afterEach(cleanup);
 const NEW: Theme[] = ["neon", "cyber", "steam", "fluent", "minimal"];
 
 describe("QA v0.8.0 temas novos", () => {
-  it("THEMES tem 21 temas únicos (9 + 6 da v0.23.0 + 6 da v0.24.0) e todos têm cor sugerida", () => {
-    expect(THEMES.length).toBe(21);
-    expect(new Set(THEMES).size).toBe(21);
+  it("THEMES tem 24 temas únicos (9 + 6 da v0.23.0 + 6 da v0.24.0 + 3 da v0.32.0) e todos têm cor sugerida", () => {
+    expect(THEMES.length).toBe(24);
+    expect(new Set(THEMES).size).toBe(24);
     for (const t of NEW) expect(THEMES).toContain(t);
     for (const t of THEMES) expect(THEME_ACCENT[t]).toMatch(/^#[0-9a-f]{6}$/i);
   });

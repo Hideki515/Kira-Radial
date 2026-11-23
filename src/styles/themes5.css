@@ -1,0 +1,112 @@
+/* Pacote "Tecnologia 2": Osciloscópio, Fibra óptica e Válvulas Nixie.
+   A cor de destaque (--active) continua valendo. Poucas animações por tema (agrupadas). */
+
+.scope, .fiber, .nixie { pointer-events: none; }
+
+/* ======================================================================
+   Osciloscópio — fósforo verde, retícula, onda viva.
+   ====================================================================== */
+.scope-screen { fill: #020d04; opacity: 0.94; }
+.scope-grid-line { fill: none; stroke: rgba(125, 255, 90, 0.12); stroke-width: 1; }
+.scope-axis { stroke: rgba(125, 255, 90, 0.3); stroke-width: 1; stroke-dasharray: 2 7; }
+.scope-bezel { fill: none; stroke: #1c2a1e; stroke-width: 10; }
+.scope-wave { fill: none; stroke: #9dff7a; stroke-width: 2.4; stroke-linejoin: round; opacity: 0.95; }
+.scope-echo { fill: none; stroke: #7dff5a; stroke-width: 6; opacity: 0.12; }
+/* Uma volta a cada 40 s, ~12 quadros/s: a onda "anda" pelas fatias sem pesar. */
+.scope-spin { transform-box: view-box; transform-origin: 450px 450px; animation: holo-spin 40s steps(480) infinite; }
+.scope-echo { animation: scope-breathe 3s steps(10) infinite; }
+@keyframes scope-breathe { 0%, 100% { opacity: 0.08; } 50% { opacity: 0.2; } }
+
+.theme-scope { --font-tech: "Cascadia Mono", "Consolas", monospace; }
+.theme-scope .slice-label { font-family: var(--font-tech); font-weight: 600; letter-spacing: 0.05em; fill: #c9ffb8; }
+.theme-scope .hub-time, .theme-scope .hub-cpu, .theme-scope .hub-date { font-family: var(--font-tech); }
+.theme-scope .ring-backing { fill: #010a03; fill-opacity: 0.96; }
+.theme-scope .main-slice .slice-shape { fill: #041a08; stroke: rgba(125, 255, 90, 0.35); stroke-width: 1.2; }
+.theme-scope .main-slice .slice-icon, .theme-scope .sub-slice .slice-icon { color: #c9ffb8; }
+.theme-scope .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 24%, #041a08); stroke: var(--active); stroke-width: 2; }
+.theme-scope .main-slice.is-active .slice-icon { color: #fff; }
+.theme-scope .main-slice.is-active .slice-label { fill: #fff; }
+.theme-scope .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 30%, transparent); }
+.theme-scope .sub-slice .slice-shape { fill: #041a08; }
+.theme-scope .hub-disc { fill: #041a08; stroke: #7dff5a; stroke-opacity: 0.5; }
+.theme-scope .hub-well { fill: #010802; stroke: rgba(125, 255, 90, 0.2); }
+.theme-scope .hub-time, .theme-scope .hub-np-title { fill: #e6ffdc; }
+.theme-scope .hub-date, .theme-scope .hub-pill-text, .theme-scope .hub-np-artist { fill: #6fbf5a; }
+.theme-scope .hub-cpu { fill: #9dff7a; }
+.theme-scope .hub-gauge { stroke: #9dff7a; stroke-linecap: butt; }
+.theme-scope .hub-track { stroke: rgba(125, 255, 90, 0.14); stroke-linecap: butt; }
+
+/* ======================================================================
+   Fibra óptica — fios finos coloridos em fundo escuro, pulsos correndo para fora.
+   ====================================================================== */
+.fiber-dark { fill: #03050c; opacity: 0.92; }
+.fiber-strands path { fill: none; stroke-width: 1.6; opacity: 0.45; }
+.fiber-strands .fiber-c0 { stroke: #29d4ff; }
+.fiber-strands .fiber-c1 { stroke: #b46bff; }
+.fiber-strands .fiber-c2 { stroke: #ff5fa8; }
+.fiber-tips .fiber-c0, .fiber-pulses .fiber-c0 { fill: #8be9ff; }
+.fiber-tips .fiber-c1, .fiber-pulses .fiber-c1 { fill: #d9b8ff; }
+.fiber-tips .fiber-c2, .fiber-pulses .fiber-c2 { fill: #ffb3d4; }
+.fiber-tips { opacity: 0.9; }
+.fiber-pulses { opacity: 0; animation: fiber-run 1.2s steps(6) infinite; }
+@keyframes fiber-run { 0% { opacity: 1; } 40%, 100% { opacity: 0; } }
+.fiber-collar { fill: none; stroke: rgba(139, 233, 255, 0.35); stroke-width: 2; }
+
+.theme-fiber .ring-backing { fill: #04060e; fill-opacity: 0.95; }
+.theme-fiber .main-slice .slice-shape { fill: #0b1022; stroke: rgba(41, 212, 255, 0.3); stroke-width: 1.2; }
+.theme-fiber .main-slice .slice-icon, .theme-fiber .sub-slice .slice-icon { color: #e4f7ff; }
+.theme-fiber .slice-label { fill: #d8f3ff; letter-spacing: 0.04em; }
+.theme-fiber .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 26%, #0b1022); stroke: var(--active); stroke-width: 2; }
+.theme-fiber .main-slice.is-active .slice-icon { color: #fff; }
+.theme-fiber .main-slice.is-active .slice-label { fill: #fff; }
+.theme-fiber .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 32%, transparent); }
+.theme-fiber .sub-slice .slice-shape { fill: #0b1022; }
+.theme-fiber .hub-disc { fill: #0b1022; stroke: #29d4ff; stroke-opacity: 0.5; }
+.theme-fiber .hub-well { fill: #03050c; stroke: rgba(180, 107, 255, 0.25); }
+.theme-fiber .hub-time, .theme-fiber .hub-np-title { fill: #f2fbff; }
+.theme-fiber .hub-date, .theme-fiber .hub-pill-text, .theme-fiber .hub-np-artist { fill: #7f9cc4; }
+.theme-fiber .hub-cpu { fill: #29d4ff; }
+.theme-fiber .hub-gauge { stroke: #29d4ff; }
+.theme-fiber .hub-track { stroke: rgba(41, 212, 255, 0.14); }
+
+/* ======================================================================
+   Válvulas Nixie — metal escuro, tela hexagonal, dígitos laranja em vidro.
+   ====================================================================== */
+.nixie-chassis { fill: #120d0a; opacity: 0.95; }
+.nixie-mesh-line { fill: none; stroke: rgba(255, 138, 31, 0.07); stroke-width: 1; }
+.nixie-rim { fill: none; stroke: #3b2a1c; stroke-width: 6; }
+.nixie-glass { fill: rgba(255, 150, 60, 0.06); stroke: rgba(255, 210, 170, 0.28); stroke-width: 1.2; }
+.nixie-digit {
+  font-family: "Bahnschrift Condensed", "Bahnschrift", "Segoe UI", sans-serif;
+  font-size: 26px; font-weight: 300;
+  fill: #ff9a3c; stroke: rgba(255, 120, 20, 0.45); stroke-width: 3; paint-order: stroke;
+}
+.nixie-flicker { animation: nixie-flicker 4s steps(1) infinite; }
+@keyframes nixie-flicker { 0%, 46%, 50%, 100% { opacity: 1; } 47%, 49% { opacity: 0.35; } }
+
+.theme-nixie .slice-label { font-family: "Bahnschrift", "Segoe UI", sans-serif; fill: #ffd4a8; letter-spacing: 0.08em; }
+.theme-nixie .ring-backing { fill: #0c0805; fill-opacity: 0.96; }
+.theme-nixie .main-slice .slice-shape { fill: #1d140d; stroke: rgba(255, 154, 60, 0.3); stroke-width: 1.2; }
+.theme-nixie .main-slice .slice-icon, .theme-nixie .sub-slice .slice-icon { color: #ffd4a8; }
+.theme-nixie .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 24%, #1d140d); stroke: var(--active); stroke-width: 2; }
+.theme-nixie .main-slice.is-active .slice-icon { color: #fff3e6; }
+.theme-nixie .main-slice.is-active .slice-label { fill: #fff3e6; }
+.theme-nixie .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 32%, transparent); }
+.theme-nixie .sub-slice .slice-shape { fill: #1d140d; }
+.theme-nixie .hub-disc { fill: #1d140d; stroke: #ff9a3c; stroke-opacity: 0.45; }
+.theme-nixie .hub-well { fill: #080503; stroke: rgba(255, 154, 60, 0.2); }
+/* Relógio e CPU como dígitos de válvula: laranja com contorno brilhante. */
+.theme-nixie .hub-time, .theme-nixie .hub-cpu {
+  font-family: "Bahnschrift Condensed", "Bahnschrift", sans-serif; font-weight: 300;
+  fill: #ff9a3c; stroke: rgba(255, 120, 20, 0.4); stroke-width: 3; paint-order: stroke;
+}
+.theme-nixie .hub-np-title { fill: #ffe6cc; }
+.theme-nixie .hub-date, .theme-nixie .hub-pill-text, .theme-nixie .hub-np-artist { fill: #b98a62; }
+.theme-nixie .hub-gauge { stroke: #ff9a3c; }
+.theme-nixie .hub-track { stroke: rgba(255, 154, 60, 0.14); }
+
+@media (prefers-reduced-motion: reduce) {
+  .scope-spin, .scope-echo, .fiber-pulses, .nixie-flicker { animation: none; }
+  .fiber-pulses { opacity: 0.6; }
+}
+.is-thumb .fiber-pulses { opacity: 0.6; }

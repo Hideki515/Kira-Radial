@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.32.0
+
+- **Três temas novos (pacote "Tecnologia 2")**, em Aparência → Tema:
+  - **Osciloscópio**: tela de fósforo verde com retícula e uma onda viva que gira devagar em volta das fatias;
+  - **Fibra Óptica**: fios de luz azuis, violeta e rosa saindo do anel, com pulsos correndo para fora;
+  - **Válvulas Nixie**: tubos de vidro com dígitos laranja em volta do anel, metal escuro com tela hexagonal, e relógio e CPU no estilo de válvula.
+- Como nos outros temas, as animações são poucas e leves, param com o menu fechado e desligam com "reduzir movimento" do Windows.
+
 ## 0.31.3
 
 - **Atualizar a cópia instalada** (`scripts/update-installed.ps1`):
