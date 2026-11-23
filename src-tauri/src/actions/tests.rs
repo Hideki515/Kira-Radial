@@ -12,6 +12,17 @@ mod geral_tests {
     }
 
     #[test]
+    fn texto_pronto_serde_e_foco() {
+        // QA v0.35.0: restoreClipboard ausente = true; Text precisa do foco do app anterior.
+        let a: Action = serde_json::from_str(r#"{"type":"text","text":"Olá {data}"}"#).unwrap();
+        assert!(matches!(&a, Action::Text { text, restore_clipboard: true } if text == "Olá {data}"));
+        assert!(a.needs_previous_focus() && !a.keeps_menu_open());
+        let a: Action = serde_json::from_str(r#"{"type":"text","text":"x","restoreClipboard":false}"#).unwrap();
+        assert!(matches!(a, Action::Text { restore_clipboard: false, .. }));
+        assert!(serde_json::from_str::<Action>(r#"{"type":"text"}"#).is_err());
+    }
+
+    #[test]
     fn midia_mantem_menu_aberto() {
         let media: Action = serde_json::from_str(r#"{"type":"media","cmd":"volup"}"#).unwrap();
         let keys: Action = serde_json::from_str(r#"{"type":"keys","combo":"Win+D"}"#).unwrap();

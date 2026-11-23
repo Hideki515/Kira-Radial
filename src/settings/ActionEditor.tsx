@@ -11,6 +11,7 @@ import { ACTION_TYPES, defaultAction, type ActionType } from "./actions/catalog"
 import { MediaFields, RadioFields, ScriptFields, SystemFields, VpnFields, WindowFields } from "./actions/CommandFields";
 import { DiscordFields } from "./actions/DiscordFields";
 import { ObsFields } from "./actions/ObsFields";
+import { TextFields } from "./actions/TextFields";
 import { KeysFields } from "./actions/KeysFields";
 import { FolderFields, LaunchFields, UrlFields } from "./actions/PathFields";
 import { SequenceFields } from "./actions/SequenceFields";
@@ -26,6 +27,7 @@ function TypeFields({ action, onChange }: { action: Action; onChange: (a: Action
     case "folder": return <FolderFields action={action} onChange={onChange} />;
     case "url": return <UrlFields action={action} onChange={onChange} />;
     case "keys": return <KeysFields action={action} onChange={onChange} />;
+    case "text": return <TextFields action={action} onChange={onChange} />;
     case "media": return <MediaFields action={action} onChange={onChange} />;
     case "system": return <SystemFields action={action} onChange={onChange} />;
     case "window": return <WindowFields action={action} onChange={onChange} />;

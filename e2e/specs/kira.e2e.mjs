@@ -1241,4 +1241,85 @@ describe("Kira de teste — ponta a ponta", () => {
     await browser.refresh();
     await toWindow("settings.html");
   });
+  it("27. (QA v0.35.0) texto pronto (só registra no log na Kira de teste): variáveis, calculadora '=2*35' no menu, editor em pt/en", async function () {
+    this.timeout(120000);
+    await toWindow("settings.html");
+    const original = await invoke("get_config");
+    const runAction = (a) => browser.execute((x) => window.__TAURI_INTERNALS__.invoke("run_action", { action: x }).then(() => "ok", (e) => String(e)), a);
+    const logText = async () => (await invoke("read_log", { lines: 400 })).join("\n");
+    const PREFIX = "Kira de teste: texto pronto expandido: ";
+    const lastExpanded = async () => {
+      const lines = (await invoke("read_log", { lines: 400 })).filter((l) => l.includes(PREFIX));
+      return lines.length ? lines[lines.length - 1].slice(lines[lines.length - 1].indexOf(PREFIX) + PREFIX.length) : null;
+    };
+
+    // Variáveis expandidas (data/hora do Windows), desconhecida e {{ }} literais.
+    const tag = `QA27-${Date.now()}`;
+    expect(await runAction({ type: "text", text: `${tag} D={data} H={ Hora } {{lit}} {desconhecida}` })).toBe("ok");
+    await browser.waitUntil(async () => (await logText()).includes(`${PREFIX}${tag}`), { timeoutMsg: "texto pronto não foi registrado no log" });
+    const got = await lastExpanded();
+    console.log("[27] expandido:", got);
+    expect(got).toMatch(new RegExp(`^${tag} D=\\S*\\d\\S* H=\\S*\\d`));
+    expect(got).not.toContain("{data}");
+    expect(got).toContain("{lit}");
+    expect(got).toContain("{desconhecida}");
+    // Vazio e grande demais são recusados (pt).
+    expect(await runAction({ type: "text", text: "" })).toContain("vazio");
+    expect(await runAction({ type: "text", text: "x".repeat(10001) })).toContain("10000");
+
+    // Calculadora no menu: "=2*35" → única fatia "= 70"; Enter registra "70".
+    await invoke("qa_show_menu", { fromOrb: false });
+    await toWindow("");
+    for (const [k, c] of [["=", "Equal"], ["2", "Digit2"], ["*", "NumpadMultiply"], ["3", "Digit3"], ["5", "Digit5"]]) await pressKey(k, c);
+    // asSlices completa até 3 fatias vazias; só a 1ª tem rótulo.
+    const mainLabels = () => browser.execute(() => [...document.querySelectorAll(".main-slice")].map((s) => s.getAttribute("aria-label")).filter(Boolean));
+    await browser.waitUntil(async () => JSON.stringify(await mainLabels()) === JSON.stringify(["= 70"]), {
+      timeoutMsg: "a fatia '= 70' não apareceu",
+    });
+    expect(await $('[data-testid="hub-search"]').getText()).toContain("=2*35");
+    await pressKey("Enter");
+    await toWindow("settings.html");
+    await browser.waitUntil(async () => (await lastExpanded()) === "70", { timeoutMsg: "executar '= 70' não registrou 70 no log" });
+    await browser.waitUntil(async () => !(await qaState()).menuVisible, { timeoutMsg: "o menu não fechou após colar" });
+
+    // Editor (pt): tipo Texto pronto, botão de variável, contador, toggle → config.json.
+    await nav("Itens do menu");
+    await $(".profile-picker select").selectByIndex(0);
+    await $$(".tree-row:not(.is-child)")[0].click();
+    await pickRadio("Executar ação");
+    await $('.item-editor select:has(option[value="text"])').selectByAttribute("value", "text");
+    const ta = await $(".item-editor textarea");
+    await ta.waitForExist();
+    await ta.setValue("Olá ");
+    for (const b of await $$(".text-vars button")) if ((await b.getText()).trim() === "{data}") { await b.click(); break; }
+    await browser.waitUntil(async () => (await ta.getValue()) === "Olá {data}", { timeoutMsg: "botão {data} não inseriu" });
+    expect(await $(".item-editor").getText()).toContain("10 de 10000 caracteres");
+    const restoreToggle = await $("label.toggle-row*=Devolver a área de transferência depois");
+    await restoreToggle.$("input").click();
+    await save();
+    const item = qaConfig().profiles[0].items.find((i) => i.action?.type === "text");
+    expect(item.action).toEqual({ type: "text", text: "Olá {data}", restoreClipboard: false });
+
+    // Editor (en): botões com nomes em inglês e textos traduzidos.
+    const en = structuredClone(qaConfig());
+    en.behavior.language = "en";
+    await invoke("save_config", { config: en });
+    await browser.refresh();
+    await toWindow("settings.html");
+    await browser.waitUntil(async () => (await browser.execute(() => document.documentElement.lang)) === "en", { timeoutMsg: "não abriu em inglês" });
+    await (await $("button.nav-item*=Menu items")).click();
+    await $(".profile-picker select").selectByIndex(0);
+    await $$(".tree-row:not(.is-child)")[0].click();
+    await $(".item-editor textarea").waitForExist();
+    const btns = await browser.execute(() => [...document.querySelectorAll(".text-vars button")].map((b) => b.textContent));
+    expect(btns).toEqual(["{date}", "{longdate}", "{time}", "{datetime}", "{clipboard}"]);
+    const edText = await $(".item-editor").getText();
+    expect(edText).toContain("Give the clipboard back afterwards");
+    expect(edText).toContain("10 of 10000 characters");
+    expect(await runAction({ type: "text", text: "" })).toContain("empty");
+
+    await invoke("save_config", { config: original });
+    await browser.refresh();
+    await toWindow("settings.html");
+  });
 });

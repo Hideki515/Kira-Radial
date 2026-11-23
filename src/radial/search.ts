@@ -1,6 +1,7 @@
 // Busca por digitação no menu aberto: fatias e subitens de todos os perfis (puro, sem React).
 import { describeAction } from "../shared/describe";
 import type { MenuItem, Profile } from "../shared/types";
+import { calcResult, isCalcQuery } from "./calc";
 
 /** Quantos resultados viram fatias do anel. */
 export const MAX_RESULTS = 8;
@@ -71,6 +72,11 @@ export function score(e: SearchEntry, rawQuery: string): number {
 
 /** Melhores resultados (até `max`); empate: perfil atual primeiro, depois nome mais curto. */
 export function search(index: SearchEntry[], query: string, currentProfileId: string, max = MAX_RESULTS): MenuItem[] {
+  // "=2*35": calculadora (a única fatia é o resultado; conta incompleta = nenhuma).
+  if (isCalcQuery(query)) {
+    const r = calcResult(query);
+    return r ? [r] : [];
+  }
   return index
     .map((e) => ({ e, s: score(e, query) }))
     .filter((r) => r.s > 0)
@@ -93,5 +99,5 @@ export function asSlices(results: MenuItem[]): MenuItem[] {
 
 /** Tecla que entra no texto da busca (letra, número, espaço e pontuação simples). */
 export function isSearchChar(e: Pick<KeyboardEvent, "key" | "ctrlKey" | "altKey" | "metaKey">): boolean {
-  return !e.ctrlKey && !e.altKey && !e.metaKey && e.key.length === 1 && /[\p{L}\p{N} ._\-/+&]/u.test(e.key);
+  return !e.ctrlKey && !e.altKey && !e.metaKey && e.key.length === 1 && /[\p{L}\p{N} ._\-/+&=*()%^,]/u.test(e.key);
 }

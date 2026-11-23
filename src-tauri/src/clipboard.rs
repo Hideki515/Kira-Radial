@@ -69,7 +69,9 @@ static STARTED: Once = Once::new();
 // ---------------------------------------------------------------------------
 // Leitura/escrita da área de transferência
 
-fn read_text() -> Option<String> {
+/// Texto atual da área de transferência (None se vazio, não for texto ou o dono pediu para
+/// não ser lido por monitores, como os gerenciadores de senha).
+pub fn read_text() -> Option<String> {
     use windows::Win32::System::DataExchange::{
         CloseClipboard, GetClipboardData, IsClipboardFormatAvailable, OpenClipboard, RegisterClipboardFormatW,
     };
@@ -118,6 +120,17 @@ fn read_text() -> Option<String> {
 
 /// Põe `text` na área de transferência.
 pub fn write_text(text: &str) -> Result<(), String> {
+    write_text_with(text, false)
+}
+
+/// Como `write_text`, mas marcado para ficar fora do histórico (da Kira e do Win+V):
+/// usado pelos textos prontos e para devolver o que havia antes.
+pub fn write_text_private(text: &str) -> Result<(), String> {
+    write_text_with(text, true)
+}
+
+fn write_text_with(text: &str, private: bool) -> Result<(), String> {
+    use windows::Win32::System::DataExchange::RegisterClipboardFormatW;
     use windows::Win32::System::DataExchange::{CloseClipboard, EmptyClipboard, OpenClipboard, SetClipboardData};
     use windows::Win32::System::Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GMEM_MOVEABLE};
     let wide: Vec<u16> = text.encode_utf16().chain(std::iter::once(0)).collect();
@@ -133,6 +146,20 @@ pub fn write_text(text: &str) -> Result<(), String> {
         let _ = EmptyClipboard();
         // Após SetClipboardData o Windows passa a ser dono da memória.
         let r = SetClipboardData(CF_UNICODETEXT, Some(HANDLE(g.0))).map(|_| ()).map_err(|e| e.to_string());
+        if private && r.is_ok() {
+            // Formatos que pedem "não guarde isto" (os mesmos que este histórico respeita).
+            for (name, value) in [(w!("ExcludeClipboardContentFromMonitorProcessing"), 1u32), (w!("CanIncludeInClipboardHistory"), 0u32)] {
+                let fmt = RegisterClipboardFormatW(name);
+                if let Ok(h) = GlobalAlloc(GMEM_MOVEABLE, 4) {
+                    let p = GlobalLock(h) as *mut u32;
+                    if !p.is_null() {
+                        *p = value;
+                        let _ = GlobalUnlock(h);
+                        let _ = SetClipboardData(fmt, Some(HANDLE(h.0)));
+                    }
+                }
+            }
+        }
         let _ = CloseClipboard();
         r
     }

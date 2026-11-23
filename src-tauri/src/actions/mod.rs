@@ -104,6 +104,13 @@ pub enum Action {
     },
     /// Cola o item `index` do histórico da área de transferência no app anterior.
     Paste { index: usize },
+    /// Texto pronto: cola o modelo com as variáveis trocadas ({data}, {hora}...).
+    Text {
+        text: String,
+        /// Devolve a área de transferência anterior depois de colar (padrão: sim).
+        #[serde(default = "yes", rename = "restoreClipboard")]
+        restore_clipboard: bool,
+    },
     /// Várias ações em ordem (ex.: abrir o VS Code, o terminal e mutar o Discord).
     Sequence {
         steps: Vec<Action>,
@@ -204,7 +211,7 @@ impl Action {
 
     /// Ações que enviam teclas precisam que o foco volte ao app anterior antes de rodar.
     pub fn needs_previous_focus(&self) -> bool {
-        matches!(self, Action::Keys { .. } | Action::Paste { .. } | Action::System { cmd: SystemCmd::Screenshot })
+        matches!(self, Action::Keys { .. } | Action::Paste { .. } | Action::Text { .. } | Action::System { cmd: SystemCmd::Screenshot })
     }
 
     /// Ações que mantêm o menu aberto (ex.: mídia — dá para clicar várias vezes em volume +).
@@ -296,6 +303,7 @@ pub fn execute(action: &Action) -> Result<(), String> {
             crate::clipboard::put(*index)?;
             keys::send_combo("Ctrl+V")
         }
+        Action::Text { text, restore_clipboard } => crate::snippet::paste(text, *restore_clipboard),
         Action::Radio { kind, mode } => crate::radios::set(*kind, *mode).map(|_| ()),
         Action::Vpn { name, mode } => crate::vpn::set(name, *mode),
         Action::Obs { cmd, scene, input } => crate::obs::run(*cmd, scene.as_deref(), input.as_deref()),
@@ -314,6 +322,15 @@ pub fn execute(action: &Action) -> Result<(), String> {
         // Passo a passo (foco, atrasos, janela) em commands::run_action.
         Action::Sequence { .. } => Err(tr!("sequência só pode rodar pelo menu", "a sequence can only run from the menu").into()),
     }
+}
+
+/// Ctrl+V no app em foco (textos prontos).
+pub fn send_paste() -> Result<(), String> {
+    keys::send_combo("Ctrl+V")
+}
+
+fn yes() -> bool {
+    true
 }
 
 pub(super) fn shell_execute(file: &str, params: Option<&str>, dir: Option<&str>, verb: &str) -> Result<(), String> {

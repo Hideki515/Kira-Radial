@@ -363,3 +363,7 @@ input[type="number"]:focus-visible { border-color: var(--active); }
 .update-box { display: grid; gap: 8px; justify-items: start; margin-top: 6px; }
 .update-title { margin: 0; }
 .update-notes pre { white-space: pre-wrap; font-family: var(--font-ui); font-size: 12px; max-height: 220px; overflow: auto; margin: 6px 0 0; color: var(--text-muted); }
+
+/* Texto pronto: botões de variável compactos. */
+.text-vars { flex-wrap: wrap; gap: 6px; margin: -4px 0 4px; }
+.text-vars .btn { padding: 2px 8px; font-size: 12px; }

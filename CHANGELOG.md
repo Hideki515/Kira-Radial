@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.35.0
+
+- **Ação "Texto pronto (colar)"**: cola um texto modelo no app que estava em uso. Bom para respostas e assinaturas.
+  - Variáveis trocadas na hora: {data}, {datalonga}, {hora}, {datahora} e {clipboard} (em inglês também valem {date}, {longdate}, {time}, {datetime}). Os botões do editor inserem a variável no cursor.
+  - Por padrão, o que estava na área de transferência volta logo depois de colar.
+  - O texto colado não entra no histórico da Kira nem no Win+V.
+- **Calculadora na busca**: com o menu aberto, digite "=" e a conta (ex.: =2*35, =(10+5)/3, =2^10, =15%4, com vírgula ou ponto). O resultado aparece como fatia, e Enter ou um clique cola o número no app que estava em uso.
+
 ## 0.34.0
 
 - **Controle do OBS Studio** pelo servidor WebSocket local que já vem no OBS 28 ou mais novo. Nada passa pela internet.

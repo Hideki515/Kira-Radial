@@ -35,6 +35,10 @@ export function describeAction(a: Action): string {
     case "openSettings": return t("d.openSettings");
     case "window":
       return WINDOW_LABEL[a.cmd];
+    case "text": {
+      const one = a.text.replace(/\s+/g, " ").trim();
+      return t("d.text", { text: one.length > 30 ? `${one.slice(0, 29)}…` : one });
+    }
     case "paste":
       return t("d.paste", { text: a.preview ?? t("d.paste.default") });
     case "radio": {

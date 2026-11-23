@@ -86,6 +86,8 @@ export type Action =
   | { type: "obs"; cmd: ObsCmd; scene?: string; input?: string }
   /** Cola um item do histórico da área de transferência (gerada pelo submenu; não aparece no editor). */
   | { type: "paste"; index: number; preview?: string }
+  /** Texto pronto: cola o modelo com as variáveis trocadas na hora ({data}, {hora}, {clipboard}...). */
+  | { type: "text"; text: string; restoreClipboard?: boolean }
   /** Discord: setInput/setOutput usam o id do dispositivo no Discord (nome = reserva se o id mudar). */
   | { type: "discord"; cmd: DiscordCmd; deviceId?: string; deviceName?: string }
   /** Várias ações em ordem (2–10; sem sequência dentro de sequência nem desligar/reiniciar/sair). */
@@ -316,5 +318,8 @@ export const THEME_ACCENT: Record<Theme, string> = {
   fiber: "#29d4ff",
   nixie: "#ff8a1f",
 };
+
+/** Tamanho máximo de um texto pronto (caracteres); o Rust usa o mesmo limite. */
+export const TEXT_MAX_CHARS = 10_000;
 
 export const LIMITS = { minSlices: 3, maxSlices: 10, maxChildren: 8 } as const;

@@ -29,6 +29,7 @@ mod qa;
 mod radios;
 mod schedule;
 mod shot;
+mod snippet;
 mod sqlite;
 mod recent;
 mod power;

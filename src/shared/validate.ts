@@ -3,7 +3,7 @@ import { t } from "./i18n";
 import { DISCORD_LABEL } from "./describe";
 import { formatCombo, parseCombo } from "./keys";
 import { hasCriteria, whenErrors } from "./schedule";
-import { OBS_CMDS, DYNAMIC_KINDS, LAUNCHER_MODES, LIMITS, ORB_ANIMATIONS, ORB_LIMITS, SCALE_LIMITS, THEMES, DANGEROUS_SYSTEM, SEQUENCE_LIMITS, knobOf, wantsHotkey, type Action, type Theme, type Config, type MenuItem } from "./types";
+import { OBS_CMDS, TEXT_MAX_CHARS, DYNAMIC_KINDS, LAUNCHER_MODES, LIMITS, ORB_ANIMATIONS, ORB_LIMITS, SCALE_LIMITS, THEMES, DANGEROUS_SYSTEM, SEQUENCE_LIMITS, knobOf, wantsHotkey, type Action, type Theme, type Config, type MenuItem } from "./types";
 
 /** Teclas do knob: válidas, diferentes entre si e do atalho do menu. */
 export function knobErrors(c: Config): string[] {
@@ -159,6 +159,10 @@ export function validateAction(a: Action): string | null {
       if (!parseCombo(a.combo)) return t("v.a.combo", { combo: a.combo });
       if (a.delayMs !== undefined && (!Number.isInteger(a.delayMs) || a.delayMs < 0 || a.delayMs > 10000))
         return t("v.a.delay");
+      return null;
+    case "text":
+      if (!a.text.trim()) return t("v.a.text");
+      if ([...a.text].length > TEXT_MAX_CHARS) return t("v.a.textLong", { max: TEXT_MAX_CHARS });
       return null;
     case "script": return a.command.trim() ? null : t("v.a.script");
     case "brightness":
