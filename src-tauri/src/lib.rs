@@ -53,7 +53,7 @@ macro_rules! handlers {
 #[cfg(feature = "qa")]
 macro_rules! handlers {
     ($($cmd:path),* $(,)?) => {
-        tauri::generate_handler![$($cmd,)* qa::commands::qa_show_menu, qa::commands::qa_open_settings, qa::commands::qa_close_settings, qa::commands::qa_state, qa::commands::qa_knob, shot::qa_fake_shot, hotkeys::qa_hotkey, updater::qa_fake_update]
+        tauri::generate_handler![$($cmd,)* qa::commands::qa_show_menu, qa::commands::qa_open_settings, qa::commands::qa_close_settings, qa::commands::qa_state, qa::commands::qa_knob, shot::qa_fake_shot, hotkeys::qa_hotkey, updater::qa_fake_update, keycapture::qa_key_capture]
     };
 }
 

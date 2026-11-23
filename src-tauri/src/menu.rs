@@ -270,6 +270,14 @@ pub fn to_shortcut(accelerator: &str) -> Result<Shortcut, String> {
 
 /// Liga ou desliga o atalho global conforme o modo de abertura (atalho / ícone / ambos).
 pub fn apply_hotkey(app: &AppHandle, cfg: &Config) -> Result<(), String> {
+    // Kira de teste: nunca registra o atalho no Windows (pegaria o teclado do usuário);
+    // só confere se a combinação é válida.
+    if crate::qa::ENABLED {
+        if cfg.launcher.mode.wants_hotkey() {
+            to_shortcut(&cfg.hotkey.accelerator)?;
+        }
+        return Ok(());
+    }
     if cfg.launcher.mode.wants_hotkey() {
         return register_hotkey(app, &cfg.hotkey.accelerator);
     }

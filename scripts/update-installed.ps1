@@ -31,14 +31,24 @@ $setup = Get-ChildItem (Join-Path $root 'src-tauri\target\release\bundle\nsis') 
 if (-not $setup) { throw 'instalador não encontrado em bundle\nsis' }
 Write-Host "Instalador: $($setup.FullName)"
 
-# Fecha qualquer Kira aberto (instalado ou release), senão a instância única atrapalha e o exe fica travado.
-$procs = Get-Process kira-radial -ErrorAction SilentlyContinue
+# Processos kira-radial com o caminho do exe. Get-Process pode devolver .Path vazio (sem
+# acesso ao processo), então lê pelo CIM. A Kira de teste (target-qa) fica de fora:
+# tem identificador próprio e não atrapalha a instalação.
+function Get-KiraProcs {
+    Get-CimInstance Win32_Process -Filter "Name='kira-radial.exe'" |
+        Where-Object { $_.ExecutablePath -notlike '*\target-qa\*' }
+}
+
+# Fecha a Kira aberta (instalada ou release), senão a instância única atrapalha e o exe fica travado.
+$procs = @(Get-KiraProcs)
 foreach ($p in $procs) {
-    Write-Host "Encerrando kira-radial pid $($p.Id) ($($p.Path))"
-    $p.CloseMainWindow() | Out-Null
+    Write-Host "Encerrando kira-radial pid $($p.ProcessId) ($($p.ExecutablePath))"
+    # O processo pode ter fechado entre a leitura do CIM e aqui.
+    $gp = Get-Process -Id $p.ProcessId -ErrorAction SilentlyContinue
+    if ($gp) { $gp.CloseMainWindow() | Out-Null }
 }
 Start-Sleep -Milliseconds 800
-Get-Process kira-radial -ErrorAction SilentlyContinue | Stop-Process -Force
+foreach ($p in @(Get-KiraProcs)) { Stop-Process -Id $p.ProcessId -Force -ErrorAction SilentlyContinue }
 Start-Sleep -Milliseconds 500
 
 $p = Start-Process -FilePath $setup.FullName -ArgumentList '/S' -Wait -PassThru
@@ -48,7 +58,12 @@ if (-not (Test-Path $installedExe)) { throw "exe instalado não encontrado: $ins
 $v = (Get-Item $installedExe).VersionInfo.ProductVersion
 Write-Host "Instalado: $installedExe (versão $v, modificado $((Get-Item $installedExe).LastWriteTime))"
 Start-Process -FilePath $installedExe
-Start-Sleep -Seconds 3
-$running = Get-Process kira-radial -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $installedExe }
-if ($running) { Write-Host "OK: Kira Radial instalado em execução (pid $($running.Id -join ','))" }
+# Espera até 10 s a Kira instalada aparecer (o primeiro início pode demorar um pouco).
+$running = $null
+for ($i = 0; $i -lt 20 -and -not $running; $i++) {
+    Start-Sleep -Milliseconds 500
+    $running = @(Get-KiraProcs | Where-Object { $_.ExecutablePath -eq $installedExe })
+    if (-not $running.Count) { $running = $null }
+}
+if ($running) { Write-Host "OK: Kira Radial instalado em execução (pid $($running.ProcessId -join ','))" }
 else { throw 'Kira Radial instalado não ficou em execução' }

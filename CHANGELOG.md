@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.31.3
+
+- **Atualizar a cópia instalada** (`scripts/update-installed.ps1`):
+  - não acusa mais "não ficou em execução" quando a Kira abriu normalmente; o caminho dos processos agora é lido de um jeito que funciona nesta máquina, e o script espera até 10 s;
+  - não encerra mais uma Kira de teste aberta.
+- **Kira de teste:** o gravador de atalho não instala mais o hook de teclado do sistema, que pegaria o teclado real. Os testes entregam a combinação pelo comando `qa_key_capture`. A Kira normal não muda.
+- **Kira de teste:** salvar uma mudança de atalho ou de modo de abertura não registra mais o atalho de verdade no Windows. Ela só confere se a combinação é válida. A inicialização, as teclas do knob e os atalhos de fatia já tinham essa trava.
+
 ## 0.31.2
 
 - **Interface em inglês (parte 3, final):** com o idioma em English, passam a sair em inglês também:

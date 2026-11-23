@@ -977,4 +977,105 @@ describe("Kira de teste — ponta a ponta", () => {
     await invoke("save_config", { config: original });
     expect("language" in qaConfig().behavior).toBe(false);
   });
+  it("24. (QA) gravador de atalho de verdade (qa_key_capture, sem hook de teclado): fatia e Atalho; recusada continua gravando; cancelar; sem gravação = erro", async () => {
+    await toWindow("settings.html");
+    const original = await invoke("get_config");
+    const cfg = structuredClone(original);
+    // Na Kira de teste o apply_hotkey não registra no Windows (v0.31.3): dá para salvar
+    // modo e atalho principal; o knob fica só no rascunho.
+    for (const p of cfg.profiles) for (const it of p.items) delete it.hotkey;
+    await invoke("save_config", { config: cfg });
+    await browser.refresh();
+    await toWindow("settings.html");
+    const capture = (combo) => browser.execute((c) => window.__TAURI_INTERNALS__.invoke("qa_key_capture", { combo: c }).then(() => "OK", (e) => String(e)), combo);
+    const recSel = '[aria-label="Gravar atalho"]';
+    const recording = () => browser.execute((s) => !!document.querySelector(s)?.classList.contains("is-recording"), recSel);
+    const kbds = () => browser.execute((s) => [...document.querySelector(s).querySelectorAll("kbd")].map((k) => k.textContent), recSel);
+    /** Foca o gravador e espera o backend aceitar o qa_key_capture (a gravação começa assíncrona). */
+    const startRec = async () => {
+      await browser.execute((s) => document.querySelector(s).focus(), recSel);
+      await browser.waitUntil(recording, { timeoutMsg: "gravador não entrou em gravação" });
+      await browser.pause(300);
+    };
+
+    // Sem gravação ativa: erro.
+    expect(await capture("Ctrl+Alt+J")).toContain("não está gravando");
+
+    // Fatia: grava Ctrl+Alt+K, aparece no campo e vai para o rascunho/config ao salvar.
+    await nav("Itens do menu");
+    if (await $(".profile-picker select").isExisting()) await $(".profile-picker select").selectByIndex(0);
+    await $$(".tree-row")[0].click();
+    await $(recSel).waitForExist();
+    await startRec();
+    expect(await capture("Ctrl+Alt+K")).toBe("OK");
+    await browser.waitUntil(async () => !(await recording()), { timeoutMsg: "gravação não terminou" });
+    expect(await kbds()).toEqual(["Ctrl", "Alt", "K"]);
+    expect(await $("button=Salvar").isEnabled()).toBe(true);
+    await save();
+    expect(qaConfig().profiles[0].items[0].hotkey).toBe("Ctrl+Alt+K");
+    // Depois de terminar, sem gravação de novo.
+    expect(await capture("Ctrl+Alt+J")).toContain("não está gravando");
+
+    // Cancelar (Esc): sai da gravação e não muda nada.
+    await startRec();
+    expect(await capture(null)).toBe("OK");
+    await browser.waitUntil(async () => !(await recording()), { timeoutMsg: "cancelar não parou a gravação" });
+    expect(await kbds()).toEqual(["Ctrl", "Alt", "K"]);
+    expect(await $("button=Salvar").isEnabled()).toBe(false);
+
+    // Página Atalho ("Ícone + atalho" mostra o gravador; exige modificador):
+    // "K" sozinho é recusado e a gravação continua; Ctrl+Alt+M vale.
+    const accelBefore = qaConfig().hotkey.accelerator;
+    const modeBefore = qaConfig().launcher.mode;
+    await nav("Atalho");
+    await pickRadio("Ícone + atalho");
+    await $(recSel).waitForExist();
+    await startRec();
+    expect(await capture("K")).toBe("OK");
+    await browser.pause(400);
+    expect(await recording()).toBe(true);
+    await browser.waitUntil(async () => (await capture("Ctrl+Alt+M")) === "OK", { timeout: 5000, timeoutMsg: "a gravação não recomeçou depois da recusa" });
+    await browser.waitUntil(async () => !(await recording()), { timeoutMsg: "gravação do Atalho não terminou" });
+    expect(await kbds()).toEqual(["Ctrl", "Alt", "M"]);
+    expect(await $("button=Salvar").isEnabled()).toBe(true);
+    expect(await capture("Ctrl+Alt+J")).toContain("não está gravando");
+
+    // Knob (mesma página, só no rascunho): ligar mostra os gravadores das teclas; grava Ctrl+Alt+F9 no 1º deles.
+    const recsBefore = await browser.execute((s) => document.querySelectorAll(s).length, recSel);
+    await $("label.toggle-row*=Usar o knob").click();
+    await browser.waitUntil(async () => (await browser.execute((s) => document.querySelectorAll(s).length, recSel)) > recsBefore, { timeoutMsg: "gravadores do knob não apareceram" });
+    await browser.execute((s, n) => document.querySelectorAll(s)[n].focus(), recSel, recsBefore);
+    const knobRecording = () => browser.execute((s, n) => document.querySelectorAll(s)[n].classList.contains("is-recording"), recSel, recsBefore);
+    const knobKbds = () => browser.execute((s, n) => [...document.querySelectorAll(s)[n].querySelectorAll("kbd")].map((k) => k.textContent), recSel, recsBefore);
+    await browser.waitUntil(knobRecording, { timeoutMsg: "gravador do knob não entrou em gravação" });
+    await browser.pause(300);
+    expect(await capture("Ctrl+Alt+F9")).toBe("OK");
+    await browser.waitUntil(async () => !(await knobRecording()), { timeoutMsg: "gravação do knob não terminou" });
+    expect(await knobKbds()).toEqual(["Ctrl", "Alt", "F9"]);
+
+    // Desliga o knob de novo e SALVA modo "Ícone + atalho" com Ctrl+Alt+M (em uso no Windows):
+    // na Kira de teste o apply_hotkey não registra nada, então não há "HotKey already registered".
+    await $("label.toggle-row*=Usar o knob").click();
+    await save();
+    expect(await $(".savebar").getText()).not.toContain("registrar");
+    expect(qaConfig().hotkey.accelerator).toBe("Ctrl+Alt+M");
+    expect(qaConfig().launcher.mode).toBe("both");
+    expect(qaConfig().knob?.enabled ?? false).toBe(false);
+    expect(accelBefore).not.toBe("Ctrl+Alt+M");
+    expect(modeBefore).not.toBe("both");
+    // Atalho inválido continua recusado (to_shortcut / validação), e a config não muda.
+    const bad = await browser.execute(() =>
+      window.__TAURI_INTERNALS__.invoke("get_config").then((c) => {
+        c.hotkey.accelerator = "Ctrl+Nope";
+        return window.__TAURI_INTERNALS__.invoke("save_config", { config: c });
+      }).then(() => "OK", (e) => String(e)),
+    );
+    console.log("[24] atalho inválido:", bad);
+    expect(bad).not.toBe("OK");
+    expect(qaConfig().hotkey.accelerator).toBe("Ctrl+Alt+M");
+
+    // Volta a config de antes.
+    await invoke("save_config", { config: original });
+    expect(qaConfig().hotkey.accelerator).toBe(original.hotkey.accelerator);
+  });
 });

@@ -9,10 +9,13 @@
 //! Eventos emitidos para a janela de configurações:
 //! - "keycapture:combo"  (String, ex.: "Win+Shift+Z")
 //! - "keycapture:cancel" (Esc sozinho, tempo esgotado ou parada)
+//!
+//! Kira de teste: NÃO instala o hook (pegaria o teclado real do usuário). A gravação só
+//! fica "ativa" e o comando `qa_key_capture` entrega a combinação ou o cancelamento.
 
 use crate::actions::keys::vk_name;
 use crate::menu::SETTINGS;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Mutex;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter};
@@ -45,6 +48,8 @@ struct Capture {
 
 static STATE: Mutex<Option<Capture>> = Mutex::new(None);
 static SESSION: AtomicU64 = AtomicU64::new(0);
+/// Kira de teste: gravação "ativa" sem hook.
+static FAKE_ACTIVE: AtomicBool = AtomicBool::new(false);
 
 fn modifier_bit(vk: u32) -> Option<u8> {
     match vk {
@@ -135,6 +140,11 @@ unsafe extern "system" fn hook_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -
 /// Inicia a gravação (substitui uma gravação anterior, se houver).
 pub fn start(app: AppHandle) -> Result<(), String> {
     stop();
+    if crate::qa::ENABLED {
+        let _ = app;
+        FAKE_ACTIVE.store(true, Ordering::SeqCst);
+        return Ok(());
+    }
     let session = SESSION.fetch_add(1, Ordering::SeqCst) + 1;
     let (tx, rx) = std::sync::mpsc::channel::<Result<(), String>>();
     std::thread::spawn(move || unsafe {
@@ -188,11 +198,27 @@ pub fn start(app: AppHandle) -> Result<(), String> {
 
 /// Para a gravação atual (se houver) e remove o hook.
 pub fn stop() {
+    FAKE_ACTIVE.store(false, Ordering::SeqCst);
     if let Some(c) = STATE.lock_ok().take() {
         unsafe {
             let _ = PostThreadMessageW(c.thread_id, WM_QUIT, WPARAM(0), LPARAM(0));
         }
     }
+}
+
+/// Kira de teste: termina a gravação ativa como se a combinação tivesse sido pressionada
+/// (`None` = Esc / cancelar). Erro se o gravador não estiver gravando.
+#[cfg(feature = "qa")]
+#[tauri::command]
+pub fn qa_key_capture(app: AppHandle, combo: Option<String>) -> Result<(), String> {
+    if !FAKE_ACTIVE.swap(false, Ordering::SeqCst) {
+        return Err(tr!("o gravador de atalho não está gravando", "the shortcut recorder isn't recording").into());
+    }
+    match combo {
+        Some(c) => app.emit_to(SETTINGS, "keycapture:combo", c),
+        None => app.emit_to(SETTINGS, "keycapture:cancel", ()),
+    }
+    .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
