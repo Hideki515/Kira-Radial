@@ -18,6 +18,8 @@ export const pt = {
   "dyn.none.radios": "Sem rádios",
   "dyn.none.recent": "Nada recente",
   "dyn.none.clipboard": "Vazio",
+  "dyn.none.vscode": "Nenhum projeto",
+  "dyn.none.vpns": "Nenhuma VPN",
   "dyn.radio.on": "{name} ligado",
   "dyn.radio.off": "{name} desligado",
   "dyn.discord.closed": "Discord fechado",
@@ -40,6 +42,8 @@ export const pt = {
   "dyn.label.discordVoice": "Discord: microfone e fone",
   "dyn.label.discordInput": "Discord: entrada (microfone)",
   "dyn.label.discordOutput": "Discord: saída (fone)",
+  "dyn.label.vscodeProjects": "Projetos do VS Code",
+  "dyn.label.vpns": "VPNs",
   "dyn.hint.audioOutputs": "as saídas de áudio reconhecidas pelo Windows. A saída em uso aparece em verde; clique em outra para trocar.",
   "dyn.hint.windows": "as janelas abertas mais recentes, com o ícone de cada app. Clique numa para trazê-la para a frente.",
   "dyn.hint.powerPlans": "os planos de energia do Windows. O plano ativo aparece em verde; clique em outro para trocar.",
@@ -50,6 +54,8 @@ export const pt = {
   "dyn.hint.discordVoice": "o microfone e o fone do Discord, com o estado atual (verde = ligado). Clique para mutar/desmutar ou ensurdecer. Precisa conectar em Configurações → Discord.",
   "dyn.hint.discordInput": "os microfones que o Discord reconhece (os do próprio Discord, não do Windows). O atual aparece em verde. Precisa conectar em Configurações → Discord.",
   "dyn.hint.discordOutput": "as saídas de áudio que o Discord reconhece (as do próprio Discord, não do Windows). A atual aparece em verde. Precisa conectar em Configurações → Discord.",
+  "dyn.hint.vscodeProjects": "as pastas e workspaces abertos recentemente no VS Code (os mesmos de \"Abrir recente\"). Clique para abrir no VS Code.",
+  "dyn.hint.vpns": "as VPNs salvas no Windows (Configurações → Rede → VPN). A conectada aparece em verde; clique para conectar ou desconectar. Usa o usuário e a senha salvos; sem eles, abre a janela de conexão do Windows.",
 
   // --- centro do menu
   "hub.back": "Voltar",

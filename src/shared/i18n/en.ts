@@ -18,6 +18,8 @@ export const en: Record<Key, string> = {
   "dyn.none.radios": "No radios",
   "dyn.none.recent": "Nothing recent",
   "dyn.none.clipboard": "Empty",
+  "dyn.none.vscode": "No projects",
+  "dyn.none.vpns": "No VPNs",
   "dyn.radio.on": "{name} on",
   "dyn.radio.off": "{name} off",
   "dyn.discord.closed": "Discord closed",
@@ -40,6 +42,8 @@ export const en: Record<Key, string> = {
   "dyn.label.discordVoice": "Discord: mic and headset",
   "dyn.label.discordInput": "Discord: input (mic)",
   "dyn.label.discordOutput": "Discord: output (headset)",
+  "dyn.label.vscodeProjects": "VS Code projects",
+  "dyn.label.vpns": "VPNs",
   "dyn.hint.audioOutputs": "the audio outputs Windows knows about. The one in use is green; click another to switch.",
   "dyn.hint.windows": "the most recent open windows, with each app's icon. Click one to bring it to the front.",
   "dyn.hint.powerPlans": "the Windows power plans. The active one is green; click another to switch.",
@@ -50,6 +54,8 @@ export const en: Record<Key, string> = {
   "dyn.hint.discordVoice": "Discord's mic and headset, with the current state (green = on). Click to mute/unmute or deafen. Connect it in Settings → Discord.",
   "dyn.hint.discordInput": "the microphones Discord knows about (Discord's own, not Windows'). The current one is green. Connect it in Settings → Discord.",
   "dyn.hint.discordOutput": "the audio outputs Discord knows about (Discord's own, not Windows'). The current one is green. Connect it in Settings → Discord.",
+  "dyn.hint.vscodeProjects": "the folders and workspaces recently opened in VS Code (the same as \"Open Recent\"). Click to open in VS Code.",
+  "dyn.hint.vpns": "the VPNs saved in Windows (Settings → Network → VPN). The connected one is green; click to connect or disconnect. Uses the saved user name and password; without them, opens the Windows connection window.",
 
   // --- menu center
   "hub.back": "Back",

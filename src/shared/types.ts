@@ -72,6 +72,8 @@ export type Action =
     }
   /** Liga/desliga Wi-Fi ou Bluetooth. */
   | { type: "radio"; kind: "wifi" | "bluetooth"; mode: "toggle" | "on" | "off" }
+  /** VPN do Windows pelo nome (Configurações → Rede → VPN). */
+  | { type: "vpn"; name: string; mode: "toggle" | "connect" | "disconnect" }
   /** Cola um item do histórico da área de transferência (gerada pelo submenu; não aparece no editor). */
   | { type: "paste"; index: number; preview?: string }
   /** Discord: setInput/setOutput usam o id do dispositivo no Discord (nome = reserva se o id mudar). */
@@ -105,8 +107,8 @@ export interface MenuItem {
   hotkey?: string;
 }
 
-export type DynamicKind = "audioOutputs" | "windows" | "powerPlans" | "brightness" | "radios" | "recentFiles" | "clipboard" | "discordVoice" | "discordInput" | "discordOutput";
-export const DYNAMIC_KINDS: readonly DynamicKind[] = ["audioOutputs", "windows", "powerPlans", "brightness", "radios", "recentFiles", "clipboard", "discordVoice", "discordInput", "discordOutput"];
+export type DynamicKind = "audioOutputs" | "windows" | "powerPlans" | "brightness" | "radios" | "recentFiles" | "clipboard" | "discordVoice" | "discordInput" | "discordOutput" | "vscodeProjects" | "vpns";
+export const DYNAMIC_KINDS: readonly DynamicKind[] = ["audioOutputs", "windows", "powerPlans", "brightness", "radios", "recentFiles", "clipboard", "discordVoice", "discordInput", "discordOutput", "vscodeProjects", "vpns"];
 
 export interface ProfileWhen {
   days?: number[];

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.33.0
+
+- **Dois submenus automáticos novos** (em Itens → fatia → Submenu automático):
+  - **Projetos do VS Code**: as pastas e workspaces da lista "Abrir recente" do VS Code; clique abre o projeto no VS Code. Lê o histórico do VS Code atual e também o formato antigo, sem travar os arquivos dele.
+  - **VPNs**: as VPNs salvas no Windows, com a conectada em verde; clique conecta ou desconecta. Usa o usuário e a senha salvos; sem eles, abre a janela de conexão do Windows.
+- **Ação nova "VPN"**: conectar, desconectar ou alternar uma VPN pelo nome, para usar numa fatia, num atalho ou numa sequência. O campo sugere as VPNs salvas.
+- A Kira de teste nunca conecta nem desconecta VPNs de verdade: ela só mostra uma VPN fingida.
+
 ## 0.32.0
 
 - **Três temas novos (pacote "Tecnologia 2")**, em Aparência → Tema:

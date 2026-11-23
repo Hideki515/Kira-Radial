@@ -163,6 +163,18 @@ pub async fn list_recent_files() -> Result<Vec<crate::recent::RecentFile>, Strin
     tauri::async_runtime::spawn_blocking(crate::recent::list).await.map_err(|e| e.to_string())
 }
 
+/// Projetos recentes do VS Code (submenu automático).
+#[tauri::command]
+pub async fn list_vscode_projects() -> Result<Vec<crate::vscode::VsProject>, String> {
+    tauri::async_runtime::spawn_blocking(crate::vscode::list).await.map_err(|e| e.to_string())?
+}
+
+/// VPNs do Windows com o estado (submenu automático).
+#[tauri::command]
+pub async fn list_vpns() -> Result<Vec<crate::vpn::VpnInfo>, String> {
+    tauri::async_runtime::spawn_blocking(crate::vpn::list).await.map_err(|e| e.to_string())?
+}
+
 /// Wi-Fi e Bluetooth (submenu automático "Rádios").
 #[tauri::command]
 pub async fn list_radios() -> Result<Vec<crate::radios::RadioInfo>, String> {

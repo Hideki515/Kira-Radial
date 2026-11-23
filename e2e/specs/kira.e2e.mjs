@@ -1078,4 +1078,79 @@ describe("Kira de teste — ponta a ponta", () => {
     await invoke("save_config", { config: original });
     expect(qaConfig().hotkey.accelerator).toBe(original.hotkey.accelerator);
   });
+
+  it("25. (QA v0.33.0) submenus VPNs (FALSA, da Kira de teste) e Projetos do VS Code (só leitura, nenhum projeto é aberto)", async () => {
+    await toWindow("settings.html");
+    const original = await invoke("get_config");
+    const withFirst = (dynamic) => {
+      const cfg = structuredClone(original);
+      for (const p of cfg.profiles) {
+        const it = p.items[0];
+        delete it.action;
+        delete it.children;
+        delete it.dynamicTarget;
+        delete it.dynamicTargetName;
+        it.dynamic = dynamic;
+      }
+      return cfg;
+    };
+    const subLabels = () => browser.execute(() => [...document.querySelectorAll(".sub-slice")].map((s) => s.getAttribute("aria-label")));
+    const runAction = (a) => browser.execute((x) => window.__TAURI_INTERNALS__.invoke("run_action", { action: x }).then(() => "ok", (e) => String(e)), a);
+
+    // VPN: a Kira de teste só conhece a VPN fingida, desconectada no início.
+    expect(await invoke("list_vpns")).toEqual([{ name: "Kira QA VPN", connected: false }]);
+    await invoke("save_config", { config: withFirst("vpns") });
+    await invoke("qa_show_menu", { fromOrb: false });
+    await toWindow("");
+    await pressKey("1", "Digit1");
+    await browser.waitUntil(async () => (await subLabels())[0] === "Kira QA VPN", { timeoutMsg: "submenu VPNs não listou a VPN fingida" });
+    await pressKey("1", "Digit1"); // alterna (fingido) → conectada
+    await browser.waitUntil(async () => (await invoke("list_vpns"))[0]?.connected === true, { timeoutMsg: "VPN fingida não conectou" });
+    // Pela ação: desconectar, conectar 2x (fica), nome desconhecido/ inválido = erro.
+    await toWindow("settings.html");
+    expect(await runAction({ type: "vpn", name: "Kira QA VPN", mode: "disconnect" })).toBe("ok");
+    expect((await invoke("list_vpns"))[0].connected).toBe(false);
+    expect(await runAction({ type: "vpn", name: "Kira QA VPN", mode: "connect" })).toBe("ok");
+    expect(await runAction({ type: "vpn", name: "Kira QA VPN", mode: "connect" })).toBe("ok");
+    expect((await invoke("list_vpns"))[0].connected).toBe(true);
+    const unknown = await runAction({ type: "vpn", name: "VPN Real Qualquer", mode: "connect" });
+    console.log("[25] VPN desconhecida:", unknown);
+    expect(unknown).toContain("não encontrada");
+    expect(await runAction({ type: "vpn", name: 'a"b', mode: "toggle" })).not.toBe("ok");
+    expect(await runAction({ type: "vpn", name: "Kira QA VPN", mode: "liga" })).not.toBe("ok");
+    expect(await runAction({ type: "vpn", name: "Kira QA VPN", mode: "disconnect" })).toBe("ok");
+    // Menu reaberto mostra o estado novo (cache invalidado pela ação "vpn").
+    await invoke("qa_show_menu", { fromOrb: false });
+    await toWindow("");
+    await pressKey("1", "Digit1");
+    await browser.waitUntil(async () => (await subLabels())[0] === "Kira QA VPN", { timeoutMsg: "submenu VPNs não reabriu" });
+    await pressKey("Escape");
+    await pressKey("Escape");
+
+    // VS Code: o submenu mostra exatamente o que o backend leu (sem clicar em nada).
+    await toWindow("settings.html");
+    const projects = await invoke("list_vscode_projects");
+    console.log("[25] projetos do VS Code:", projects.length);
+    expect(projects.length).toBeLessThanOrEqual(8);
+    for (const p of projects) {
+      expect(p.exe.toLowerCase()).toMatch(/code(?: - insiders)?\.exe$/);
+      expect(p.path).not.toMatch(/^[a-z-]+:\/\//);
+    }
+    await invoke("save_config", { config: withFirst("vscodeProjects") });
+    await invoke("qa_show_menu", { fromOrb: false });
+    await toWindow("");
+    await pressKey("1", "Digit1");
+    await browser.waitUntil(async () => {
+      const l = await subLabels();
+      return l.length > 0 && l[0] !== "Carregando…";
+    }, { timeoutMsg: "submenu VS Code não carregou" });
+    const labels = await subLabels();
+    if (projects.length === 0) expect(labels).toEqual(["Nenhum projeto"]);
+    else expect(labels.length).toBe(projects.length);
+    await pressKey("Escape"); // só fecha: nenhum projeto é aberto
+    await pressKey("Escape");
+
+    await toWindow("settings.html");
+    await invoke("save_config", { config: original });
+  });
 });

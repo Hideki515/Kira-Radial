@@ -28,11 +28,14 @@ mod qa;
 mod radios;
 mod schedule;
 mod shot;
+mod sqlite;
 mod recent;
 mod power;
 mod stats;
 mod syslang;
 mod updater;
+mod vpn;
+mod vscode;
 mod winlist;
 mod winops;
 
@@ -191,6 +194,8 @@ pub fn run() {
             shot::shot_pin_image,
             shot::shot_unpin,
             commands::list_recent_files,
+            commands::list_vscode_projects,
+            commands::list_vpns,
             commands::clipboard_list,
             commands::clipboard_clear,
             commands::get_volume,

@@ -1,4 +1,4 @@
-import type { AudioDevice, DiscordVoiceState, DisplayInfo, PowerPlan, RadioInfo, RecentFile, WindowInfo } from "../shared/ipc";
+import type { AudioDevice, DiscordVoiceState, DisplayInfo, PowerPlan, RadioInfo, RecentFile, VpnInfo, VsProject, WindowInfo } from "../shared/ipc";
 import { DYNAMIC_KINDS, LIMITS, type DynamicKind, type MenuItem } from "../shared/types";
 import { t, type Key } from "../shared/i18n";
 import { pt } from "../shared/i18n/pt";
@@ -212,6 +212,46 @@ export function clipboardChildren(parentId: string, items: string[] | null): Men
   }));
 }
 
+/** Nomes iguais (duas pastas "app"): usa "pai/nome" para diferenciar. */
+function projectLabels(list: VsProject[]): string[] {
+  const count = new Map<string, number>();
+  list.forEach((p) => count.set(p.name.toLowerCase(), (count.get(p.name.toLowerCase()) ?? 0) + 1));
+  return list.map((p) => {
+    if (count.get(p.name.toLowerCase())! < 2) return trimLabel(p.name);
+    const parts = p.path.split(/[\\/]+/).filter(Boolean);
+    const parent = parts[parts.length - 2] ?? "";
+    return trimLabel(parent ? `${parent}/${p.name}` : p.name);
+  });
+}
+
+/** Projetos recentes do VS Code: clique abre a pasta (ou o workspace) no VS Code. */
+export function vscodeChildren(parentId: string, list: VsProject[] | null): MenuItem[] {
+  if (list === null) return [{ id: `${parentId}:loading`, label: t("common.loading"), icon: "folder-code" }];
+  if (!list.length) return [{ id: `${parentId}:none`, label: t("dyn.none.vscode"), icon: "folder-code" }];
+  const shown = list.slice(0, LIMITS.maxChildren);
+  const labels = projectLabels(shown);
+  return shown.map((p, i) => ({
+    id: `${parentId}:${i}`,
+    label: labels[i],
+    icon: p.workspace ? "layers" : "folder-code",
+    // Barra no fim ("D:\") escaparia a aspa de fechamento: vira "D:\.".
+    action: { type: "launch", path: p.exe, args: `"${p.path.endsWith("\\") ? `${p.path}.` : p.path}"` },
+  }));
+}
+
+/** VPNs do Windows: conectada em verde; clique conecta/desconecta. */
+export function vpnChildren(parentId: string, list: VpnInfo[] | null): MenuItem[] {
+  if (list === null) return [{ id: `${parentId}:loading`, label: t("common.loading"), icon: "shield" }];
+  if (!list.length) return [{ id: `${parentId}:none`, label: t("dyn.none.vpns"), icon: "shield-off" }];
+  return list.slice(0, LIMITS.maxChildren).map((v, i) => ({
+    id: `${parentId}:${i}`,
+    label: trimLabel(v.name),
+    icon: v.connected ? "shield-check" : "shield",
+    color: v.connected ? AUDIO_CURRENT_COLOR : AUDIO_OTHER_COLOR,
+    action: { type: "vpn", name: v.name, mode: "toggle" },
+  }));
+}
+
 /** Dados lidos do sistema para cada tipo de submenu automático (null/ausente = carregando). */
 export interface DynamicSources {
   audio?: AudioDevice[] | null;
@@ -223,6 +263,8 @@ export interface DynamicSources {
   clipboard?: string[] | null;
   /** Os três submenus do Discord usam a mesma leitura. */
   discord?: DiscordVoiceState | null;
+  vscode?: VsProject[] | null;
+  vpns?: VpnInfo[] | null;
 }
 
 /** Texto `dyn.<grupo>.<tipo>` no idioma atual; tipo desconhecido = undefined (como num objeto comum). */
@@ -254,6 +296,8 @@ function childrenFor(it: MenuItem, src: DynamicSources): MenuItem[] {
     case "discordVoice": return discordVoiceChildren(it.id, src.discord ?? null);
     case "discordInput": return discordDeviceChildren(it.id, src.discord ?? null, "input");
     case "discordOutput": return discordDeviceChildren(it.id, src.discord ?? null, "output");
+    case "vscodeProjects": return vscodeChildren(it.id, src.vscode ?? null);
+    case "vpns": return vpnChildren(it.id, src.vpns ?? null);
   }
 }
 

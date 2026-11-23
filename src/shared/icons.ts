@@ -3,7 +3,7 @@ import {
   FileImage, FileSpreadsheet, FileText, FolderOpen, Gauge, GitBranch, Globe, HeadphoneOff, Headphones, Headset, History, Layers, Leaf,
   Lock, Maximize2, Mic, MicOff, Minimize2, Monitor, MonitorUp, Moon, Music, NotebookPen, PanelLeft, PanelRight, Pin, Play,
   Server, Settings, SkipBack, SkipForward, SlidersHorizontal, Speaker, Sun, SunDim, Terminal, Volume1,
-  Volume2, VolumeX, Wifi, WifiOff, Zap,
+  Volume2, VolumeX, Wifi, WifiOff, Zap, Shield, ShieldCheck, ShieldOff, FolderCode,
   type LucideIcon,
 } from "lucide-react";
 
@@ -62,6 +62,10 @@ export const ICONS: Record<string, LucideIcon> = {
   wifi: Wifi,
   "wifi-off": WifiOff,
   zap: Zap,
+  shield: Shield,
+  "shield-check": ShieldCheck,
+  "shield-off": ShieldOff,
+  "folder-code": FolderCode,
 };
 
 export function getIcon(name: string): LucideIcon {

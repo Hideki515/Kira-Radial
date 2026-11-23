@@ -11,7 +11,7 @@ function opt<T extends string>(value: T, key: Key): { value: T; label: string } 
 export type ActionType = Exclude<Action["type"], "focusWindow" | "powerPlan" | "paste">;
 
 export const ACTION_TYPES: { value: ActionType; label: string }[] = (
-  ["launch", "folder", "url", "keys", "media", "system", "script", "audioOutput", "window", "brightness", "radio", "discord", "sequence", "openSettings"] as const
+  ["launch", "folder", "url", "keys", "media", "system", "script", "audioOutput", "window", "brightness", "radio", "vpn", "discord", "sequence", "openSettings"] as const
 ).map((v) => opt(v, `act.type.${v}`));
 
 export const MEDIA: { value: MediaCmd; label: string }[] = (
@@ -36,6 +36,7 @@ export function defaultAction(type: ActionType): Action {
     case "window": return { type, cmd: "maximize" };
     case "brightness": return { type, mode: "up" };
     case "radio": return { type, kind: "wifi", mode: "toggle" };
+    case "vpn": return { type, name: "", mode: "toggle" };
     case "discord": return { type, cmd: "toggleMute" };
     case "sequence": return { type, steps: [{ type: "launch", path: "" }, { type: "media", cmd: "playpause" }] };
   }

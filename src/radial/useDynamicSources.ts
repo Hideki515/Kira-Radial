@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { clipboardList, discordVoice, listAudioOutputs, listDisplays, listPowerPlans, listRadios, listRecentFiles, listWindows } from "../shared/ipc";
+import { clipboardList, discordVoice, listAudioOutputs, listDisplays, listPowerPlans, listRadios, listRecentFiles, listVpns, listVscodeProjects, listWindows } from "../shared/ipc";
 import { perfLog } from "../shared/perf";
 import type { Action, DynamicKind, MenuItem } from "../shared/types";
 import type { DynamicSources } from "./dynamic";
@@ -16,6 +16,8 @@ const LOADERS: { [K in DynamicKind]: { key: keyof DynamicSources; load: () => Pr
   discordVoice: { key: "discord", load: discordVoice },
   discordInput: { key: "discord", load: discordVoice },
   discordOutput: { key: "discord", load: discordVoice },
+  vscodeProjects: { key: "vscode", load: listVscodeProjects },
+  vpns: { key: "vpns", load: listVpns },
 };
 
 /** Falha ao ler: o que mostrar (listas vazias; o Discord explica o erro na própria fatia). */
@@ -26,7 +28,7 @@ const FAILED: Partial<Record<keyof DynamicSources, unknown>> = { discord: { stat
  * que já foi lido (o brilho lê cada monitor por DDC/CI, ~100 ms cada). Os outros tipos
  * (janelas, áudio, recentes, área de transferência) são relidos a cada abertura.
  */
-export const CACHE_MS: Partial<Record<DynamicKind, number>> = { brightness: 15_000, powerPlans: 10_000, radios: 5_000 };
+export const CACHE_MS: Partial<Record<DynamicKind, number>> = { brightness: 15_000, powerPlans: 10_000, radios: 5_000, vscodeProjects: 10_000, vpns: 5_000 };
 /** Leituras mais lentas que isto vão para o log (para achar gargalos). */
 export const SLOW_LOAD_MS = 250;
 
@@ -44,6 +46,7 @@ export function kindChangedBy(action: Action | undefined): DynamicKind | undefin
     case "brightness": return "brightness";
     case "powerPlan": return "powerPlans";
     case "radio": return "radios";
+    case "vpn": return "vpns";
     default: return undefined;
   }
 }

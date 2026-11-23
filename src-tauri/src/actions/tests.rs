@@ -229,3 +229,13 @@ mod sequence_tests {
         assert!(execute(&seq(json!([]))).is_err());
     }
 }
+
+#[test]
+fn acao_vpn_le_do_json_e_valida_o_nome() {
+    use crate::actions::Action;
+    let a: Action = serde_json::from_str(r#"{"type":"vpn","name":"Casa","mode":"connect"}"#).unwrap();
+    assert!(matches!(a, Action::Vpn { ref name, mode: crate::vpn::Mode::Connect } if name == "Casa"));
+    assert!(serde_json::from_str::<Action>(r#"{"type":"vpn","name":"Casa","mode":"liga"}"#).is_err());
+    // Nome inválido nem chega ao rasdial.
+    assert!(crate::vpn::set("a\"b", crate::vpn::Mode::Toggle).is_err());
+}

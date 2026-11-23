@@ -1,4 +1,5 @@
-import { WINDOW_LABEL } from "../../shared/ipc";
+import { useEffect, useState } from "react";
+import { WINDOW_LABEL, listVpns } from "../../shared/ipc";
 import { t } from "../../shared/i18n";
 import type { Action, MediaCmd, SystemCmd, WindowCmd } from "../../shared/types";
 import { Field, Segmented, Toggle } from "../controls";
@@ -71,6 +72,35 @@ export function ScriptFields({ action, onChange }: Props<"script">) {
         <textarea rows={4} value={action.command} spellCheck={false} onChange={(e) => onChange({ ...action, command: e.target.value })} />
       </Field>
       <Toggle label={t("script.hidden")} hint={t("script.hidden.hint")} checked={action.hidden} onChange={(hidden) => onChange({ ...action, hidden })} />
+    </>
+  );
+}
+
+/** VPN do Windows: nome (com sugestões das VPNs salvas) e o que fazer ao executar. */
+export function VpnFields({ action, onChange }: Props<"vpn">) {
+  const [saved, setSaved] = useState<string[]>([]);
+  useEffect(() => {
+    let alive = true;
+    listVpns().then((l) => alive && setSaved(l.map((v) => v.name)), () => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return (
+    <>
+      <Field label={t("vpn.field")} hint={t("vpn.hint")}>
+        <input type="text" list="kira-vpn-names" value={action.name} onChange={(e) => onChange({ ...action, name: e.target.value })} />
+        <datalist id="kira-vpn-names">
+          {saved.map((n) => <option key={n} value={n} />)}
+        </datalist>
+      </Field>
+      <Field label={t("vpn.onRun")} group>
+        <Segmented
+          value={action.mode}
+          options={[{ value: "toggle", label: t("vpn.toggle") }, { value: "connect", label: t("vpn.connect") }, { value: "disconnect", label: t("vpn.disconnect") }]}
+          onChange={(m) => onChange({ ...action, mode: m })}
+        />
+      </Field>
     </>
   );
 }

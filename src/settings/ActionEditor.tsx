@@ -8,7 +8,7 @@ import { Field } from "./controls";
 import { AudioOutputFields } from "./actions/AudioOutputFields";
 import { BrightnessFields } from "./actions/BrightnessFields";
 import { ACTION_TYPES, defaultAction, type ActionType } from "./actions/catalog";
-import { MediaFields, RadioFields, ScriptFields, SystemFields, WindowFields } from "./actions/CommandFields";
+import { MediaFields, RadioFields, ScriptFields, SystemFields, VpnFields, WindowFields } from "./actions/CommandFields";
 import { DiscordFields } from "./actions/DiscordFields";
 import { KeysFields } from "./actions/KeysFields";
 import { FolderFields, LaunchFields, UrlFields } from "./actions/PathFields";
@@ -30,6 +30,7 @@ function TypeFields({ action, onChange }: { action: Action; onChange: (a: Action
     case "window": return <WindowFields action={action} onChange={onChange} />;
     case "brightness": return <BrightnessFields action={action} onChange={onChange} />;
     case "radio": return <RadioFields action={action} onChange={onChange} />;
+    case "vpn": return <VpnFields action={action} onChange={onChange} />;
     case "script": return <ScriptFields action={action} onChange={onChange} />;
     case "audioOutput": return <AudioOutputFields action={action} onChange={onChange} />;
     case "discord": return <DiscordFields action={action} onChange={onChange} />;

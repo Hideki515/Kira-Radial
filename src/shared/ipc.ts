@@ -216,6 +216,39 @@ export async function listRecentFiles(): Promise<RecentFile[]> {
   ];
 }
 
+export interface VsProject {
+  name: string;
+  /** Pasta ou arquivo .code-workspace. */
+  path: string;
+  workspace: boolean;
+  /** Code.exe que abre o projeto. */
+  exe: string;
+}
+
+/** Projetos recentes do VS Code (pastas e workspaces, até 8). */
+export async function listVscodeProjects(): Promise<VsProject[]> {
+  if (isTauri()) return invoke<VsProject[]>("list_vscode_projects");
+  const exe = "C:/Users/kira/AppData/Local/Programs/Microsoft VS Code/Code.exe";
+  return [
+    { name: "Kira-Radial", path: "D:/Code/Kira-Radial", workspace: false, exe },
+    { name: "Trabalho", path: "D:/ws/Trabalho.code-workspace", workspace: true, exe },
+  ];
+}
+
+export interface VpnInfo {
+  name: string;
+  connected: boolean;
+}
+
+/** VPNs salvas no Windows, com o estado. */
+export async function listVpns(): Promise<VpnInfo[]> {
+  if (isTauri()) return invoke<VpnInfo[]>("list_vpns");
+  return [
+    { name: "Escritório", connected: false },
+    { name: "Casa", connected: true },
+  ];
+}
+
 export interface RadioInfo {
   kind: "wifi" | "bluetooth";
   name: string;

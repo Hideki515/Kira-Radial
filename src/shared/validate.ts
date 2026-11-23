@@ -182,6 +182,12 @@ export function validateAction(a: Action): string | null {
       }
       return null;
     }
+    case "vpn": {
+      const n = a.name.trim();
+      if (!n) return t("v.a.vpnName");
+      if (n.length > 256 || /["\u0000-\u001f]/.test(n)) return t("v.a.vpnChars");
+      return null;
+    }
     case "discord":
       if (!Object.prototype.hasOwnProperty.call(DISCORD_LABEL, a.cmd)) return t("v.a.discordCmd");
       if ((a.cmd === "setInput" || a.cmd === "setOutput") && !a.deviceId?.trim() && !a.deviceName?.trim())
