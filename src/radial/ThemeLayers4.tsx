@@ -36,7 +36,7 @@ export function CircuitBack() {
         {TRACES.map((t, i) => <path key={i} d={t.d} />)}
       </g>
       {[0, 1, 2].map((g) => (
-        <g key={g} className="circuit-vias" style={{ animationDelay: `${-g * 0.9}s` }}>
+        <g key={g} className="circuit-vias" style={{ animationDelay: `${-g * 0.9}s` /* 3 quadros de 0,3 s */ }}>
           {TRACES.filter((t) => t.group === g).map((t, i) => (
             <circle key={i} cx={f(t.via.x)} cy={f(t.via.y)} r={5} />
           ))}
@@ -195,7 +195,7 @@ export function NeuralBack() {
         </g>
       ))}
       {LAYERS.map((layer, l) => (
-        <g key={l} className="neural-nodes" style={{ animationDelay: `${-l * 0.8}s` }}>
+        <g key={l} className="neural-nodes" style={{ animationDelay: `${-l * 0.825}s` /* 3 quadros de 0,275 s */ }}>
           {layer.map((p, i) => <circle key={i} cx={f(p.x)} cy={f(p.y)} r={6 - l} />)}
         </g>
       ))}

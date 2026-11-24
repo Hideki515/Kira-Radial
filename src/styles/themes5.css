@@ -14,7 +14,8 @@
 .scope-echo { fill: none; stroke: #7dff5a; stroke-width: 6; opacity: 0.12; }
 /* Uma volta a cada 40 s, ~12 quadros/s: a onda "anda" pelas fatias sem pesar. */
 .scope-spin { transform-box: view-box; transform-origin: 450px 450px; animation: holo-spin 40s steps(480) infinite; }
-.scope-echo { animation: scope-breathe 3s steps(10) infinite; }
+/* 0,25 s por quadro: troca junto com a onda (12 quadros/s). */
+.scope-echo { animation: scope-breathe 3s steps(12) infinite; }
 @keyframes scope-breathe { 0%, 100% { opacity: 0.08; } 50% { opacity: 0.2; } }
 
 .theme-scope { --font-tech: "Cascadia Mono", "Consolas", monospace; }

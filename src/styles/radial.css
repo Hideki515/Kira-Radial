@@ -227,21 +227,23 @@ html.is-tauri body { background: transparent; }
   stroke: var(--holo-dim);
   stroke-width: 1.2;
   stroke-dasharray: 220 26 6 26;
-  animation: holo-dash 22s linear infinite;
+  /* Giros lentos não precisam de 60 quadros/s: 15 alinhados (durações múltiplas de 1/15 s). */
+  animation: holo-dash 22s steps(330) infinite;
 }
-.holo-orbit--rev { animation-direction: reverse; animation-duration: 30s; stroke: var(--holo-faint); }
+.holo-orbit--rev { animation-direction: reverse; animation-duration: 30s; animation-timing-function: steps(450); stroke: var(--holo-faint); }
 @keyframes holo-dash { to { stroke-dashoffset: -1112; } }
 
 .holo-spin {
   transform-box: view-box;
   transform-origin: 450px 450px;
-  animation: holo-spin 60s linear infinite;
+  animation: holo-spin 60s steps(900) infinite;
 }
-.holo-spin--slow  { animation-duration: 120s; }
-.holo-spin--mid   { animation-duration: 40s; }
-.holo-spin--rev   { animation-duration: 50s; animation-direction: reverse; }
-.holo-spin--hub   { animation-duration: 24s; }
-.holo-spin--sweep { animation-duration: 5s; }
+.holo-spin--slow  { animation-duration: 120s; animation-timing-function: steps(1800); }
+.holo-spin--mid   { animation-duration: 40s; animation-timing-function: steps(600); }
+.holo-spin--rev   { animation-duration: 50s; animation-timing-function: steps(750); animation-direction: reverse; }
+.holo-spin--hub   { animation-duration: 24s; animation-timing-function: steps(360); }
+/* A varredura é rápida: 30 quadros/s (ainda alinhados com os de 15). */
+.holo-spin--sweep { animation-duration: 5s; animation-timing-function: steps(150); }
 @keyframes holo-spin { to { transform: rotate(360deg); } }
 
 .holo-ticks { fill: none; stroke: var(--holo-dim); stroke-width: 1.2; }
@@ -414,9 +416,9 @@ html.is-tauri body { background: transparent; }
 .reactor-tooth { fill: none; stroke: var(--rx-dim); stroke-width: 5; }
 .reactor-coil { fill: none; stroke: var(--rx-hi); stroke-width: 11; opacity: 0.75; }
 .reactor-rim { fill: none; stroke: var(--rx-hi); stroke-width: 2; }
-.reactor-spin { transform-box: view-box; transform-origin: 450px 450px; animation: holo-spin 90s linear infinite; }
-.reactor-spin--rev { animation-duration: 140s; animation-direction: reverse; }
-.reactor-spin--coils { animation-duration: 30s; }
+.reactor-spin { transform-box: view-box; transform-origin: 450px 450px; animation: holo-spin 90s steps(1350) infinite; }
+.reactor-spin--rev { animation-duration: 140s; animation-timing-function: steps(2100); animation-direction: reverse; }
+.reactor-spin--coils { animation-duration: 30s; animation-timing-function: steps(450); }
 
 .theme-reactor .ring-backing { fill: var(--rx-bg); fill-opacity: 0.92; }
 .theme-reactor .main-slice .slice-shape { fill: color-mix(in srgb, var(--active) 5%, #050b12); stroke: var(--rx-dim); stroke-width: 1.4; }
@@ -447,7 +449,7 @@ html.is-tauri body { background: transparent; }
 .term-bracket { fill: none; stroke: var(--tm); stroke-width: 2; }
 .term-caption { font-family: var(--font-term); font-size: 12px; fill: var(--tm-dim); letter-spacing: 0.1em; }
 .term-scanline { fill: #000; opacity: 0.22; }
-.term-sweep { fill: var(--tm); opacity: 0.05; animation: term-sweep 4s linear infinite; }
+.term-sweep { fill: var(--tm); opacity: 0.05; animation: term-sweep 4s steps(60) infinite; }
 @keyframes term-sweep { from { transform: translateY(0); } to { transform: translateY(740px); } }
 
 .theme-terminal .ring-backing { fill: #020602; fill-opacity: 0.95; }

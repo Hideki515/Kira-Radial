@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.38.0
+
+- **Menos CPU no ícone flutuante:** parado, ele passa de 30 para 15 quadros/s, com todos os anéis, o brilho e o núcleo trocando de quadro juntos. Com o mouse em cima continua a 30 quadros/s.
+- **Menos CPU com o menu aberto** nos temas animados:
+  - giros lentos (Holográfico, Reator, Cyberpunk, Steampunk) deixam de redesenhar a 60 quadros/s;
+  - o Quântico gira a 8 quadros/s e o Radar a 15;
+  - no Circuito, na Rede Neural e no Osciloscópio os grupos animados trocam de quadro no mesmo instante, o que evita redesenhos extras.
+- O visual dos temas não muda.
+
 ## 0.37.1
 
 - **Discord: mutado fica vermelho.** No submenu "Discord: microfone e fone", a fatia do microfone mutado e a do fone ensurdecido ficam vermelhas (antes cinza). Ligado continua verde.

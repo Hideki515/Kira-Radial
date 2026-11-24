@@ -39,7 +39,7 @@
 .cyber-caption { font-family: "Bahnschrift", "Consolas", monospace; font-size: 13px; font-weight: 700; fill: #fcee0a; letter-spacing: 0.18em; }
 .cyber-bar { fill: #00f0ff; opacity: 0.7; animation: cyber-bar 1.6s steps(4) infinite; }
 .cyber-bar--b { fill: #ff003c; animation-delay: -0.8s; }
-.cyber-spin { transform-box: view-box; transform-origin: 450px 450px; animation: holo-spin 60s linear infinite; }
+.cyber-spin { transform-box: view-box; transform-origin: 450px 450px; animation: holo-spin 60s steps(900) infinite; }
 @keyframes cyber-bar { 0% { opacity: 0.2; } 50% { opacity: 0.9; } 100% { opacity: 0.4; } }
 
 .theme-cyber .ring-backing { fill: #0a0a0a; fill-opacity: 0.96; }
@@ -75,9 +75,9 @@
 .steam-hub { fill: #2a1a0e; stroke: #d4a24c; stroke-width: 2; }
 .steam-rivet { fill: #e7c27a; stroke: #6b4a1e; stroke-width: 1; }
 .steam-bezel { fill: none; stroke: #d4a24c; stroke-width: 5; }
-.steam-spin { transform-box: view-box; transform-origin: 450px 450px; animation: holo-spin 80s linear infinite; }
-.steam-spin--a { animation-duration: 20s; animation-direction: reverse; }
-.steam-spin--b { animation-duration: 16s; }
+.steam-spin { transform-box: view-box; transform-origin: 450px 450px; animation: holo-spin 80s steps(1200) infinite; }
+.steam-spin--a { animation-duration: 20s; animation-timing-function: steps(300); animation-direction: reverse; }
+.steam-spin--b { animation-duration: 16s; animation-timing-function: steps(240); }
 
 .theme-steam .ring-backing { fill: #1d120a; fill-opacity: 0.97; }
 .theme-steam .main-slice .slice-shape { fill: #2a1a0e; stroke: #8a5f2a; stroke-width: 1.5; }

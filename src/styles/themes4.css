@@ -18,7 +18,8 @@
 .circuit-board { fill: #04140c; opacity: 0.85; }
 .circuit-traces path { fill: none; stroke: #c9a94a; stroke-width: 3; stroke-linejoin: round; opacity: 0.55; }
 .circuit-vias circle { fill: #04140c; stroke: #e6c766; stroke-width: 2.5; }
-.circuit-vias { animation: circuit-via 2.7s steps(8) infinite; }
+/* Quadro de 0,3 s; os grupos defasados em 3 quadros trocam juntos (menos redesenhos). */
+.circuit-vias { animation: circuit-via 2.4s steps(8) infinite; }
 @keyframes circuit-via { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 .circuit-pad-ring { fill: none; stroke: #c9a94a; stroke-width: 2; stroke-dasharray: 10 6; opacity: 0.6; }
 
@@ -45,7 +46,7 @@
 .radar-scope { fill: #011410; opacity: 0.9; }
 .radar-grid { fill: none; stroke: #2cf5c0; stroke-width: 1; opacity: 0.22; }
 .radar-beam { stroke: #2cf5c0; stroke-width: 2; opacity: 0.9; }
-.radar-spin { transform-box: view-box; transform-origin: 450px 450px; animation: holo-spin 4s steps(120) infinite; }
+.radar-spin { transform-box: view-box; transform-origin: 450px 450px; animation: holo-spin 4s steps(60) infinite; }
 .radar-blips circle { fill: #b8ffe9; }
 .radar-blips { animation: radar-blip 3s steps(6) infinite; }
 @keyframes radar-blip { 0% { opacity: 1; } 70%, 100% { opacity: 0.1; } }
@@ -74,8 +75,9 @@
 .quantum-orbit { fill: none; stroke: #b388ff; stroke-width: 1.2; opacity: 0.4; }
 .quantum-electron { fill: #7df9ff; }
 .quantum-electron--b { fill: #e4d8ff; }
-/* Giro lento do átomo: 30 s por volta, a ~15 quadros/s (suave nessa velocidade). */
-.quantum-spin { transform-box: view-box; transform-origin: 450px 450px; animation: holo-spin 30s steps(450) infinite; }
+/* Giro lento do átomo: 30 s por volta a 8 quadros/s (1,5° por quadro: suave nessa velocidade
+   e metade dos redesenhos do SVG inteiro). */
+.quantum-spin { transform-box: view-box; transform-origin: 450px 450px; animation: holo-spin 30s steps(240) infinite; }
 
 .theme-quantum .ring-backing { fill: #0a0618; fill-opacity: 0.95; }
 .theme-quantum .main-slice .slice-shape { fill: #150d2e; stroke: rgba(179, 136, 255, 0.35); stroke-width: 1.2; }
