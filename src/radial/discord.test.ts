@@ -3,7 +3,7 @@ import type { DiscordVoiceState } from "../shared/ipc";
 import { describeAction } from "../shared/describe";
 import { DYNAMIC_KINDS, type MenuItem } from "../shared/types";
 import { validateAction } from "../shared/validate";
-import { AUDIO_CURRENT_COLOR, AUDIO_OTHER_COLOR, DYNAMIC_HINT, DYNAMIC_LABEL, discordDeviceChildren, discordVoiceChildren, resolveItems } from "./dynamic";
+import { AUDIO_CURRENT_COLOR, AUDIO_OTHER_COLOR, DISCORD_OFF_COLOR, DYNAMIC_HINT, DYNAMIC_LABEL, discordDeviceChildren, discordVoiceChildren, resolveItems } from "./dynamic";
 
 const voice = (mute: boolean, deaf: boolean): DiscordVoiceState => ({
   status: "ok",
@@ -21,8 +21,8 @@ describe("submenu Discord: microfone e fone", () => {
     expect(mic).toMatchObject({ label: "Microfone ligado", icon: "mic", color: AUDIO_CURRENT_COLOR, action: { type: "discord", cmd: "toggleMute" } });
     expect(fone).toMatchObject({ label: "Áudio ligado", icon: "headphones", color: AUDIO_CURRENT_COLOR, action: { type: "discord", cmd: "toggleDeafen" } });
     const [mic2, fone2] = discordVoiceChildren("d", voice(true, true));
-    expect(mic2).toMatchObject({ label: "Microfone mutado", icon: "mic-off", color: AUDIO_OTHER_COLOR });
-    expect(fone2).toMatchObject({ label: "Ensurdecido", icon: "headphone-off", color: AUDIO_OTHER_COLOR });
+    expect(mic2).toMatchObject({ label: "Microfone mutado", icon: "mic-off", color: DISCORD_OFF_COLOR });
+    expect(fone2).toMatchObject({ label: "Ensurdecido", icon: "headphone-off", color: DISCORD_OFF_COLOR });
   });
 
   it("carregando, fechado, não conectado e erro viram uma fatia sem ação", () => {

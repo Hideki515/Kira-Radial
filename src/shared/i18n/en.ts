@@ -57,7 +57,7 @@ export const en: Record<Key, string> = {
   "dyn.hint.radios": "the PC's Wi-Fi and Bluetooth. On is green; click to turn on/off.",
   "dyn.hint.recentFiles": "files recently opened in Windows (the same as \"Recent\" in File Explorer). Click to open.",
   "dyn.hint.clipboard": "the last copied texts. Click to paste into the app you were using. Turn on the history in Settings → General (kept in memory only).",
-  "dyn.hint.discordVoice": "Discord's mic and headset, with the current state (green = on). Click to mute/unmute or deafen. Connect it in Settings → Discord.",
+  "dyn.hint.discordVoice": "Discord's mic and headset, with the current state (green = on, red = muted or deafened). Click to mute/unmute or deafen. Connect it in Settings → Discord.",
   "dyn.hint.discordInput": "the microphones Discord knows about (Discord's own, not Windows'). The current one is green. Connect it in Settings → Discord.",
   "dyn.hint.discordOutput": "the audio outputs Discord knows about (Discord's own, not Windows'). The current one is green. Connect it in Settings → Discord.",
   "dyn.hint.vscodeProjects": "the folders and workspaces recently opened in VS Code (the same as \"Open Recent\"). Click to open in VS Code.",

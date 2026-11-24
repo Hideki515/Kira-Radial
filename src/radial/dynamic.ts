@@ -6,6 +6,8 @@ import { pt } from "../shared/i18n/pt";
 /** Cor do dispositivo em uso e dos demais no sub-anel. */
 export const AUDIO_CURRENT_COLOR = "#4ade9b";
 export const AUDIO_OTHER_COLOR = "#9aa5b8";
+/** Discord mutado/ensurdecido: vermelho (ligado continua verde). */
+export const DISCORD_OFF_COLOR = "#f25f5c";
 const MAX_LABEL = 14;
 
 const trimLabel = (s: string) => {
@@ -149,14 +151,14 @@ export function discordVoiceChildren(parentId: string, state: DiscordVoiceState 
       id: `${parentId}:mic`,
       label: t(mute ? "dyn.discord.micMuted" : "dyn.discord.micOn"),
       icon: mute ? "mic-off" : "mic",
-      color: mute ? AUDIO_OTHER_COLOR : AUDIO_CURRENT_COLOR,
+      color: mute ? DISCORD_OFF_COLOR : AUDIO_CURRENT_COLOR,
       action: { type: "discord", cmd: "toggleMute" },
     },
     {
       id: `${parentId}:deaf`,
       label: t(deaf ? "dyn.discord.deafened" : "dyn.discord.audioOn"),
       icon: deaf ? "headphone-off" : "headphones",
-      color: deaf ? AUDIO_OTHER_COLOR : AUDIO_CURRENT_COLOR,
+      color: deaf ? DISCORD_OFF_COLOR : AUDIO_CURRENT_COLOR,
       action: { type: "discord", cmd: "toggleDeafen" },
     },
   ];

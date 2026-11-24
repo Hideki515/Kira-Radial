@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.37.1
+
+- **Discord: mutado fica vermelho.** No submenu "Discord: microfone e fone", a fatia do microfone mutado e a do fone ensurdecido ficam vermelhas (antes cinza). Ligado continua verde.
+
 ## 0.37.0
 
 - **Medidor do centro escolhível** (Aparência → Medidor do centro): CPU (como antes), **RAM** ou **Rede**. A rede mostra o download e o upload atuais (↓ 1,2 MB/s, ↑ 35 KB/s). As leituras só são feitas com o menu aberto.

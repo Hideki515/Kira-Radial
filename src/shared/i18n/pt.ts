@@ -57,7 +57,7 @@ export const pt = {
   "dyn.hint.radios": "o Wi-Fi e o Bluetooth do PC. Ligado aparece em verde; clique para ligar/desligar.",
   "dyn.hint.recentFiles": "os arquivos abertos recentemente no Windows (os mesmos de \"Recentes\" no Explorador). Clique para abrir.",
   "dyn.hint.clipboard": "os últimos textos copiados. Clique para colar no app que estava em uso. Precisa ligar o histórico em Configurações → Geral (fica só na memória).",
-  "dyn.hint.discordVoice": "o microfone e o fone do Discord, com o estado atual (verde = ligado). Clique para mutar/desmutar ou ensurdecer. Precisa conectar em Configurações → Discord.",
+  "dyn.hint.discordVoice": "o microfone e o fone do Discord, com o estado atual (verde = ligado, vermelho = mutado ou ensurdecido). Clique para mutar/desmutar ou ensurdecer. Precisa conectar em Configurações → Discord.",
   "dyn.hint.discordInput": "os microfones que o Discord reconhece (os do próprio Discord, não do Windows). O atual aparece em verde. Precisa conectar em Configurações → Discord.",
   "dyn.hint.discordOutput": "as saídas de áudio que o Discord reconhece (as do próprio Discord, não do Windows). A atual aparece em verde. Precisa conectar em Configurações → Discord.",
   "dyn.hint.vscodeProjects": "as pastas e workspaces abertos recentemente no VS Code (os mesmos de \"Abrir recente\"). Clique para abrir no VS Code.",
