@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import type { MenuItem } from "../shared/types";
 import { LAYOUT, donutSlicePath, polar, submenuAngles, submenuItemSpan } from "./geometry";
-import { SliceContent, SliceNumber } from "./SliceContent";
+import { SliceBadge, SliceContent, SliceNumber } from "./SliceContent";
 
 interface Props {
   items: MenuItem[];
@@ -28,13 +28,15 @@ export function SubmenuRing({ items, parentAngle, activeIndex, showNumbers, them
         return (
           <g
             key={item.id}
-            className={`sub-slice${activeIndex === i ? " is-active" : ""}`}
+            className={`sub-slice${activeIndex === i ? " is-active" : ""}${item.state ? ` has-state is-${item.state}` : ""}`}
             style={style}
             role="menuitem"
             aria-label={item.label}
           >
             {activeIndex === i && <path d={d} className="slice-halo" />}
             <path d={d} className="slice-shape" />
+            {/* Item em uso/ligado (ou mutado): véu da cor por cima da forma de qualquer tema. */}
+            {item.state && <path d={d} className="slice-tint" />}
             <SliceContent
               x={mid.x}
               y={mid.y}
@@ -45,6 +47,7 @@ export function SubmenuRing({ items, parentAngle, activeIndex, showNumbers, them
               themeClass={themeClass}
               sector={{ cx: c, cy: c, rIn: LAYOUT.subInner, rOut: LAYOUT.subOuter, a0: a - span / 2, a1: a + span / 2, gap: LAYOUT.subGap }}
             />
+            {item.badge && <SliceBadge c={c} r={LAYOUT.subOuter - 10} angle={a + span * 0.3} kind={item.badge} />}
             {showNumbers && <SliceNumber c={c} r={LAYOUT.subOuter - 10} angle={a} n={i + 1} />}
           </g>
         );

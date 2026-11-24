@@ -10,6 +10,13 @@ export const AUDIO_OTHER_COLOR = "#9aa5b8";
 export const DISCORD_OFF_COLOR = "#f25f5c";
 const MAX_LABEL = 14;
 
+/** Item em uso/ligado: verde e tingido; os demais, cinza sem destaque. */
+const current = (on: boolean): Pick<MenuItem, "color" | "state"> =>
+  on ? { color: AUDIO_CURRENT_COLOR, state: "on" } : { color: AUDIO_OTHER_COLOR };
+/** Estado que importa nos dois lados (Discord): ligado verde, desligado vermelho — ambos tingidos. */
+const onOff = (on: boolean): Pick<MenuItem, "color" | "state"> =>
+  on ? { color: AUDIO_CURRENT_COLOR, state: "on" } : { color: DISCORD_OFF_COLOR, state: "off" };
+
 const trimLabel = (s: string) => {
   const t = s.replace(/[\s\-–_]+$/, "").trim();
   return t.length > MAX_LABEL ? `${t.slice(0, MAX_LABEL - 1)}…` : t;
@@ -47,7 +54,7 @@ export function audioChildren(parentId: string, devices: AudioDevice[] | null): 
     id: `${parentId}:${d.id}`,
     label: labels[i],
     icon: audioIcon(d.name),
-    color: d.isDefault ? AUDIO_CURRENT_COLOR : AUDIO_OTHER_COLOR,
+    ...current(d.isDefault),
     action: { type: "audioOutput", mode: "set", deviceId: d.id, deviceName: d.name },
   }));
 }
@@ -89,7 +96,7 @@ export function powerChildren(parentId: string, list: PowerPlan[] | null): MenuI
     id: `${parentId}:${p.guid}`,
     label: trimLabel(p.name),
     icon: /desempenho|performance/i.test(p.name) ? "gauge" : /econom|saver/i.test(p.name) ? "leaf" : "zap",
-    color: p.active ? AUDIO_CURRENT_COLOR : AUDIO_OTHER_COLOR,
+    ...current(p.active),
     action: { type: "powerPlan", guid: p.guid, name: p.name },
   }));
 }
@@ -117,7 +124,7 @@ export function brightnessChildren(parentId: string, displays: DisplayInfo[] | n
     id: `${parentId}:${v}`,
     label: `${v}%`,
     icon: v < 50 ? "sun-dim" : "sun",
-    color: v === nearest ? AUDIO_CURRENT_COLOR : AUDIO_OTHER_COLOR,
+    ...current(v === nearest),
     action: { type: "brightness", mode: "set", value: v, target, ...(targetName && target !== "all" && target !== "cursor" ? { targetName } : {}) },
   }));
 }
@@ -130,7 +137,7 @@ export function radioChildren(parentId: string, radios: RadioInfo[] | null): Men
     id: `${parentId}:${r.kind}:${i}`,
     label: t(r.on ? "dyn.radio.on" : "dyn.radio.off", { name: r.kind === "wifi" ? "Wi-Fi" : "Bluetooth" }),
     icon: r.kind === "wifi" ? (r.on ? "wifi" : "wifi-off") : r.on ? "bluetooth" : "bluetooth-off",
-    color: r.on ? AUDIO_CURRENT_COLOR : AUDIO_OTHER_COLOR,
+    ...current(r.on),
     action: { type: "radio", kind: r.kind, mode: "toggle" },
   }));
 }
@@ -151,14 +158,14 @@ export function discordVoiceChildren(parentId: string, state: DiscordVoiceState 
       id: `${parentId}:mic`,
       label: t(mute ? "dyn.discord.micMuted" : "dyn.discord.micOn"),
       icon: mute ? "mic-off" : "mic",
-      color: mute ? DISCORD_OFF_COLOR : AUDIO_CURRENT_COLOR,
+      ...onOff(!mute),
       action: { type: "discord", cmd: "toggleMute" },
     },
     {
       id: `${parentId}:deaf`,
       label: t(deaf ? "dyn.discord.deafened" : "dyn.discord.audioOn"),
       icon: deaf ? "headphone-off" : "headphones",
-      color: deaf ? DISCORD_OFF_COLOR : AUDIO_CURRENT_COLOR,
+      ...onOff(!deaf),
       action: { type: "discord", cmd: "toggleDeafen" },
     },
   ];
@@ -178,7 +185,7 @@ export function discordDeviceChildren(parentId: string, state: DiscordVoiceState
     id: `${parentId}:${d.id}`,
     label: labels[i],
     icon: kind === "input" ? "mic" : audioIcon(d.name),
-    color: d.id === list.current ? AUDIO_CURRENT_COLOR : AUDIO_OTHER_COLOR,
+    ...current(d.id === list.current),
     action: { type: "discord", cmd: kind === "input" ? "setInput" : "setOutput", deviceId: d.id, deviceName: d.name },
   }));
 }
@@ -249,7 +256,7 @@ export function vpnChildren(parentId: string, list: VpnInfo[] | null): MenuItem[
     id: `${parentId}:${i}`,
     label: trimLabel(v.name),
     icon: v.connected ? "shield-check" : "shield",
-    color: v.connected ? AUDIO_CURRENT_COLOR : AUDIO_OTHER_COLOR,
+    ...current(v.connected),
     action: { type: "vpn", name: v.name, mode: "toggle" },
   }));
 }
@@ -266,7 +273,7 @@ export function obsSceneChildren(parentId: string, state: ObsState | null): Menu
     id: `${parentId}:${i}`,
     label: trimLabel(s),
     icon: "clapperboard",
-    color: s === state.current ? AUDIO_CURRENT_COLOR : AUDIO_OTHER_COLOR,
+    ...current(s === state.current),
     action: { type: "obs", cmd: "setScene", scene: s },
   }));
 }
@@ -322,11 +329,53 @@ function childrenFor(it: MenuItem, src: DynamicSources): MenuItem[] {
   }
 }
 
-/** Troca os itens dinâmicos pelos filhos gerados (o restante fica intacto). */
+const MUTE_CMDS = new Set(["toggleMute", "mute", "unmute"]);
+const DEAF_CMDS = new Set(["toggleDeafen", "deafen", "undeafen"]);
+const RECORD_CMDS = new Set(["toggleRecord", "startRecord", "stopRecord", "toggleRecordPause"]);
+const STREAM_CMDS = new Set(["toggleStream", "startStream", "stopStream"]);
+
+/** Leitura que mostra o estado de uma ação comum (selo na fatia); undefined = sem selo. */
+export function badgeKindOf(action: MenuItem["action"]): DynamicKind | undefined {
+  if (action?.type === "discord" && (MUTE_CMDS.has(action.cmd) || DEAF_CMDS.has(action.cmd))) return "discordVoice";
+  if (action?.type === "obs" && (RECORD_CMDS.has(action.cmd) || STREAM_CMDS.has(action.cmd))) return "obsScenes";
+  return undefined;
+}
+
+/** Selo de uma fatia comum: Discord verde (ligado) / vermelho (mutado); OBS vermelho só gravando/transmitindo. */
+export function badgeFor(action: MenuItem["action"], src: DynamicSources): MenuItem["badge"] {
+  if (action?.type === "discord") {
+    const v = src.discord?.status === "ok" ? src.discord.voice : null;
+    if (!v) return undefined;
+    if (MUTE_CMDS.has(action.cmd)) return v.mute ? "off" : "on";
+    if (DEAF_CMDS.has(action.cmd)) return v.deaf ? "off" : "on";
+  }
+  if (action?.type === "obs" && src.obs?.status === "ok") {
+    if (RECORD_CMDS.has(action.cmd)) return src.obs.recording ? "live" : undefined;
+    if (STREAM_CMDS.has(action.cmd)) return src.obs.streaming ? "live" : undefined;
+  }
+  return undefined;
+}
+
+const withBadge = (it: MenuItem, src: DynamicSources): MenuItem => {
+  const badge = it.children?.length ? undefined : badgeFor(it.action, src);
+  return badge ? { ...it, badge } : it;
+};
+
+/** Item comum: põe os selos (nele e nos filhos); sem nenhum, devolve o mesmo objeto. */
+function badged(it: MenuItem, src: DynamicSources): MenuItem {
+  const self = withBadge(it, src);
+  if (!it.children?.length) return self;
+  const kids = it.children.map((c) => withBadge(c, src));
+  return kids.some((c, i) => c !== it.children![i]) ? { ...self, children: kids } : self;
+}
+
+const needsBadge = (it: MenuItem) => !!badgeKindOf(it.action) || !!it.children?.some((c) => badgeKindOf(c.action));
+
+/** Troca os itens dinâmicos pelos filhos gerados e põe os selos de estado (o restante fica intacto). */
 export function resolveItems(items: MenuItem[], src: DynamicSources = {}): MenuItem[] {
-  if (!items.some((it) => it.dynamic)) return items;
+  if (!items.some((it) => it.dynamic || needsBadge(it))) return items;
   return items.map((it) => {
-    if (!it.dynamic) return it;
+    if (!it.dynamic) return badged(it, src);
     // Tipo desconhecido: sub-anel vazio em vez de quebrar o menu.
     const children = DYNAMIC_KINDS.includes(it.dynamic) ? childrenFor(it, src) : [];
     return { ...it, action: undefined, children };

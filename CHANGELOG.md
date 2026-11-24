@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.39.0
+
+- **Estado mais visível nos submenus automáticos.** O item em uso fica com o fundo tingido e o ícone colorido, mesmo sem o ponteiro em cima:
+  - o dispositivo de áudio atual;
+  - o plano de energia ativo;
+  - a VPN conectada;
+  - a cena atual do OBS;
+  - Wi-Fi e Bluetooth ligados.
+
+  No Discord, o microfone mutado e o fone ensurdecido ficam tingidos de vermelho; ligados, de verde.
+- **Selo de estado em fatias comuns.** Uma fatia (ou subitem) com uma ação do Discord ou do OBS mostra uma bolinha perto da borda:
+  - **Discord mutar/ensurdecer:** verde quando ligado, vermelho quando mutado ou ensurdecido;
+  - **OBS gravar/transmitir:** vermelha enquanto grava ou transmite.
+
+  O estado é lido ao abrir o menu. Com o Discord ou o OBS fechado, a fatia não mostra selo.
+- **Transição suave:** ao digitar na busca ou trocar de perfil, os ícones e nomes novos entram com um fade de 120 ms. Com "reduzir movimento" do Windows, não há fade.
+
 ## 0.38.0
 
 - **Menos CPU no ícone flutuante:** parado, ele passa de 30 para 15 quadros/s, com todos os anéis, o brilho e o núcleo trocando de quadro juntos. Com o mouse em cima continua a 30 quadros/s.

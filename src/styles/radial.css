@@ -113,6 +113,29 @@ html.is-tauri body { background: transparent; }
 
 .submenu-ring.is-dense .slice-label--sub { font-size: 10px; }
 
+/* Estado (submenus automáticos): o item em uso/ligado — ou o Discord mutado — fica tingido
+   com a própria cor e com o ícone colorido, mesmo sem o ponteiro em cima. O véu é um path
+   próprio por cima da forma, então vale em todos os temas sem brigar com as regras deles. */
+.slice-tint { fill: var(--item-color); fill-opacity: 0.13; stroke: none; pointer-events: none; }
+.sub-slice.is-active .slice-tint { fill-opacity: 0.2; }
+.sub-slice.has-state .slice-shape { stroke: var(--item-color); }
+.sub-slice.has-state .slice-content .slice-icon { color: var(--item-color); }
+
+/* Selo de estado numa fatia comum (Discord, OBS). */
+.slice-badge { stroke: rgba(6, 9, 14, 0.85); stroke-width: 2; }
+.slice-badge--on { fill: #4ade9b; }
+.slice-badge--off { fill: #f25f5c; }
+.slice-badge--live { fill: #ff3b3b; }
+
+/* Resultados da busca e troca de perfil: ícones e nomes novos entram com um fade curto.
+   Só o conteúdo (a forma opaca não pisca: a janela é transparente). Só "from": termina
+   no valor normal, então a fatia escurecida (is-dimmed) continua a 0,6. */
+.main-slice .slice-content { animation: content-in 120ms var(--ease-out) backwards; }
+@keyframes content-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .main-slice .slice-content { animation: none; }
+}
+
 /* --- hub central --- */
 .hub-well { fill: #0a0d12; stroke: rgba(255, 255, 255, 0.03); }
 .hub-disc {

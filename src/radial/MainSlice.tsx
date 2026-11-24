@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import type { MenuItem } from "../shared/types";
 import { LAYOUT, donutSlicePath, polar, sliceAngle, sliceSpan } from "./geometry";
-import { SliceContent, SliceNumber } from "./SliceContent";
+import { SliceBadge, SliceContent, SliceNumber } from "./SliceContent";
 
 interface Props {
   item: MenuItem;
@@ -39,6 +39,7 @@ export function MainSlice({ item, index, count, active, dimmed, showNumber, them
         themeClass={themeClass}
         sector={{ cx: c, cy: c, rIn: LAYOUT.mainInner, rOut: LAYOUT.mainOuter, a0: angle - span / 2, a1: angle + span / 2, gap: LAYOUT.mainGap }}
       />
+      {item.badge && <SliceBadge c={c} r={LAYOUT.mainOuter - 16} angle={angle + span * 0.32} kind={item.badge} />}
       {showNumber && index < 9 && <SliceNumber c={c} r={LAYOUT.mainOuter - 18} angle={angle} n={index + 1} />}
     </g>
   );

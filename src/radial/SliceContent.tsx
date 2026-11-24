@@ -123,3 +123,9 @@ export function SliceNumber({ c, r, angle, n }: { c: number; r: number; angle: n
     </text>
   );
 }
+
+/** Selo de estado (Discord ligado/mutado, OBS gravando): bolinha perto da borda externa. */
+export function SliceBadge({ c, r, angle, kind }: { c: number; r: number; angle: number; kind: "on" | "off" | "live" }) {
+  const p = polar(c, c, r, angle);
+  return <circle cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r={5} className={`slice-badge slice-badge--${kind}`} pointerEvents="none" data-testid={`slice-badge-${kind}`} />;
+}

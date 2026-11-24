@@ -135,6 +135,10 @@ export interface MenuItem {
   dynamicTargetName?: string;
   /** Atalho global que executa a ação direto, sem abrir o menu (vale em qualquer perfil). */
   hotkey?: string;
+  /** Só em tempo de execução (submenus automáticos): item em uso/ligado ou desligado — fatia tingida. */
+  state?: "on" | "off";
+  /** Só em tempo de execução: selo de estado numa fatia comum (Discord mutado, OBS gravando...). */
+  badge?: "on" | "off" | "live";
 }
 
 export type DynamicKind = "audioOutputs" | "windows" | "powerPlans" | "brightness" | "radios" | "recentFiles" | "clipboard" | "discordVoice" | "discordInput" | "discordOutput" | "vscodeProjects" | "vpns" | "obsScenes";

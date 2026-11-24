@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { clipboardList, discordVoice, listAudioOutputs, listDisplays, listPowerPlans, listRadios, listRecentFiles, listVpns, listVscodeProjects, listWindows, obsState } from "../shared/ipc";
 import { perfLog } from "../shared/perf";
 import type { Action, DynamicKind, MenuItem } from "../shared/types";
-import type { DynamicSources } from "./dynamic";
+import { badgeKindOf, type DynamicSources } from "./dynamic";
 
 /** Como ler cada tipo de submenu automático e onde guardar o resultado. */
 const LOADERS: { [K in DynamicKind]: { key: keyof DynamicSources; load: () => Promise<unknown> } } = {
@@ -66,10 +66,11 @@ export function isFresh(kind: DynamicKind, at: number | undefined, now: number):
  * dentro do prazo de `CACHE_MS`. Falha → lista vazia + registro no log.
  */
 export function useDynamicSources(items: MenuItem[], active: boolean, refreshKey: number): DynamicSources {
-  const kinds = useMemo(
-    () => [...new Set(items.map((it) => it.dynamic).filter((k): k is DynamicKind => !!k))].sort().join(","),
-    [items],
-  );
+  const kinds = useMemo(() => {
+    // Submenus automáticos + leituras que dão o selo de estado às fatias comuns (Discord/OBS).
+    const all = items.flatMap((it) => [it.dynamic, badgeKindOf(it.action), ...(it.children ?? []).map((c) => badgeKindOf(c.action))]);
+    return [...new Set(all.filter((k): k is DynamicKind => !!k))].sort().join(",");
+  }, [items]);
   const [sources, setSources] = useState<DynamicSources>({});
 
   useEffect(() => {
