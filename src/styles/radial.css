@@ -120,6 +120,11 @@ html.is-tauri body { background: transparent; }
 .sub-slice.is-active .slice-tint { fill-opacity: 0.2; }
 .sub-slice.has-state .slice-shape { stroke: var(--item-color); }
 .sub-slice.has-state .slice-content .slice-icon { color: var(--item-color); }
+/* Temas claros: a cor pura some no fundo quase branco (verde ~1,7:1); escurecida, passa de 4,5:1.
+   Só nos embutidos: um personalizado com base neles pode ter fatias escuras (o de base Papel já
+   nasce escuro), e lá a cor pura é a legível. */
+.theme-fluent:not(.theme-custom) .sub-slice.has-state .slice-content .slice-icon,
+.theme-paper:not(.theme-custom) .sub-slice.has-state .slice-content .slice-icon { color: color-mix(in srgb, var(--item-color) 50%, #000); }
 
 /* Selo de estado numa fatia comum (Discord, OBS). */
 .slice-badge { stroke: rgba(6, 9, 14, 0.85); stroke-width: 2; }

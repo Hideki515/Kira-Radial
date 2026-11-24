@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.39.1
+
+- **Temas claros (Fluent Claro e Papel):** no submenu automático, o ícone do item em uso fica numa versão mais escura da cor (verde, ou vermelho no Discord mutado), legível sobre o fundo branco. Antes, o verde puro quase sumia. Temas personalizados (que podem ter fatias escuras) continuam com a cor pura.
+
 ## 0.39.0
 
 - **Estado mais visível nos submenus automáticos.** O item em uso fica com o fundo tingido e o ícone colorido, mesmo sem o ponteiro em cima:
