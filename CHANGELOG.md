@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.40.1
+
+- **Menos CPU no tema Holográfico:** os meridianos da esfera giravam com redesenho na taxa da tela. Agora trocam de quadro a 15 quadros/s, junto com os outros giros do tema. O formato do giro (achatando como um cosseno) continua o mesmo.
+
 ## 0.40.0
 
 - **Discord: sair do canal de voz.** No submenu automático "Discord: microfone e fone", quando você está num canal de voz aparece uma terceira fatia, **"Sair: <canal>"**, que desconecta da chamada. Fora de canal, ela não aparece.

@@ -69,7 +69,8 @@ export function HoloBack() {
             rx={GLOBE_R}
             ry={GLOBE_R}
             className="holo-line holo-meridian"
-            style={{ animationDelay: `${(-i * 18) / (MERIDIANS * 2)}s` }}
+            // Fase em quadros inteiros (1/15 s): todos trocam de quadro no mesmo instante.
+            style={{ animationDelay: `${-Math.round((i * 18 * 15) / (MERIDIANS * 2)) / 15}s` }}
           />
         ))}
       </g>

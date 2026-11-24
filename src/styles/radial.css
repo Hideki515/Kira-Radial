@@ -238,15 +238,25 @@ html.is-tauri body { background: transparent; }
 .holo-line { fill: none; stroke: var(--holo-faint); stroke-width: 1; }
 .holo-line--outline { stroke: var(--holo-dim); }
 
-/* Esfera: cada meridiano "gira" achatando no eixo X (cos) com fase própria. */
+/* Esfera: cada meridiano "gira" achatando no eixo X (cos) com fase própria.
+   O cosseno vem dos 10 trechos do keyframe (36° cada); steps(27) por trecho = 1,8 s / 27 =
+   15 quadros/s alinhados com os outros giros (antes ease-in-out redesenhava na taxa da tela). */
 .holo-meridian {
   transform-box: view-box;
   transform-origin: 450px 450px;
-  animation: holo-meridian 18s ease-in-out infinite;
+  animation: holo-meridian 18s steps(27) infinite;
 }
 @keyframes holo-meridian {
-  0%   { transform: scaleX(1); }
-  50%  { transform: scaleX(-1); }
+  0% { transform: scaleX(1); }
+  10% { transform: scaleX(0.809); }
+  20% { transform: scaleX(0.309); }
+  30% { transform: scaleX(-0.309); }
+  40% { transform: scaleX(-0.809); }
+  50% { transform: scaleX(-1); }
+  60% { transform: scaleX(-0.809); }
+  70% { transform: scaleX(-0.309); }
+  80% { transform: scaleX(0.309); }
+  90% { transform: scaleX(0.809); }
   100% { transform: scaleX(1); }
 }
 
