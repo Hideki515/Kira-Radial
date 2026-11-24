@@ -313,6 +313,14 @@ export const THEMES: readonly Theme[] = [
   "circuit", "radar", "quantum", "blueprint", "datacenter", "neural",
   "scope", "fiber", "nixie",
 ];
+export type ThemeGroup = "classic" | "scifi" | "color" | "tech";
+/** Seções do seletor de temas (cada tema embutido aparece em exatamente uma). */
+export const THEME_GROUPS: readonly { id: ThemeGroup; themes: readonly Theme[] }[] = [
+  { id: "classic", themes: ["glass", "fluent", "minimal", "paper", "pixel"] },
+  { id: "scifi", themes: ["holo", "reactor", "terminal", "cyber", "steam", "neon"] },
+  { id: "color", themes: ["sakura", "ocean", "aurora", "magma"] },
+  { id: "tech", themes: ["circuit", "radar", "quantum", "blueprint", "datacenter", "neural", "scope", "fiber", "nixie"] },
+];
 /** Cor de destaque sugerida ao escolher o tema holográfico. */
 export const HOLO_ACCENT = "#ffb03a";
 /** Cor sugerida para cada tema (aplicada ao trocar, se a cor atual for a sugerida do tema anterior). */

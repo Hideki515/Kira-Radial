@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { cloneConfig, defaultConfig } from "../../shared/defaults";
-import { HOLO_ACCENT, SCALE_LIMITS, THEMES, THEME_ACCENT, type Config } from "../../shared/types";
+import { HOLO_ACCENT, SCALE_LIMITS, THEMES, THEME_ACCENT, THEME_GROUPS, type Config } from "../../shared/types";
 import { validateConfig } from "../../shared/validate";
 import { AppearancePage, applyTheme } from "./SimplePages";
 
@@ -75,5 +75,19 @@ describe("Aparência › tema", () => {
     const c = cloneConfig(defaultConfig);
     c.appearance.theme = "terminal";
     expect(validateConfig(c)).toEqual([]);
+  });
+
+  it("temas em seções: cada tema embutido em exatamente uma, mais 'Meus temas' (v0.41.0)", () => {
+    const all = THEME_GROUPS.flatMap((g) => g.themes);
+    expect([...all].sort()).toEqual([...THEMES].sort());
+    expect(new Set(all).size).toBe(all.length);
+    render(<Harness onChange={() => {}} />);
+    const titles = [...document.querySelectorAll(".theme-group-title")].map((h) => h.textContent);
+    expect(titles).toEqual(["Clássicos", "Ficção científica", "Cores e natureza", "Tecnologia", "Meus temas"]);
+    const tech = screen.getByRole("region", { name: "Tecnologia" });
+    expect(tech.querySelectorAll(".theme-card")).toHaveLength(9);
+    const mine = screen.getByRole("region", { name: "Meus temas" });
+    expect(mine.querySelector(".theme-card.is-add")).not.toBeNull();
+    expect(screen.getAllByRole("radiogroup", { name: "Tema" })).toHaveLength(1);
   });
 });

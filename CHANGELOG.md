@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.41.0
+
+- **Temas em seções:** em Aparência → Tema, os 24 temas ficam agrupados:
+  - **Clássicos:** Vidro, Fluent Claro, Minimalista, Papel, Pixel;
+  - **Ficção científica:** Holográfico, Arc Reactor, Terminal, Cyberpunk, Steampunk, Neon Synthwave;
+  - **Cores e natureza:** Sakura, Oceano, Aurora, Magma;
+  - **Tecnologia:** Circuito, Radar, Quântico, Blueprint, Data Center, Rede Neural, Osciloscópio, Fibra Óptica, Válvulas Nixie;
+  - **Meus temas:** os temas personalizados e o botão "+ Criar tema".
+- Nada muda nos temas em si nem no tema escolhido.
+
 ## 0.40.1
 
 - **Menos CPU no tema Holográfico:** os meridianos da esfera giravam com redesenho na taxa da tela. Agora trocam de quadro a 15 quadros/s, junto com os outros giros do tema. O formato do giro (achatando como um cosseno) continua o mesmo.

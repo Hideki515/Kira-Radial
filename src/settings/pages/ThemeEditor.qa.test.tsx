@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { RadialCanvas } from "../../radial/RadialCanvas";
 import { MAX_CUSTOM_THEMES, createTheme, customRef, exportTheme, importTheme } from "../../shared/customTheme";
 import { cloneConfig, defaultConfig, defaultProfile } from "../../shared/defaults";
-import { THEMES, THEME_ACCENT, type Config } from "../../shared/types";
+import { THEMES, THEME_GROUPS, THEME_ACCENT, type Config } from "../../shared/types";
 import { validateConfig } from "../../shared/validate";
 import { AppearancePage, applyTheme } from "./SimplePages";
 
@@ -117,7 +117,8 @@ describe("QA v0.15.0 — tema personalizado", () => {
     radios.forEach((r, i) => {
       fireEvent.click(r);
       // Padrão sem tema = "glass" (clicar no Vidro não grava nada).
-      expect(last.appearance.theme ?? "glass").toBe(THEMES[i]);
+      // Cartões na ordem das seções (v0.41.0), não na de THEMES.
+      expect(last.appearance.theme ?? "glass").toBe(THEME_GROUPS.flatMap((g) => g.themes)[i]);
       expect(r.getAttribute("aria-checked")).toBe("true");
     });
     unmount();

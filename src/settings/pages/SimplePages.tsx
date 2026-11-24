@@ -2,7 +2,7 @@ import { Check, Clipboard, RotateCcw, Upload } from "lucide-react";
 import { t, type Key } from "../../shared/i18n";
 import { useState, type CSSProperties } from "react";
 import { cloneConfig, defaultConfig, withDefaults } from "../../shared/defaults";
-import { HOLO_ACCENT, SCALE_LIMITS, THEMES, THEME_ACCENT, wantsHotkey, wantsOrb, type Config, type LauncherMode, type Theme, type ThemeRef } from "../../shared/types";
+import { HOLO_ACCENT, SCALE_LIMITS, THEMES, THEME_ACCENT, THEME_GROUPS, wantsHotkey, wantsOrb, type Config, type LauncherMode, type Theme, type ThemeRef } from "../../shared/types";
 import { Field, Section, Segmented, Toggle } from "../controls";
 import { HotkeyRecorder } from "../HotkeyRecorder";
 import { RadialCanvas } from "../../radial/RadialCanvas";
@@ -166,67 +166,79 @@ function ThemePicker({ config, update }: PageProps) {
   const current = config.appearance.theme ?? "glass";
   const items = config.profiles[0].items;
   return (
-    <div className="theme-grid" role="radiogroup" aria-label={t("theme.group")}>
-      {THEMES.map((th) => (
-        <button
-          key={th}
-          type="button"
-          role="radio"
-          aria-checked={current === th}
-          aria-label={THEME_INFO[th].label}
-          className={`theme-card${current === th ? " is-on" : ""}`}
-          onClick={() => update((c) => applyTheme(c, th))}
-        >
-          <span className="theme-thumb is-thumb" style={{ "--active": current === th ? config.appearance.accent : THEME_ACCENT[th] } as CSSProperties}>
-            <RadialCanvas
-              items={items}
-              activeMain={0}
-              activeSub={null}
-              hubHovered={false}
-              stats={{ cpu: 42, ram: 50 }}
-              appearance={{ ...config.appearance, theme: th, showMedia: false }}
-            />
-          </span>
-          <span className="theme-name">{THEME_INFO[th].label}</span>
-          <span className="theme-hint">{THEME_INFO[th].hint}</span>
-        </button>
+    <div className="theme-groups" role="radiogroup" aria-label={t("theme.group")}>
+      {THEME_GROUPS.map((g) => (
+        <section key={g.id} className="theme-group" aria-label={t(`theme.cat.${g.id}` as Key)}>
+          <h4 className="theme-group-title">{t(`theme.cat.${g.id}` as Key)}</h4>
+          <div className="theme-grid">
+            {g.themes.map((th) => (
+              <button
+                key={th}
+                type="button"
+                role="radio"
+                aria-checked={current === th}
+                aria-label={THEME_INFO[th].label}
+                className={`theme-card${current === th ? " is-on" : ""}`}
+                onClick={() => update((c) => applyTheme(c, th))}
+              >
+                <span className="theme-thumb is-thumb" style={{ "--active": current === th ? config.appearance.accent : THEME_ACCENT[th] } as CSSProperties}>
+                  <RadialCanvas
+                    items={items}
+                    activeMain={0}
+                    activeSub={null}
+                    hubHovered={false}
+                    stats={{ cpu: 42, ram: 50 }}
+                    appearance={{ ...config.appearance, theme: th, showMedia: false }}
+                  />
+                </span>
+                <span className="theme-name">{THEME_INFO[th].label}</span>
+                <span className="theme-hint">{THEME_INFO[th].hint}</span>
+              </button>
+            ))}
+          </div>
+        </section>
       ))}
-      {(config.appearance.customThemes ?? []).map((ct) => {
-        const ref = customRef(ct.id);
-        return (
+      <section className="theme-group" aria-label={t("theme.cat.mine")}>
+        <h4 className="theme-group-title">{t("theme.cat.mine")}</h4>
+        <div className="theme-grid">
+          {(config.appearance.customThemes ?? []).map((ct) => {
+            const ref = customRef(ct.id);
+            return (
+              <button
+                key={ct.id}
+                type="button"
+                role="radio"
+                aria-checked={current === ref}
+                aria-label={ct.name}
+                className={`theme-card is-custom${current === ref ? " is-on" : ""}`}
+                onClick={() => update((c) => applyTheme(c, ref))}
+              >
+                <span className="theme-thumb is-thumb">
+                  <RadialCanvas
+                    items={items}
+                    activeMain={0}
+                    activeSub={null}
+                    hubHovered={false}
+                    stats={{ cpu: 42, ram: 50 }}
+                    appearance={{ ...config.appearance, theme: ref, showMedia: false }}
+                  />
+                </span>
+                <span className="theme-name">{ct.name}</span>
+                <span className="theme-hint">{t("theme.custom.hint", { base: (THEMES as readonly string[]).includes(ct.base) ? THEME_INFO[ct.base].label : ct.base })}</span>
+              </button>
+            );
+          })}
           <button
-            key={ct.id}
             type="button"
-            role="radio"
-            aria-checked={current === ref}
-            aria-label={ct.name}
-            className={`theme-card is-custom${current === ref ? " is-on" : ""}`}
-            onClick={() => update((c) => applyTheme(c, ref))}
+            className="theme-card is-add"
+            disabled={(config.appearance.customThemes?.length ?? 0) >= MAX_CUSTOM_THEMES}
+            onClick={() => update((c) => addCustomTheme(c))}
           >
-            <span className="theme-thumb is-thumb">
-              <RadialCanvas
-                items={items}
-                activeMain={0}
-                activeSub={null}
-                hubHovered={false}
-                stats={{ cpu: 42, ram: 50 }}
-                appearance={{ ...config.appearance, theme: ref, showMedia: false }}
-              />
-            </span>
-            <span className="theme-name">{ct.name}</span>
-            <span className="theme-hint">{t("theme.custom.hint", { base: (THEMES as readonly string[]).includes(ct.base) ? THEME_INFO[ct.base].label : ct.base })}</span>
+            <span className="theme-name">{t("theme.create")}</span>
+            <span className="theme-hint">{t("theme.create.hint")}</span>
           </button>
-        );
-      })}
-      <button
-        type="button"
-        className="theme-card is-add"
-        disabled={(config.appearance.customThemes?.length ?? 0) >= MAX_CUSTOM_THEMES}
-        onClick={() => update((c) => addCustomTheme(c))}
-      >
-        <span className="theme-name">{t("theme.create")}</span>
-        <span className="theme-hint">{t("theme.create.hint")}</span>
-      </button>
+        </div>
+      </section>
     </div>
   );
 }
