@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.43.0
+
+- **3 temas novos na seção Tecnologia** (Aparência → Tema):
+  - **Chuva de Código:** colunas de caracteres descendo atrás do anel, em duas velocidades, com as fatias em vidro escuro;
+  - **Scanner LiDAR:** nuvem de pontos (paredes em arco e pontos soltos) e um leque de varredura girando;
+  - **Rack de Áudio:** painel de metal escovado com parafusos e 20 barras de LED (verde, amarelo e vermelho) que mudam de nível como num medidor de som.
+- Como nos outros temas animados, são poucas animações, a 15 quadros/s. Com "reduzir movimento" do Windows, ficam parados.
+- **Correções visuais da 0.42.0:**
+  - Mapa Térmico: a régua de temperatura e os valores 38°/19° agora ficam dentro do campo (antes saíam da tela);
+  - Display Vetorial: o triângulo e o fundo preto não são mais cortados nas bordas.
+
 ## 0.42.0
 
 - **3 temas novos na seção Tecnologia** (Aparência → Tema):

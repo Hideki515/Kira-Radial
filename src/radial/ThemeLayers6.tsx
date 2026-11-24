@@ -35,13 +35,13 @@ const SPOKES = Array.from({ length: SIDES }, (_, i) => {
 /** Estrelas: pontos fixos fora do anel (determinísticos). */
 const STARS = seq(40, 613).map((r, i) => {
   const [b, c] = seq(2, i * 17 + 3);
-  return { ...polar(C, C, OUT + 70 + b * 28, r * 360), s: 0.8 + c * 1.2 };
+  return { ...polar(C, C, OUT + 62 + b * 14, r * 360), s: 0.8 + c * 1.2 };
 });
 
 export function VectorBack() {
   return (
     <g className="vector vector-back" data-testid="vector-back" aria-hidden="true">
-      <circle cx={C} cy={C} r={OUT + 100} className="vector-void" />
+      <circle cx={C} cy={C} r={OUT + 78} className="vector-void" />
       <g className="vector-stars">
         {STARS.map((s, i) => <circle key={i} cx={f(s.x)} cy={f(s.y)} r={s.s.toFixed(2)} />)}
       </g>
@@ -50,7 +50,7 @@ export function VectorBack() {
         <path d={TUNNEL.map((r) => polygon(SIDES, r, 22.5)).join("") + SPOKES} className="vector-glow" />
         <path d={TUNNEL.map((r) => polygon(SIDES, r, 22.5)).join("") + SPOKES} className="vector-line" />
       </g>
-      <path d={polygon(3, OUT + 86, -90)} className="vector-line vector-line--dim" />
+      <path d={polygon(3, OUT + 74, -90)} className="vector-line vector-line--dim" />
     </g>
   );
 }
@@ -104,9 +104,10 @@ export function ThermalBack() {
       </g>
       {/* Retícula da câmera e régua de temperatura. */}
       <path d={`M${C - R + 18} ${C}h26M${C + R - 44} ${C}h26M${C} ${C - R + 18}v26M${C} ${C + R - 44}v26`} className="thermal-reticle" />
-      <rect x={C + R - 6} y={C - 90} width={10} height={180} rx={3} fill="url(#thermal-scale)" className="thermal-bar" />
-      <text x={C + R + 10} y={C - 84} className="thermal-temp">38°</text>
-      <text x={C + R + 10} y={C + 92} className="thermal-temp">19°</text>
+      {/* Régua no canto inferior direito, dentro do campo e fora do sub-anel. */}
+      <rect x={C + 326} y={C + 190} width={10} height={100} rx={3} fill="url(#thermal-scale)" className="thermal-bar" />
+      <text x={C + 340} y={C + 199} className="thermal-temp">38°</text>
+      <text x={C + 320} y={C + 290} textAnchor="end" className="thermal-temp">19°</text>
     </g>
   );
 }

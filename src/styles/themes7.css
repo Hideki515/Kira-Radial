@@ -1,0 +1,115 @@
+/* Pacote "Tecnologia 4": Chuva de código, Scanner LiDAR e Rack de áudio.
+   A cor de destaque (--active) continua valendo. Poucas animações por tema (agrupadas),
+   todas a 15 quadros/s alinhados (passos múltiplos de 1/15 s), como nos outros temas. */
+
+.rain, .lidar, .vu { pointer-events: none; }
+
+/* ======================================================================
+   Chuva de código — colunas de caracteres descendo, cabeça clara.
+   ====================================================================== */
+.rain-dark { fill: #020608; opacity: 0.94; }
+.rain-rim { fill: none; stroke: color-mix(in srgb, var(--active) 25%, transparent); stroke-width: 2; }
+.rain-fall text {
+  font-family: "Cascadia Mono", "Consolas", monospace; font-size: 15px; font-weight: 600;
+  fill: color-mix(in srgb, var(--active) 80%, #000);
+}
+.rain-fall .rain-head { fill: color-mix(in srgb, var(--active) 35%, #fff); }
+.rain-fall { transform-box: view-box; }
+/* Desce um período (360 px) por volta e emenda sem pulo. 8 s × 15 = 120 passos; 5 s × 15 = 75. */
+.rain-fall--slow { animation: rain-fall 8s steps(120) infinite; }
+.rain-fall--fast { animation: rain-fall 5s steps(75) infinite; }
+@keyframes rain-fall { from { transform: translateY(0); } to { transform: translateY(360px); } }
+
+.theme-rain { --font-rain: "Cascadia Mono", "Consolas", monospace; }
+.theme-rain .slice-label { font-family: var(--font-rain); font-weight: 600; letter-spacing: 0.04em; fill: #dff7ff; }
+.theme-rain .hub-time, .theme-rain .hub-cpu, .theme-rain .hub-date { font-family: var(--font-rain); }
+.theme-rain .ring-backing { fill: #01080c; fill-opacity: 0.96; }
+/* Fatias em "vidro escuro": a chuva aparece de leve por trás. */
+.theme-rain .main-slice .slice-shape { fill: #04121a; fill-opacity: 0.92; stroke: color-mix(in srgb, var(--active) 32%, transparent); stroke-width: 1.2; }
+.theme-rain .main-slice .slice-icon, .theme-rain .sub-slice .slice-icon { color: #dff7ff; }
+.theme-rain .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 22%, #04121a); fill-opacity: 1; stroke: var(--active); stroke-width: 2; }
+.theme-rain .main-slice.is-active .slice-icon { color: #fff; }
+.theme-rain .main-slice.is-active .slice-label { fill: #fff; }
+.theme-rain .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 30%, transparent); }
+.theme-rain .sub-slice .slice-shape { fill: #04121a; }
+.theme-rain .hub-disc { fill: #04121a; stroke: var(--active); stroke-opacity: 0.5; }
+.theme-rain .hub-well { fill: #01080c; stroke: color-mix(in srgb, var(--active) 20%, transparent); }
+.theme-rain .hub-time, .theme-rain .hub-np-title { fill: #ecfbff; }
+.theme-rain .hub-date, .theme-rain .hub-pill-text, .theme-rain .hub-np-artist { fill: #6fa4b8; }
+.theme-rain .hub-cpu { fill: var(--active); }
+.theme-rain .hub-gauge { stroke: var(--active); stroke-linecap: butt; }
+.theme-rain .hub-track { stroke: color-mix(in srgb, var(--active) 14%, transparent); stroke-linecap: butt; }
+
+/* ======================================================================
+   Scanner LiDAR — nuvem de pontos e leque girando.
+   ====================================================================== */
+.lidar-dark { fill: #05070a; opacity: 0.94; }
+.lidar-range { fill: none; stroke: color-mix(in srgb, var(--active) 18%, transparent); stroke-width: 1; stroke-dasharray: 3 9; }
+.lidar-cloud circle { fill: color-mix(in srgb, var(--active) 70%, #fff); opacity: 0.45; }
+.lidar-fan { fill: var(--active); }
+.lidar-fan--0 { opacity: 0.2; }
+.lidar-fan--1 { opacity: 0.12; }
+.lidar-fan--2 { opacity: 0.07; }
+.lidar-fan--3 { opacity: 0.035; }
+.lidar-edge { stroke: var(--active); stroke-width: 1.6; opacity: 0.85; }
+/* Uma volta a cada 6 s, 15 quadros/s (90 passos). */
+.lidar-sweep { transform-box: view-box; transform-origin: 450px 450px; animation: holo-spin 6s steps(90) infinite; }
+
+.theme-lidar .slice-label { fill: #ecf7e0; letter-spacing: 0.05em; }
+.theme-lidar .ring-backing { fill: #040608; fill-opacity: 0.96; }
+.theme-lidar .main-slice .slice-shape { fill: #0b1013; stroke: color-mix(in srgb, var(--active) 30%, transparent); stroke-width: 1.2; }
+.theme-lidar .main-slice .slice-icon, .theme-lidar .sub-slice .slice-icon { color: #ecf7e0; }
+.theme-lidar .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 20%, #0b1013); stroke: var(--active); stroke-width: 2; }
+.theme-lidar .main-slice.is-active .slice-icon { color: #fff; }
+.theme-lidar .main-slice.is-active .slice-label { fill: #fff; }
+.theme-lidar .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 30%, transparent); }
+.theme-lidar .sub-slice .slice-shape { fill: #0b1013; }
+.theme-lidar .hub-disc { fill: #0b1013; stroke: var(--active); stroke-opacity: 0.5; }
+.theme-lidar .hub-well { fill: #040608; stroke: color-mix(in srgb, var(--active) 20%, transparent); }
+.theme-lidar .hub-time, .theme-lidar .hub-np-title { fill: #f4fbea; }
+.theme-lidar .hub-date, .theme-lidar .hub-pill-text, .theme-lidar .hub-np-artist { fill: #8a9a80; }
+.theme-lidar .hub-cpu { fill: var(--active); }
+.theme-lidar .hub-gauge { stroke: var(--active); }
+.theme-lidar .hub-track { stroke: color-mix(in srgb, var(--active) 14%, transparent); }
+
+/* ======================================================================
+   Rack de áudio — metal escovado, parafusos e barras de LED dançando.
+   ====================================================================== */
+.vu-panel { fill: #16181b; opacity: 0.96; }
+.vu-brush-line { fill: rgba(255, 255, 255, 0.025); }
+.vu-rim { fill: none; stroke: #2a2d31; stroke-width: 8; }
+.vu-screw circle { fill: #2c3035; stroke: #0c0d0f; stroke-width: 1.5; }
+.vu-screw path { stroke: #0c0d0f; stroke-width: 1.6; }
+.vu-leds path { fill: none; stroke-width: 7; stroke-linecap: butt; }
+.vu-leds .vu-g { stroke: #39d98a; }
+.vu-leds .vu-y { stroke: #ffd23f; }
+.vu-leds .vu-r { stroke: #ff4d4d; }
+.vu-leds--off { opacity: 0.16; }
+/* 3 momentos de 0,4 s (6 quadros a 15/s): cada grupo aceso só no seu terço. */
+.vu-phase { animation: vu-phase 1.2s steps(1) infinite; }
+@keyframes vu-phase { 0% { opacity: 1; } 33.333%, 100% { opacity: 0; } }
+
+.theme-vu .slice-label { font-family: "Bahnschrift", "Segoe UI", sans-serif; letter-spacing: 0.08em; fill: #e6e8ea; }
+.theme-vu .ring-backing { fill: #0e0f11; fill-opacity: 0.97; }
+.theme-vu .main-slice .slice-shape { fill: #1d2024; stroke: #33373c; stroke-width: 1.2; }
+.theme-vu .main-slice .slice-icon, .theme-vu .sub-slice .slice-icon { color: #e6e8ea; }
+.theme-vu .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 20%, #1d2024); stroke: var(--active); stroke-width: 2; }
+.theme-vu .main-slice.is-active .slice-icon { color: #fff; }
+.theme-vu .main-slice.is-active .slice-label { fill: #fff; }
+.theme-vu .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 30%, transparent); }
+.theme-vu .sub-slice .slice-shape { fill: #1d2024; }
+.theme-vu .hub-disc { fill: #1d2024; stroke: #3a3f45; }
+.theme-vu .hub-well { fill: #0e0f11; stroke: #2a2d31; }
+.theme-vu .hub-time, .theme-vu .hub-cpu { font-family: "Bahnschrift", "Segoe UI", sans-serif; }
+.theme-vu .hub-time, .theme-vu .hub-np-title { fill: #f2f3f4; }
+.theme-vu .hub-date, .theme-vu .hub-pill-text, .theme-vu .hub-np-artist { fill: #8b9096; }
+.theme-vu .hub-cpu { fill: var(--active); }
+.theme-vu .hub-gauge { stroke: var(--active); stroke-linecap: butt; }
+.theme-vu .hub-track { stroke: rgba(255, 255, 255, 0.07); stroke-linecap: butt; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rain-fall, .lidar-sweep, .vu-phase { animation: none; }
+  /* Parado: só o primeiro momento das barras aceso. */
+  .vu-phase + .vu-phase { opacity: 0; }
+}
+.is-thumb .vu-phase + .vu-phase { opacity: 0; }

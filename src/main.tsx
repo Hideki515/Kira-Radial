@@ -11,6 +11,7 @@ import "./styles/themes3.css";
 import "./styles/themes4.css";
 import "./styles/themes5.css";
 import "./styles/themes6.css";
+import "./styles/themes7.css";
 
 if (isTauri()) document.documentElement.classList.add("is-tauri");
 installErrorLogging("radial");

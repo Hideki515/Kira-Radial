@@ -85,7 +85,7 @@ describe("Aparência › tema", () => {
     const titles = [...document.querySelectorAll(".theme-group-title")].map((h) => h.textContent);
     expect(titles).toEqual(["Clássicos", "Ficção científica", "Cores e natureza", "Tecnologia", "Meus temas"]);
     const tech = screen.getByRole("region", { name: "Tecnologia" });
-    expect(tech.querySelectorAll(".theme-card")).toHaveLength(12);
+    expect(tech.querySelectorAll(".theme-card")).toHaveLength(15);
     const mine = screen.getByRole("region", { name: "Meus temas" });
     expect(mine.querySelector(".theme-card.is-add")).not.toBeNull();
     expect(screen.getAllByRole("radiogroup", { name: "Tema" })).toHaveLength(1);
