@@ -3,7 +3,7 @@ import type { CustomTheme } from "./customTheme";
 // Ao mudar algo aqui, incremente `version` e adicione migração nos dois lados.
 
 /** Discord (RPC local): mudo, ensurdecer e dispositivos de entrada/saída do próprio Discord. */
-export type DiscordCmd = "toggleMute" | "mute" | "unmute" | "toggleDeafen" | "deafen" | "undeafen" | "setInput" | "setOutput";
+export type DiscordCmd = "toggleMute" | "mute" | "unmute" | "toggleDeafen" | "deafen" | "undeafen" | "setInput" | "setOutput" | "leaveVoice";
 
 /** Uma janela guardada num layout (posição "normal" e estado). */
 export interface LayoutWindow {

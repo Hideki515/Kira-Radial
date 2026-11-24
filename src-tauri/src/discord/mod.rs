@@ -47,6 +47,8 @@ pub enum DiscordCmd {
     Undeafen,
     SetInput,
     SetOutput,
+    /// Sai do canal de voz em que está (SELECT_VOICE_CHANNEL com channel_id nulo).
+    LeaveVoice,
 }
 
 #[derive(Serialize, Clone, Debug, PartialEq)]
@@ -68,6 +70,8 @@ pub struct Voice {
     pub deaf: bool,
     pub input: DeviceList,
     pub output: DeviceList,
+    /// Canal de voz em que está agora (nome); None = fora de canal ou não deu para ler.
+    pub channel: Option<String>,
 }
 
 /// Resposta para o menu e as Configurações: nunca é erro, para o submenu explicar o que houve.
@@ -104,7 +108,16 @@ fn devices(v: &Value) -> DeviceList {
 
 pub fn parse_voice(v: &Value) -> Voice {
     let deaf = v["deaf"].as_bool().unwrap_or(false);
-    Voice { mute: v["mute"].as_bool().unwrap_or(false) || deaf, deaf, input: devices(&v["input"]), output: devices(&v["output"]) }
+    Voice { mute: v["mute"].as_bool().unwrap_or(false) || deaf, deaf, input: devices(&v["input"]), output: devices(&v["output"]), channel: None }
+}
+
+/// Resposta do GET_SELECTED_VOICE_CHANNEL: null fora de canal; sem nome (DM) = "Chamada".
+pub fn parse_channel(v: &Value) -> Option<String> {
+    if !v.is_object() {
+        return None;
+    }
+    let name = v["name"].as_str().map(str::trim).unwrap_or("");
+    Some(if name.is_empty() { tr!("Chamada", "Call").to_string() } else { name.to_string() })
 }
 
 /// Argumentos do SET_VOICE_SETTINGS para mudo/ensurdecer, a partir do estado atual.
@@ -117,7 +130,7 @@ pub fn voice_args(cmd: DiscordCmd, mute: bool, deaf: bool) -> Option<Value> {
         DiscordCmd::ToggleDeafen => json!({"deaf": !deaf}),
         DiscordCmd::Deafen => json!({"deaf": true}),
         DiscordCmd::Undeafen => json!({"deaf": false}),
-        DiscordCmd::SetInput | DiscordCmd::SetOutput => return None,
+        DiscordCmd::SetInput | DiscordCmd::SetOutput | DiscordCmd::LeaveVoice => return None,
     })
 }
 
@@ -207,8 +220,16 @@ impl Service {
         self.with_session(|c| c.command("GET_VOICE_SETTINGS", json!({}))).map(|v| parse_voice(&v))
     }
 
+    /// Canal de voz atual; falha ao ler (ex.: escopo) = como se estivesse fora (só esconde o "Sair").
+    pub fn channel(&mut self) -> Option<String> {
+        self.with_session(|c| c.command("GET_SELECTED_VOICE_CHANNEL", json!({}))).ok().and_then(|v| parse_channel(&v))
+    }
+
     pub fn voice_state(&mut self) -> VoiceState {
-        match self.voice() {
+        match self.voice().map(|mut v| {
+            v.channel = self.channel();
+            v
+        }) {
             Ok(v) => VoiceState { status: "ok", message: None, voice: Some(v) },
             Err(m) => VoiceState {
                 status: if m == not_connected() { "notConnected" } else if m == closed() { "closed" } else { "error" },
@@ -220,6 +241,9 @@ impl Service {
 
     pub fn run(&mut self, cmd: DiscordCmd, device_id: Option<&str>, device_name: Option<&str>) -> Result<(), String> {
         let args = match cmd {
+            DiscordCmd::LeaveVoice => {
+                return self.with_session(|c| c.command("SELECT_VOICE_CHANNEL", json!({ "channel_id": null }))).map(|_| ());
+            }
             DiscordCmd::Mute | DiscordCmd::Unmute | DiscordCmd::Deafen | DiscordCmd::Undeafen => {
                 voice_args(cmd, false, false).expect("comando de voz")
             }
@@ -453,6 +477,22 @@ mod tests {
     }
 
     #[test]
+    fn le_o_canal_e_sai_dele() {
+        let mut t = connected("canal");
+        assert_eq!(t.svc.voice_state().voice.unwrap().channel.as_deref(), Some("Geral QA"));
+        t.svc.run(DiscordCmd::LeaveVoice, None, None).unwrap();
+        assert_eq!(t.state.lock().unwrap().channel, None);
+        assert_eq!(t.svc.voice_state().voice.unwrap().channel, None);
+        assert!(t.state.lock().unwrap().commands.contains(&"SELECT_VOICE_CHANNEL".to_string()));
+        // Sair de novo, já fora: não é erro.
+        t.svc.run(DiscordCmd::LeaveVoice, None, None).unwrap();
+        assert_eq!(parse_channel(&json!(null)), None);
+        assert_eq!(parse_channel(&json!({"id": "1", "name": "  "})).as_deref(), Some("Chamada"));
+        let cmd: DiscordCmd = serde_json::from_value(json!("leaveVoice")).unwrap();
+        assert_eq!(cmd, DiscordCmd::LeaveVoice);
+    }
+
+    #[test]
     fn troca_dispositivos_por_id_ou_nome() {
         let mut t = connected("dispositivos");
         t.svc.run(DiscordCmd::SetInput, Some("mic-2"), None).unwrap();
@@ -515,6 +555,7 @@ mod tests {
         assert_eq!(voice_args(ToggleDeafen, false, false), Some(json!({"deaf": true})));
         assert_eq!(voice_args(Unmute, false, false), Some(json!({"mute": false, "deaf": false})));
         assert_eq!(voice_args(SetInput, false, false), None);
+        assert_eq!(voice_args(LeaveVoice, false, false), None);
     }
 
     #[test]

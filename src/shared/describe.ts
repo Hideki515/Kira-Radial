@@ -18,7 +18,7 @@ const MEDIA_LABEL: Record<string, string> = labels("d.media", ["playpause", "nex
 
 export const WINDOW_LABEL: Record<WindowCmd, string> = labels<WindowCmd>("d.win", ["topmost", "nextMonitor", "snapLeft", "snapRight", "maximize", "minimize", "minimizeAll"]);
 
-export const DISCORD_LABEL: Record<DiscordCmd, string> = labels<DiscordCmd>("d.dc", ["toggleMute", "mute", "unmute", "toggleDeafen", "deafen", "undeafen", "setInput", "setOutput"]);
+export const DISCORD_LABEL: Record<DiscordCmd, string> = labels<DiscordCmd>("d.dc", ["toggleMute", "mute", "unmute", "toggleDeafen", "deafen", "undeafen", "setInput", "setOutput", "leaveVoice"]);
 
 export function describeAction(a: Action): string {
   switch (a.type) {

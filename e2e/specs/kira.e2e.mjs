@@ -371,6 +371,37 @@ describe("Kira de teste — ponta a ponta", () => {
     expect(v.status).toBe("ok");
     expect(v.voice.deaf).toBe(false);
   });
+  it("11b. (QA v0.40.0) Discord FALSO em canal: 3ª fatia 'Sair: Geral QA'; executar sai e a fatia some na próxima abertura", async () => {
+    const openDiscordSub = async () => {
+      await toWindow("settings.html");
+      await invoke("hide_menu");
+      await browser.waitUntil(async () => !(await qaState()).menuVisible, { timeoutMsg: "menu não fechou" });
+      await invoke("qa_show_menu", { fromOrb: false });
+      await toWindow("");
+      await pressKey("1", "Digit1");
+      await browser.waitUntil(
+        async () => {
+          const subs = await $$(".sub-slice");
+          return subs.length > 0 && /^Microfone/.test(await subs[0].getAttribute("aria-label"));
+        },
+        { timeoutMsg: "submenu do Discord não carregou" },
+      );
+      return $$(".sub-slice").map((s) => s.getAttribute("aria-label"));
+    };
+    expect((await invoke("discord_voice")).voice.channel).toBe("Geral QA");
+    const a = await openDiscordSub();
+    console.log("[11b] antes:", JSON.stringify(a));
+    expect(a).toHaveLength(3);
+    expect(a[2]).toBe("Sair: Geral QA");
+    const muteBefore = (await invoke("discord_voice")).voice.mute;
+    await pressKey("3", "Digit3"); // executa "Sair" (Discord FALSO)
+    await browser.waitUntil(async () => (await invoke("discord_voice")).voice.channel == null, { timeoutMsg: "não saiu do canal" });
+    expect((await invoke("discord_voice")).voice.mute).toBe(muteBefore);
+    const b = await openDiscordSub();
+    console.log("[11b] depois:", JSON.stringify(b));
+    expect(b).toHaveLength(2);
+    expect(b.some((l) => /^Sair/.test(l))).toBe(false);
+  });
   it("12. knob (simulado por qa_knob): apertar abre, girar escolhe, apertar abre o submenu e executa", async () => {
     // Usa a fatia do Discord FALSO do cenário 11 (perfil ativo, fatia 1): executar é seguro.
     await toWindow("settings.html");

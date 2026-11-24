@@ -329,6 +329,8 @@ export interface DiscordVoice {
   deaf: boolean;
   input: DiscordDeviceList;
   output: DiscordDeviceList;
+  /** Canal de voz em que está agora; null/ausente = fora de canal. */
+  channel?: string | null;
 }
 
 export interface DiscordVoiceState {
@@ -348,6 +350,7 @@ const DEMO_VOICE: DiscordVoice = {
   deaf: false,
   input: { current: "default", devices: [{ id: "default", name: "Default" }, { id: "mic-1", name: "Microfone (USB Audio)" }] },
   output: { current: "default", devices: [{ id: "default", name: "Default" }, { id: "out-1", name: "Headset Earphone (Arctis)" }] },
+  channel: "Geral",
 };
 
 /** Estado de voz do Discord (nunca rejeita: o status explica se está fechado ou desconectado). */

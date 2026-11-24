@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.40.0
+
+- **Discord: sair do canal de voz.** No submenu automático "Discord: microfone e fone", quando você está num canal de voz aparece uma terceira fatia, **"Sair: <canal>"**, que desconecta da chamada. Fora de canal, ela não aparece.
+- Também dá para usar como ação comum de uma fatia: Discord → "Sair do canal de voz".
+- Não precisa autorizar o Discord de novo: a Kira já tinha a permissão de voz.
+
 ## 0.39.1
 
 - **Temas claros (Fluent Claro e Papel):** no submenu automático, o ícone do item em uso fica numa versão mais escura da cor (verde, ou vermelho no Discord mutado), legível sobre o fundo branco. Antes, o verde puro quase sumia. Temas personalizados (que podem ter fatias escuras) continuam com a cor pura.

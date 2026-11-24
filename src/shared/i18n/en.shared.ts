@@ -94,6 +94,7 @@ export const enShared: Record<keyof typeof ptShared, string> = {
   "d.dc.undeafen": "Undeafen",
   "d.dc.setInput": "Use input device",
   "d.dc.setOutput": "Use output device",
+  "d.dc.leaveVoice": "Leave voice channel",
   "d.launch": "Run {path}",
   "d.folder": "Open folder {path}",
   "d.url.in": "in {browser}",

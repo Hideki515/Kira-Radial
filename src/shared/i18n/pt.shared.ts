@@ -92,6 +92,7 @@ export const ptShared = {
   "d.dc.undeafen": "Reativar o áudio",
   "d.dc.setInput": "Usar dispositivo de entrada",
   "d.dc.setOutput": "Usar dispositivo de saída",
+  "d.dc.leaveVoice": "Sair do canal de voz",
   "d.launch": "Executar {path}",
   "d.folder": "Abrir pasta {path}",
   "d.url.in": "no {browser}",

@@ -16,6 +16,8 @@ pub struct FakeState {
     pub deaf: bool,
     pub input: String,
     pub output: String,
+    /// Canal de voz em que está (None = fora).
+    pub channel: Option<String>,
     /// Discord "fechado": abrir o pipe falha.
     pub closed: bool,
     /// Quantos comandos recebeu (para os testes).
@@ -29,6 +31,7 @@ impl Default for FakeState {
             deaf: false,
             input: "default".into(),
             output: "default".into(),
+            channel: Some("Geral QA".into()),
             closed: false,
             commands: vec![],
         }
@@ -100,6 +103,14 @@ impl Transport for FakeDiscord {
             "AUTHENTICATE" => error(4009, "Invalid OAuth2 access token"),
             _ if !self.authed => error(4006, "Not authenticated or invalid scope"),
             "GET_VOICE_SETTINGS" => reply(settings(&s)),
+            "GET_SELECTED_VOICE_CHANNEL" => reply(s.channel.as_ref().map_or(Value::Null, |n| json!({"id": "42", "name": n, "type": 2}))),
+            "SELECT_VOICE_CHANNEL" => {
+                // Só sair (channel_id nulo) é usado; entrar num canal o falso não simula.
+                if args["channel_id"].is_null() {
+                    s.channel = None;
+                }
+                reply(Value::Null)
+            }
             "SET_VOICE_SETTINGS" => {
                 if let Some(d) = args["deaf"].as_bool() {
                     s.deaf = d;

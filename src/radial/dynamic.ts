@@ -152,8 +152,8 @@ function discordProblem(parentId: string, state: DiscordVoiceState): MenuItem[] 
 export function discordVoiceChildren(parentId: string, state: DiscordVoiceState | null): MenuItem[] {
   if (state === null) return [{ id: `${parentId}:loading`, label: t("common.loading"), icon: "headset" }];
   if (state.status !== "ok" || !state.voice) return discordProblem(parentId, state);
-  const { mute, deaf } = state.voice;
-  return [
+  const { mute, deaf, channel } = state.voice;
+  const items: MenuItem[] = [
     {
       id: `${parentId}:mic`,
       label: t(mute ? "dyn.discord.micMuted" : "dyn.discord.micOn"),
@@ -169,6 +169,17 @@ export function discordVoiceChildren(parentId: string, state: DiscordVoiceState 
       action: { type: "discord", cmd: "toggleDeafen" },
     },
   ];
+  // Em canal de voz: terceira fatia para sair dele (sem tingido: é um botão, não um estado).
+  if (channel) {
+    items.push({
+      id: `${parentId}:leave`,
+      label: trimLabel(t("dyn.discord.leave", { name: channel })),
+      icon: "phone-off",
+      color: DISCORD_OFF_COLOR,
+      action: { type: "discord", cmd: "leaveVoice" },
+    });
+  }
+  return items;
 }
 
 /** Dispositivos de entrada ou saída do Discord; o atual em verde, "Padrão" primeiro. */
