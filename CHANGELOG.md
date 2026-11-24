@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.42.0
+
+- **3 temas novos na seção Tecnologia** (Aparência → Tema):
+  - **Display Vetorial:** linhas finas e brilhantes em fundo preto, com um túnel octogonal girando devagar e estrelas paradas, como nos fliperamas vetoriais dos anos 80;
+  - **Mapa Térmico:** visão de câmera térmica, com fundo frio em roxo e manchas de calor. A fatia escolhida fica "quente", em laranja e amarelo;
+  - **Glitch CRT:** monitor de tubo com linhas de varredura, vinheta, bordas com aberração cromática (vermelho e ciano), uma faixa clara descendo e falhas rápidas de vez em quando.
+- Como os outros temas animados, cada um tem poucas animações, a 15 quadros/s. Com "reduzir movimento" do Windows, ficam parados.
+
 ## 0.41.0
 
 - **Temas em seções:** em Aparência → Tema, os 24 temas ficam agrupados:

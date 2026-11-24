@@ -306,12 +306,14 @@ export type Theme =
   | "glass" | "holo" | "reactor" | "terminal" | "neon" | "cyber" | "steam" | "fluent" | "minimal"
   | "sakura" | "ocean" | "aurora" | "magma" | "pixel" | "paper"
   | "circuit" | "radar" | "quantum" | "blueprint" | "datacenter" | "neural"
-  | "scope" | "fiber" | "nixie";
+  | "scope" | "fiber" | "nixie"
+  | "vector" | "thermal" | "crt";
 export const THEMES: readonly Theme[] = [
   "glass", "holo", "reactor", "terminal", "neon", "cyber", "steam", "fluent", "minimal",
   "sakura", "ocean", "aurora", "magma", "pixel", "paper",
   "circuit", "radar", "quantum", "blueprint", "datacenter", "neural",
   "scope", "fiber", "nixie",
+  "vector", "thermal", "crt",
 ];
 export type ThemeGroup = "classic" | "scifi" | "color" | "tech";
 /** Seções do seletor de temas (cada tema embutido aparece em exatamente uma). */
@@ -319,7 +321,7 @@ export const THEME_GROUPS: readonly { id: ThemeGroup; themes: readonly Theme[] }
   { id: "classic", themes: ["glass", "fluent", "minimal", "paper", "pixel"] },
   { id: "scifi", themes: ["holo", "reactor", "terminal", "cyber", "steam", "neon"] },
   { id: "color", themes: ["sakura", "ocean", "aurora", "magma"] },
-  { id: "tech", themes: ["circuit", "radar", "quantum", "blueprint", "datacenter", "neural", "scope", "fiber", "nixie"] },
+  { id: "tech", themes: ["circuit", "radar", "quantum", "blueprint", "datacenter", "neural", "scope", "fiber", "nixie", "vector", "thermal", "crt"] },
 ];
 /** Cor de destaque sugerida ao escolher o tema holográfico. */
 export const HOLO_ACCENT = "#ffb03a";
@@ -349,6 +351,9 @@ export const THEME_ACCENT: Record<Theme, string> = {
   scope: "#7dff5a",
   fiber: "#29d4ff",
   nixie: "#ff8a1f",
+  vector: "#7df9ff",
+  thermal: "#ffae00",
+  crt: "#ff4f7a",
 };
 
 /** Tamanho máximo de um texto pronto (caracteres); o Rust usa o mesmo limite. */

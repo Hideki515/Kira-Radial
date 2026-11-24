@@ -1,0 +1,119 @@
+/* Pacote "Tecnologia 3": Display vetorial, Mapa térmico e Glitch CRT.
+   A cor de destaque (--active) continua valendo. Poucas animações por tema (agrupadas),
+   todas a 15 quadros/s alinhados (passos múltiplos de 1/15 s), como nos outros temas. */
+
+.vector, .thermal, .crt, .crt-front { pointer-events: none; }
+
+/* ======================================================================
+   Display vetorial — traço fino e brilhante, fundo preto, estrelas paradas.
+   ====================================================================== */
+.vector-void { fill: #000; opacity: 0.95; }
+.vector-stars circle { fill: #cfffff; opacity: 0.55; }
+.vector-line { fill: none; stroke: var(--active); stroke-width: 1.3; stroke-linejoin: round; }
+.vector-line--dim { opacity: 0.35; }
+.vector-glow { fill: none; stroke: color-mix(in srgb, var(--active) 22%, transparent); stroke-width: 6; stroke-linejoin: round; }
+/* Uma volta a cada 72 s, 15 quadros/s (72 × 15 = 1080 passos). */
+.vector-spin { transform-box: view-box; transform-origin: 450px 450px; animation: holo-spin 72s steps(1080) infinite; }
+
+.theme-vector { --font-vector: "Bahnschrift", "Segoe UI", sans-serif; }
+.theme-vector .slice-label { font-family: var(--font-vector); font-weight: 400; letter-spacing: 0.14em; fill: color-mix(in srgb, var(--active) 70%, #fff); }
+.theme-vector .ring-backing { fill: #000; fill-opacity: 0.97; }
+.theme-vector .main-slice .slice-shape { fill: #000; stroke: color-mix(in srgb, var(--active) 60%, transparent); stroke-width: 1.2; }
+.theme-vector .main-slice .slice-icon, .theme-vector .sub-slice .slice-icon { color: color-mix(in srgb, var(--active) 75%, #fff); }
+.theme-vector .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 12%, #000); stroke: var(--active); stroke-width: 2; }
+.theme-vector .main-slice.is-active .slice-icon { color: #fff; }
+.theme-vector .main-slice.is-active .slice-label { fill: #fff; }
+.theme-vector .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 34%, transparent); }
+.theme-vector .sub-slice .slice-shape { fill: #000; }
+.theme-vector .hub-disc { fill: #000; stroke: var(--active); stroke-opacity: 0.8; }
+.theme-vector .hub-well { fill: #000; stroke: color-mix(in srgb, var(--active) 30%, transparent); }
+.theme-vector .hub-time, .theme-vector .hub-cpu { font-family: var(--font-vector); font-weight: 300; }
+.theme-vector .hub-time, .theme-vector .hub-np-title { fill: #f2ffff; }
+.theme-vector .hub-date, .theme-vector .hub-pill-text, .theme-vector .hub-np-artist { fill: color-mix(in srgb, var(--active) 55%, #8aa); }
+.theme-vector .hub-cpu { fill: var(--active); }
+.theme-vector .hub-gauge { stroke: var(--active); stroke-width: 3; stroke-linecap: butt; }
+.theme-vector .hub-track { stroke: color-mix(in srgb, var(--active) 15%, transparent); stroke-width: 3; }
+
+/* ======================================================================
+   Mapa térmico — fundo frio, manchas quentes, fatia ativa em brasa.
+   ====================================================================== */
+.thermal-field { fill: #10052e; opacity: 0.95; }
+.thermal-l0 { opacity: 0.55; }
+.thermal-l1 { opacity: 0.4; }
+.thermal-l2 { opacity: 0.32; }
+/* O calor "respira": 6 s em 2 trechos de 3 s; steps(9) por trecho = troca a cada 1/3 s (5 quadros a 15/s). */
+.thermal-heat { animation: thermal-breathe 6s steps(9) infinite; }
+@keyframes thermal-breathe { 0%, 100% { opacity: 0.75; } 50% { opacity: 1; } }
+.thermal-reticle { fill: none; stroke: rgba(255, 255, 255, 0.55); stroke-width: 1.5; }
+.thermal-bar { opacity: 0.9; }
+.thermal-temp { font-family: "Cascadia Mono", "Consolas", monospace; font-size: 10px; fill: rgba(255, 255, 255, 0.75); }
+
+.theme-thermal .slice-label { fill: #e9dcff; letter-spacing: 0.04em; }
+.theme-thermal .ring-backing { fill: #0b0322; fill-opacity: 0.96; }
+.theme-thermal .main-slice .slice-shape { fill: url(#thermal-cold); stroke: rgba(150, 110, 255, 0.35); stroke-width: 1.2; }
+.theme-thermal .main-slice .slice-icon, .theme-thermal .sub-slice .slice-icon { color: #d9c8ff; }
+/* A fatia "quente": degradê laranja → branco; texto escuro para ler sobre o amarelo. */
+.theme-thermal .main-slice.is-active .slice-shape { fill: url(#thermal-hot); stroke: #fff4c2; stroke-width: 2; }
+.theme-thermal .main-slice.is-active .slice-icon { color: #2a0800; }
+.theme-thermal .main-slice.is-active .slice-label { fill: #2a0800; }
+.theme-thermal .main-slice .slice-halo { stroke: rgba(255, 174, 0, 0.35); }
+.theme-thermal .sub-slice .slice-shape { fill: #1a0a4a; }
+.theme-thermal .sub-slice.is-active .slice-shape { fill: color-mix(in srgb, #ffae00 30%, #1a0a4a); }
+.theme-thermal .hub-disc { fill: #1a0a4a; stroke: #ffae00; stroke-opacity: 0.55; }
+.theme-thermal .hub-well { fill: #0b0322; stroke: rgba(255, 106, 0, 0.25); }
+.theme-thermal .hub-time, .theme-thermal .hub-np-title { fill: #fff4e0; }
+.theme-thermal .hub-date, .theme-thermal .hub-pill-text, .theme-thermal .hub-np-artist { fill: #b49ad8; }
+.theme-thermal .hub-cpu { fill: #ffae00; }
+.theme-thermal .hub-gauge { stroke: #ff6a00; }
+.theme-thermal .hub-track { stroke: rgba(150, 110, 255, 0.16); }
+
+/* ======================================================================
+   Glitch CRT — tubo com varredura, vinheta, aberração cromática e falhas.
+   ====================================================================== */
+.crt-glass { fill: #070b0a; opacity: 0.95; }
+.crt-scanline { fill: rgba(0, 0, 0, 0.45); }
+.crt-split { fill: none; stroke-width: 1.4; opacity: 0.55; }
+.crt-split--r { stroke: #ff2a4d; }
+.crt-split--c { stroke: #2af0ff; }
+.crt-bezel { fill: none; stroke: #161a19; stroke-width: 12; }
+/* Faixa clara descendo: 6 s, 90 passos (15 quadros/s). */
+.crt-roll { fill: rgba(200, 255, 240, 0.05); transform-box: view-box; animation: crt-roll 6s steps(90) infinite; }
+@keyframes crt-roll { from { transform: translateY(0); } to { transform: translateY(830px); } }
+/* Falhas: invisíveis quase sempre; dois "estalos" curtos a cada 5 s (steps(1) = sem interpolar).
+   Instantes em quadros inteiros: 1 quadro (1/15 s) = 1,333% de 5 s. */
+.crt-glitch { opacity: 0; animation: crt-glitch 5s steps(1) infinite; }
+@keyframes crt-glitch {
+  0%, 64%, 86.667%, 100% { opacity: 0; transform: translateX(0); }
+  61.333% { opacity: 1; transform: translateX(-10px); }
+  62.667% { opacity: 0.7; transform: translateX(14px); }
+  85.333% { opacity: 0.9; transform: translateX(8px); }
+}
+.crt-glitch-r { fill: rgba(255, 42, 77, 0.35); }
+.crt-glitch-c { fill: rgba(42, 240, 255, 0.3); }
+/* Varredura também por cima do anel (estática: pinta uma vez). */
+.crt-front-scan { opacity: 0.35; }
+
+.theme-crt { --font-crt: "Cascadia Mono", "Consolas", monospace; }
+.theme-crt .slice-label { font-family: var(--font-crt); font-weight: 600; letter-spacing: 0.06em; fill: #e8fff8; paint-order: stroke; stroke: rgba(255, 42, 77, 0.35); stroke-width: 1.2; }
+.theme-crt .ring-backing { fill: #050807; fill-opacity: 0.97; }
+.theme-crt .main-slice .slice-shape { fill: #0c1412; stroke: rgba(42, 240, 255, 0.28); stroke-width: 1.2; }
+.theme-crt .main-slice .slice-icon, .theme-crt .sub-slice .slice-icon { color: #d8fff4; }
+.theme-crt .main-slice.is-active .slice-shape { fill: color-mix(in srgb, var(--active) 22%, #0c1412); stroke: var(--active); stroke-width: 2; }
+.theme-crt .main-slice.is-active .slice-icon { color: #fff; }
+.theme-crt .main-slice.is-active .slice-label { fill: #fff; }
+.theme-crt .main-slice .slice-halo { stroke: color-mix(in srgb, var(--active) 32%, transparent); }
+.theme-crt .sub-slice .slice-shape { fill: #0c1412; }
+.theme-crt .hub-disc { fill: #0c1412; stroke: #2af0ff; stroke-opacity: 0.45; }
+.theme-crt .hub-well { fill: #050807; stroke: rgba(255, 42, 77, 0.25); }
+.theme-crt .hub-time, .theme-crt .hub-cpu, .theme-crt .hub-date { font-family: var(--font-crt); }
+.theme-crt .hub-time, .theme-crt .hub-np-title { fill: #f0fffa; }
+.theme-crt .hub-date, .theme-crt .hub-pill-text, .theme-crt .hub-np-artist { fill: #7fb8ad; }
+.theme-crt .hub-cpu { fill: var(--active); }
+.theme-crt .hub-gauge { stroke: var(--active); stroke-linecap: butt; }
+.theme-crt .hub-track { stroke: rgba(42, 240, 255, 0.14); stroke-linecap: butt; }
+
+@media (prefers-reduced-motion: reduce) {
+  .vector-spin, .thermal-heat, .crt-roll, .crt-glitch { animation: none; }
+}
+/* Miniatura: sem falhas nem faixa (as animações já ficam paradas). */
+.is-thumb .crt-glitch, .is-thumb .crt-roll { display: none; }

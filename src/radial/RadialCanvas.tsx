@@ -8,6 +8,7 @@ import { CyberBack, NeonBack, SteamBack, SteamFront } from "./ThemeLayers2";
 import { AuroraBack, MagmaBack, OceanBack, PaperBack, PixelBack, SakuraBack } from "./ThemeLayers3";
 import { BlueprintBack, CircuitBack, DatacenterBack, NeuralBack, QuantumBack, RadarBack } from "./ThemeLayers4";
 import { FiberBack, NixieBack, ScopeBack } from "./ThemeLayers5";
+import { CrtBack, CrtFront, ThermalBack, VectorBack } from "./ThemeLayers6";
 import { THEMES, type Theme } from "../shared/types";
 import { findCustom, themeVars } from "../shared/customTheme";
 import type { CSSProperties } from "react";
@@ -132,6 +133,12 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
         <FiberBack />
       ) : theme === "nixie" ? (
         <NixieBack />
+      ) : theme === "vector" ? (
+        <VectorBack />
+      ) : theme === "thermal" ? (
+        <ThermalBack />
+      ) : theme === "crt" ? (
+        <CrtBack />
       ) : theme === "fluent" || theme === "minimal" ? (
         // Fluent Claro e Minimalista: sem decoração atrás do anel (só a sombra suave do Fluent).
         theme === "fluent" ? <circle cx={C} cy={C} r={LAYOUT.mainOuter + 14} className="fluent-shadow" /> : null
@@ -194,6 +201,7 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
       {theme === "reactor" && <ReactorFront />}
       {theme === "terminal" && <TerminalFront />}
       {theme === "steam" && <SteamFront />}
+      {theme === "crt" && <CrtFront />}
     </svg>
   );
 }
