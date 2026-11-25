@@ -1,5 +1,5 @@
 import { cleanup, render } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { defaultConfig } from "../shared/defaults";
 import { setLang, t, type Key } from "../shared/i18n";
 import { THEMES, THEME_ACCENT, type Theme } from "../shared/types";
@@ -80,12 +80,20 @@ describe("pacote Tecnologia 2 (v0.32.0)", () => {
   });
 
   it("desenho determinístico (igual a cada abertura)", () => {
-    for (const th of TECH2) {
-      const a = draw(th).container.innerHTML;
-      cleanup();
-      const b = draw(th).container.innerHTML;
-      cleanup();
-      expect(a === b, th).toBe(true);
+    // Hora congelada: o relógio do centro mostra HH:MM, e o minuto virar entre os dois
+    // desenhos mudava o HTML (teste instável sob carga). O que se testa é o tema.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 0, 1, 12, 0, 30));
+    try {
+      for (const th of TECH2) {
+        const a = draw(th).container.innerHTML;
+        cleanup();
+        const b = draw(th).container.innerHTML;
+        cleanup();
+        expect(a === b, th).toBe(true);
+      }
+    } finally {
+      vi.useRealTimers();
     }
   });
 });

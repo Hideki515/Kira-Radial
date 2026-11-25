@@ -1,5 +1,5 @@
 import { cleanup, render } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { defaultConfig } from "../shared/defaults";
 import { THEMES, THEME_ACCENT, type Theme } from "../shared/types";
 import { RadialCanvas } from "./RadialCanvas";
@@ -61,12 +61,20 @@ describe("temas tecnológicos (v0.24.0)", () => {
   });
 
   it("desenho determinístico (igual a cada abertura)", () => {
-    for (const t of TECH) {
-      const a = draw(t).container.innerHTML;
-      cleanup();
-      const b = draw(t).container.innerHTML;
-      cleanup();
-      expect(a === b, t).toBe(true);
+    // Hora congelada: o relógio do centro mostra HH:MM, e o minuto virar entre os dois
+    // desenhos mudava o HTML (teste instável sob carga). O que se testa é o tema.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 0, 1, 12, 0, 30));
+    try {
+      for (const t of TECH) {
+        const a = draw(t).container.innerHTML;
+        cleanup();
+        const b = draw(t).container.innerHTML;
+        cleanup();
+        expect(a === b, t).toBe(true);
+      }
+    } finally {
+      vi.useRealTimers();
     }
   });
 });
