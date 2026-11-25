@@ -12,6 +12,7 @@ import "../styles/themes4.css";
 import "../styles/themes5.css";
 import "../styles/themes6.css";
 import "../styles/themes7.css";
+import "../styles/themes8.css";
 import "../styles/settings.css";
 import "../styles/orb.css";
 

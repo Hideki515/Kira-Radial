@@ -10,6 +10,7 @@ import { BlueprintBack, CircuitBack, DatacenterBack, NeuralBack, QuantumBack, Ra
 import { FiberBack, NixieBack, ScopeBack } from "./ThemeLayers5";
 import { CrtBack, CrtFront, ThermalBack, VectorBack } from "./ThemeLayers6";
 import { LidarBack, RainBack, VuBack } from "./ThemeLayers7";
+import { PlasmaBack, SatelliteBack, SiliconBack } from "./ThemeLayers8";
 import { THEMES, type Theme } from "../shared/types";
 import { findCustom, themeVars } from "../shared/customTheme";
 import type { CSSProperties } from "react";
@@ -146,6 +147,13 @@ export function RadialCanvas({ items, activeMain, activeSub, openMain, hubHovere
         <LidarBack />
       ) : theme === "vu" ? (
         <VuBack />
+      ) : theme === "silicon" ? (
+        <SiliconBack />
+      ) : theme === "plasma" ? (
+        // O raio aponta para a fatia escolhida (segue o mouse/teclado sem animação própria).
+        <PlasmaBack angle={activeMain !== null && items.length ? sliceAngle(activeMain, items.length) : null} />
+      ) : theme === "satellite" ? (
+        <SatelliteBack />
       ) : theme === "fluent" || theme === "minimal" ? (
         // Fluent Claro e Minimalista: sem decoração atrás do anel (só a sombra suave do Fluent).
         theme === "fluent" ? <circle cx={C} cy={C} r={LAYOUT.mainOuter + 14} className="fluent-shadow" /> : null

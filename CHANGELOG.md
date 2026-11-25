@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.44.0
+
+- **3 temas novos na seção Tecnologia** (Aparência → Tema), completando o pacote:
+  - **Silício:** um chip ampliado, com blocos de trilhas microscópicas, pads dourados na borda e um reflexo iridescente. É totalmente parado e não gasta CPU com animação;
+  - **Plasma:** uma esfera de plasma com o núcleo brilhando nas frestas entre as fatias e filamentos tremendo em volta. Um raio forte aponta para a fatia escolhida e acompanha o mouse e o teclado;
+  - **Satélite:** a Terra vista de cima, em grade, com satélites girando em três órbitas de velocidades diferentes.
+- **Mapa Térmico:** as manchas de calor não vazam mais um brilho fraco para fora do campo.
+
 ## 0.43.0
 
 - **3 temas novos na seção Tecnologia** (Aparência → Tema):

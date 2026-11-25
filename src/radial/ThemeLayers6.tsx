@@ -87,6 +87,9 @@ export function ThermalBack() {
             <stop offset="1" stopColor={c} stopOpacity="0" />
           </radialGradient>
         ))}
+        <clipPath id="thermal-clip">
+          <circle cx={C} cy={C} r={R} />
+        </clipPath>
         <linearGradient id="thermal-scale" x1="0" y1="1" x2="0" y2="0">
           <stop offset="0" stopColor="#1b0a5c" />
           <stop offset="0.35" stopColor="#a1127a" />
@@ -96,11 +99,14 @@ export function ThermalBack() {
         </linearGradient>
       </defs>
       <circle cx={C} cy={C} r={R} className="thermal-field" />
-      {/* Manchas de calor: círculos com degradê (mesma cor, transparente na borda), por nível. */}
+      {/* Manchas de calor: círculos com degradê (mesma cor, transparente na borda), por nível.
+          Recortadas pelo campo: sem brilho vazando para a área de trabalho. */}
+      <g clipPath="url(#thermal-clip)">
       <g className="thermal-heat">
         {HEAT.map((h, i) => (
           <circle key={i} cx={f(h.x)} cy={f(h.y)} r={f(h.r)} fill={`url(#thermal-blob-${h.level})`} className={`thermal-l${h.level}`} />
         ))}
+      </g>
       </g>
       {/* Retícula da câmera e régua de temperatura. */}
       <path d={`M${C - R + 18} ${C}h26M${C + R - 44} ${C}h26M${C} ${C - R + 18}v26M${C} ${C + R - 44}v26`} className="thermal-reticle" />
