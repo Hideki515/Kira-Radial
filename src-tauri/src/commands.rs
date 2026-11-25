@@ -58,6 +58,9 @@ pub fn save_config(app: AppHandle, state: State<'_, AppState>, mut config: Confi
     crate::icons::prune(&config);
     *state.config.lock_ok() = config.clone();
     crate::orb::apply(&app, &config);
+    if old.gamepad != config.gamepad {
+        crate::gamepad::apply(&app, &config);
+    }
     let _ = app.emit("config:changed", config);
     Ok(())
 }
@@ -392,6 +395,12 @@ pub fn set_hotkey_paused(app: AppHandle, paused: bool) {
 #[tauri::command]
 pub fn hotkeys_error() -> Option<String> {
     crate::hotkeys::error()
+}
+
+/// Há controle de videogame conectado (só se sabe com a leitura ligada).
+#[tauri::command]
+pub fn gamepad_connected() -> bool {
+    crate::gamepad::connected()
 }
 
 /// Erro ao registrar as teclas do knob (None = registradas ou desligado).

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.45.0
+
+- **Controle de videogame** (Geral → Controle de videogame): dá para usar um controle de Xbox, ou compatível com XInput, para abrir e navegar no menu.
+  - **Abrir e fechar:** segure a combinação escolhida por meio segundo. As opções são LB + RB (padrão), View ou View + Menu. Escolha uma que seus jogos não usem.
+  - **No menu:** o analógico esquerdo aponta a fatia, A escolhe (ou abre o submenu), B volta ou fecha e o direcional passa de uma em uma. A confirmação de desligar/reiniciar também funciona com A e B.
+  - **Desligado por padrão:** a Kira só lê o controle de quem ligar a opção. Ligado, lê 10 vezes por segundo com o menu fechado e 30 vezes com ele aberto, com consumo mínimo. Controles desconectados são procurados só a cada 2 s.
+  - As Configurações mostram se há controle conectado.
+
 ## 0.44.0
 
 - **3 temas novos na seção Tecnologia** (Aparência → Tema), completando o pacote:

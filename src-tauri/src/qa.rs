@@ -87,6 +87,12 @@ pub mod commands {
         Ok(())
     }
 
+    /// Simula uma leitura do controle (botões XInput, analógico e horário em ms) sem controle real.
+    #[tauri::command]
+    pub fn qa_gamepad(app: AppHandle, buttons: u16, lx: i16, ly: i16, at_ms: u64) {
+        crate::gamepad::feed(&app, crate::gamepad::Pad { buttons, lx, ly }, at_ms);
+    }
+
     #[tauri::command]
     pub fn qa_open_settings(app: AppHandle) {
         menu::open_settings(&app);

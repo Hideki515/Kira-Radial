@@ -9,6 +9,7 @@ export const enShared: Record<keyof typeof ptShared, string> = {
   "v.knob.left": "turn left",
   "v.knob.badKey": "Knob: invalid key for \"{what}\".",
   "v.knob.dupKey": "Knob: the key {combo} is used for both \"{a}\" and \"{b}\".",
+  "v.padCombo": "Controller: unknown combination to open the menu.",
   "v.knob.menuKey": "Knob: {combo} is already the shortcut that opens the menu.",
   "v.hk.menu": "the menu shortcut",
   "v.hk.knob": "the knob keys",

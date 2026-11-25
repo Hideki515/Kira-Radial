@@ -3,7 +3,7 @@ import { t } from "./i18n";
 import { DISCORD_LABEL } from "./describe";
 import { formatCombo, parseCombo } from "./keys";
 import { hasCriteria, whenErrors } from "./schedule";
-import { OBS_CMDS, TEXT_MAX_CHARS, LAYOUT_MAX_WINDOWS, DYNAMIC_KINDS, LAUNCHER_MODES, LIMITS, ORB_ANIMATIONS, ORB_LIMITS, SCALE_LIMITS, THEMES, DANGEROUS_SYSTEM, SEQUENCE_LIMITS, knobOf, wantsHotkey, type Action, type Theme, type Config, type MenuItem } from "./types";
+import { PAD_COMBOS, OBS_CMDS, TEXT_MAX_CHARS, LAYOUT_MAX_WINDOWS, DYNAMIC_KINDS, LAUNCHER_MODES, LIMITS, ORB_ANIMATIONS, ORB_LIMITS, SCALE_LIMITS, THEMES, DANGEROUS_SYSTEM, SEQUENCE_LIMITS, knobOf, wantsHotkey, type Action, type Theme, type Config, type MenuItem } from "./types";
 
 /** Teclas do knob: válidas, diferentes entre si e do atalho do menu. */
 export function knobErrors(c: Config): string[] {
@@ -68,6 +68,7 @@ export function itemHotkeyErrors(c: Config): string[] {
 /** Valida a configuração inteira. Retorna mensagens legíveis; lista vazia = válida. */
 export function validateConfig(c: Config): string[] {
   const errors: string[] = [...knobErrors(c), ...itemHotkeyErrors(c)];
+  if (c.gamepad && !PAD_COMBOS.includes(c.gamepad.combo)) errors.push(t("v.padCombo"));
   const mode = c.launcher?.mode ?? "hotkey";
   if (!LAUNCHER_MODES.includes(mode)) errors.push(t("v.launcherMode", { mode }));
   // No modo "só ícone" o atalho fica desligado: não bloqueia salvar.

@@ -15,6 +15,7 @@ import { useLabelPrewarm } from "./labelLayout";
 import type { MenuControls, MenuState, Point } from "./menuControls";
 import { useConfirm } from "./useConfirm";
 import { useKnobInput } from "./useKnobInput";
+import { useGamepadInput } from "./useGamepadInput";
 import { useMenuInput } from "./useMenuInput";
 import { applyLangSetting, t, useLang } from "../shared/i18n";
 import { asSlices, buildIndex, search } from "./search";
@@ -267,6 +268,7 @@ function RadialMenu({ config }: { config: Config }) {
   };
   useMenuInput(controls);
   useKnobInput(controls);
+  useGamepadInput(controls);
 
   const px = LAYOUT.size * scale;
   const style = {

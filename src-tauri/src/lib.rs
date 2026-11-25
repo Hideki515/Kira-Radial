@@ -17,6 +17,7 @@ mod hotkeys;
 mod icons;
 mod keycapture;
 mod knob;
+mod gamepad;
 mod layout;
 mod lock;
 mod menu;
@@ -60,7 +61,7 @@ macro_rules! handlers {
 #[cfg(feature = "qa")]
 macro_rules! handlers {
     ($($cmd:path),* $(,)?) => {
-        tauri::generate_handler![$($cmd,)* qa::commands::qa_show_menu, qa::commands::qa_open_settings, qa::commands::qa_close_settings, qa::commands::qa_state, qa::commands::qa_knob, shot::qa_fake_shot, hotkeys::qa_hotkey, updater::qa_fake_update, keycapture::qa_key_capture]
+        tauri::generate_handler![$($cmd,)* qa::commands::qa_show_menu, qa::commands::qa_open_settings, qa::commands::qa_close_settings, qa::commands::qa_state, qa::commands::qa_knob, qa::commands::qa_gamepad, shot::qa_fake_shot, hotkeys::qa_hotkey, updater::qa_fake_update, keycapture::qa_key_capture]
     };
 }
 
@@ -112,6 +113,7 @@ pub fn run() {
             if let Err(e) = hotkeys::apply(&handle, &cfg) {
                 perf::log_level(perf::Level::Warn, "rust", &format!("atalhos de fatia: {e}"));
             }
+            gamepad::apply(&handle, &cfg);
 
             // Mantém o registro do Windows coerente com a configuração.
             if !qa::ENABLED && handle.autolaunch().is_enabled().unwrap_or(false) != cfg.behavior.autostart {
@@ -190,6 +192,7 @@ pub fn run() {
             commands::discord_connect,
             commands::discord_disconnect,
             commands::knob_error,
+            commands::gamepad_connected,
             commands::hotkeys_error,
             updater::update_check,
             updater::update_status,

@@ -24,6 +24,9 @@ pub struct Config {
     /// Controle dedicado (knob de teclado macro). Ausente/inválido = desligado.
     #[serde(default, deserialize_with = "lenient_knob")]
     pub knob: Knob,
+    /// Controle de videogame (XInput). Ausente/inválido = desligado.
+    #[serde(default, deserialize_with = "lenient_gamepad")]
+    pub gamepad: Gamepad,
     /// Preview das capturas tiradas pela Kira. Ausente/inválido = padrão (ligado).
     #[serde(default, deserialize_with = "lenient_screenshot")]
     pub screenshot: Screenshot,
@@ -55,6 +58,28 @@ impl Default for Knob {
     fn default() -> Self {
         Knob { enabled: false, press: "F13".into(), right: "F14".into(), left: "F15".into(), closed_turn: ClosedTurn::Ignore }
     }
+}
+
+/// Combinação de botões do controle que abre (e fecha) o menu.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum PadCombo {
+    #[default]
+    LbRb,
+    View,
+    ViewStart,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase", default)]
+pub struct Gamepad {
+    pub enabled: bool,
+    pub combo: PadCombo,
+}
+
+fn lenient_gamepad<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Gamepad, D::Error> {
+    let v = Value::deserialize(d)?;
+    Ok(serde_json::from_value(v).unwrap_or_default())
 }
 
 /// Canto da tela onde o preview do print aparece.
@@ -605,6 +630,20 @@ mod knob_config_tests {
         assert!(orb_hidden_after_mode_change(Orb, Orb, true));
         assert!(orb_hidden_after_mode_change(Orb, Hotkey, true));
         assert!(!orb_hidden_after_mode_change(Hotkey, Orb, false));
+    }
+
+    #[test]
+    fn controle_ausente_ou_quebrado_vira_desligado() {
+        let mut v = serde_json::to_value(Config::default_config()).unwrap();
+        v.as_object_mut().unwrap().remove("gamepad");
+        let c: Config = serde_json::from_value(v.clone()).unwrap();
+        assert_eq!(c.gamepad, Gamepad::default());
+        assert!(!c.gamepad.enabled);
+        v["gamepad"] = serde_json::json!({ "enabled": "sim" });
+        assert!(!serde_json::from_value::<Config>(v.clone()).unwrap().gamepad.enabled);
+        v["gamepad"] = serde_json::json!({ "enabled": true, "combo": "viewStart" });
+        let c: Config = serde_json::from_value(v).unwrap();
+        assert_eq!((c.gamepad.enabled, c.gamepad.combo), (true, PadCombo::ViewStart));
     }
 
     #[test]

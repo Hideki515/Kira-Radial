@@ -12,6 +12,7 @@ import { ThemeEditor, addCustomTheme } from "./ThemeEditor";
 import { MAX_CUSTOM_THEMES, customRef, isCustomRef } from "../../shared/customTheme";
 import { BackupHistory } from "./BackupHistory";
 import { KnobSection } from "./KnobSection";
+import { GamepadSection } from "./GamepadSection";
 import { ScreenshotSection } from "./ScreenshotSection";
 import { UpdatesSection } from "./UpdatesSection";
 import { clipboardClear } from "../../shared/ipc";
@@ -137,6 +138,7 @@ export function HotkeyPage({ config, update }: PageProps) {
     </Section>
     )}
     <KnobSection config={config} update={update} />
+    <GamepadSection config={config} update={update} />
     </>
   );
 }

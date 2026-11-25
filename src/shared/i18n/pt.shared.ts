@@ -7,6 +7,7 @@ export const ptShared = {
   "v.knob.left": "girar para a esquerda",
   "v.knob.badKey": "Knob: tecla de \"{what}\" inválida.",
   "v.knob.dupKey": "Knob: a tecla {combo} está em \"{a}\" e em \"{b}\".",
+  "v.padCombo": "Controle: combinação para abrir o menu desconhecida.",
   "v.knob.menuKey": "Knob: {combo} já é o atalho que abre o menu.",
   "v.hk.menu": "o atalho do menu",
   "v.hk.knob": "as teclas do knob",

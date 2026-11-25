@@ -126,6 +126,11 @@ export async function getHotkeysError(): Promise<string | null> {
 }
 
 /** Erro ao registrar as teclas do knob (controle dedicado), ou null. */
+/** Há controle de videogame conectado (só com a leitura ligada). */
+export async function gamepadConnected(): Promise<boolean> {
+  return isTauri() ? invoke<boolean>("gamepad_connected") : false;
+}
+
 export async function getKnobError(): Promise<string | null> {
   return isTauri() ? invoke<string | null>("knob_error") : null;
 }

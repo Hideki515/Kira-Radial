@@ -197,6 +197,19 @@ export function screenshotOf(c: Pick<Config, "screenshot">): ScreenshotConfig {
 
 export const DEFAULT_KNOB: KnobConfig = { enabled: false, press: "F13", right: "F14", left: "F15", closedTurn: "none" };
 
+export type PadCombo = "lbRb" | "view" | "viewStart";
+export const PAD_COMBOS: readonly PadCombo[] = ["lbRb", "view", "viewStart"];
+/** Controle de videogame (XInput). Desligado por padrão: só lê o controle quem liga. */
+export interface GamepadConfig {
+  enabled: boolean;
+  /** Combinação (segurada ~0,4 s) que abre e fecha o menu. */
+  combo: PadCombo;
+}
+export const DEFAULT_GAMEPAD: GamepadConfig = { enabled: false, combo: "lbRb" };
+export function gamepadOf(c: Pick<Config, "gamepad">): GamepadConfig {
+  return { ...DEFAULT_GAMEPAD, ...(c.gamepad ?? {}) };
+}
+
 /** Knob da config, com o padrão para o que faltar (configs antigas não têm). */
 export function knobOf(c: Pick<Config, "knob">): KnobConfig {
   return { ...DEFAULT_KNOB, ...(c.knob ?? {}) };
@@ -206,6 +219,8 @@ export interface Config {
   version: 1;
   /** Ausente em configs antigas (= desligado). */
   knob?: KnobConfig;
+  /** Ausente em configs antigas (= desligado). */
+  gamepad?: GamepadConfig;
   /** Ausente em configs antigas (= padrão: ligado). */
   screenshot?: ScreenshotConfig;
   hotkey: { accelerator: string; mode: "toggle" | "hold" };
