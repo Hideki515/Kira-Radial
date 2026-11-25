@@ -10,7 +10,20 @@ Menu radial para Windows — Tauri 2 + Rust (`src-tauri/`) + React 18/TS + Vite 
 - **E2E** (WebDriver na Kira de teste; só DOM, sem mouse/teclado do Windows): `npm run e2e` (build QA + testes) ou `npm run e2e:run` (só testes). Requer `cargo install tauri-driver`; o msedgedriver certo é baixado por `scripts/get-edgedriver.ps1` para `tools/`.
 
 ## Regra de validação
-Após **todo** ajuste ou melhoria, chame o agente `qa-ab-tester` (`.claude/agents/qa-ab-tester.md`) informando o que mudou e **aguarde o veredito** (APROVADO/REPROVADO) antes de considerar a tarefa concluída. Se REPROVADO, corrija e rode de novo. Linha de base e relatórios ficam em `.claude/qa/`.
+Após **todo** ajuste ou melhoria, o QA roda **em paralelo, dividido em 3 agentes**, e a tarefa só termina quando **todos os chamados derem APROVADO**. Se algum der REPROVADO, corrija e rode de novo só as partes afetadas.
+1. Antes de chamar os agentes, gere o front uma vez: `npm run build`. Os agentes não regeram o `dist/`.
+2. Chame **na mesma mensagem**, em segundo plano, dizendo a cada um o que mudou:
+   - `qa-front` (`.claude/agents/qa-front.md`): tsc, Vitest, cobertura, `dist/` e revisão do front.
+   - `qa-rust` (`.claude/agents/qa-rust.md`): cargo test, clippy normal e qa, build release e revisão do Rust.
+   - `qa-app` (`.claude/agents/qa-app.md`): Kira de teste (smoke, perf:idle, E2E) e as verificações A×B da mudança. Usa o exe A guardado em `.claude/qa/exes/`, sem recompilar a versão anterior.
+3. **QA proporcional:**
+   - mudança só no front (TS/CSS): `qa-front` + `qa-app`;
+   - só no Rust: `qa-rust` + `qa-app`;
+   - nos dois, em dependências ou na versão: os 3;
+   - **antes de atualizar a Kira instalada ou de lançar versão:** os 3, sempre.
+4. `qa-ab-tester` (`.claude/agents/qa-ab-tester.md`) continua disponível como QA completo num agente só, caso a divisão dê problema.
+
+Linhas de base (`baseline-front/rust/app.json`), relatórios e exes A ficam em `.claude/qa/`. Se o Windows SDK estiver sem `dbghelp.lib` (`LNK1181`), os builds usam `LIB=tools\libfix;%LIB%` só no processo; o conserto definitivo é reparar o SDK pelo Visual Studio Installer.
 
 ## Atualizar a cópia instalada
 O **usuário atualiza por conta própria** — não rode o script nem feche/reinstale o Kira instalado sem pedido explícito. Após QA APROVADO, apenas avise que há versão nova. Ferramenta disponível: `pwsh -File scripts/update-installed.ps1` (gera o instalador NSIS, fecha o Kira aberto, instala com `/S` e reabre).

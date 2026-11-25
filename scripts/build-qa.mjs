@@ -2,13 +2,18 @@
 // Gera a "Kira de teste" (QA): identifier e pasta de dados próprios, janelas fora da tela,
 // sem atalho/bandeja/autostart e com comandos de automação qa_*. Não interfere na Kira instalada.
 // Saída: src-tauri/target-qa/release/kira-radial.exe
-// Uso: node scripts/build-qa.mjs
+// Uso: node scripts/build-qa.mjs            (gera o front e a Kira de teste)
+//      node scripts/build-qa.mjs --no-front (usa o dist/ já gerado: QA em paralelo, onde o
+//                                            front é gerado uma vez antes de começar)
 import { execSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const env = { ...process.env, CARGO_TARGET_DIR: join(root, "src-tauri", "target-qa") };
+const noFront = process.argv.includes("--no-front");
+// Sem o beforeBuildCommand, o tauri não regera o dist/ (outro agente pode estar lendo).
+const skip = noFront ? " --config src-tauri/tauri.nofront.conf.json" : "";
 // Comando fixo numa linha só (lista de argumentos + shell gera o aviso DEP0190 do Node).
-execSync("npx tauri build --no-bundle --features qa --config src-tauri/tauri.qa.conf.json", { cwd: root, env, stdio: "inherit" });
+execSync(`npx tauri build --no-bundle --features qa --config src-tauri/tauri.qa.conf.json${skip}`, { cwd: root, env, stdio: "inherit" });
 console.log("\nKira de teste: src-tauri/target-qa/release/kira-radial.exe  (dados em %APPDATA%\\Kira-Radial-QA)");
