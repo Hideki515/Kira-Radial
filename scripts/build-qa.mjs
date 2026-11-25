@@ -10,7 +10,17 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const env = { ...process.env, CARGO_TARGET_DIR: join(root, "src-tauri", "target-qa") };
+const env = {
+  ...process.env,
+  CARGO_TARGET_DIR: join(root, "src-tauri", "target-qa"),
+  // Build de teste rápido: sem LTO, com várias unidades de compilação e incremental. Assim, a
+  // partir da 2ª vez, só o código da Kira é recompilado (~1–2 min em vez de ~7). O build final
+  // (instalador/release) continua com o perfil do Cargo.toml (LTO, 1 unidade) e é medido
+  // pelo qa-rust; a Kira de teste só precisa se comportar igual.
+  CARGO_PROFILE_RELEASE_LTO: "false",
+  CARGO_PROFILE_RELEASE_CODEGEN_UNITS: "16",
+  CARGO_PROFILE_RELEASE_INCREMENTAL: "true",
+};
 const noFront = process.argv.includes("--no-front");
 // Sem o beforeBuildCommand, o tauri não regera o dist/ (outro agente pode estar lendo).
 const skip = noFront ? " --config src-tauri/tauri.nofront.conf.json" : "";

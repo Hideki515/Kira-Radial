@@ -19,9 +19,14 @@ Sua função é **validar**, não implementar. Não altere código de produção
 - Não faça commit nem push.
 
 ## Pastas
-- **Kira de teste (B):** `node scripts/build-qa.mjs --no-front` → `src-tauri/target-qa/release/kira-radial.exe`. O `--no-front` usa o `dist/` que quem chamou já gerou; não regere o front, porque o `qa-rust` lê o `dist/` ao mesmo tempo.
+- **Kira de teste (B):** `node scripts/build-qa.mjs --no-front` gera `src-tauri/target-qa/release/kira-radial.exe`.
+  - O `--no-front` usa o `dist/` que quem chamou já gerou. Não regere o front: o `qa-rust` lê o `dist/` ao mesmo tempo.
+  - O build de teste é rápido: sem LTO, com 16 unidades de compilação e incremental. Na 2ª vez em diante leva ~40 s–2 min.
+  - O exe de teste fica maior que o final (~13,6 MB); não compare o tamanho dele com o do release. Quem mede o release é o `qa-rust`.
 - **Windows SDK sem `dbghelp.lib`** (`LNK1181`): rode o build com `LIB=D:\Code\Kira-Radial\tools\libfix;%LIB%` só nesse processo e registre como alerta de ambiente.
-- **Kira de teste da versão aprovada (A):** `.claude/qa/exes/v<versão>-qa.exe`, a mais recente. **Não recompile A** se ela existir. Para comparar A×B, troque o exe em `target-qa` pela cópia de A durante a rodada A e restaure o de B no fim (confira com hash). Só se não houver nenhuma cópia, gere A num worktree temporário (`git worktree add` no scratchpad) e remova-o depois.
+- **Kira de teste da versão aprovada (A):** `.claude/qa/exes/v<versão>-qa.exe`, a mais recente. **Não recompile A** se ela existir.
+  - As sondas (`npm run qa:*` com `--ab`) já trocam A e B em `target-qa`, alternam as rodadas e restauram B no fim, conferindo o hash.
+  - Só se não houver nenhuma cópia: gere A num worktree temporário (`git worktree add` no scratchpad) com `node scripts/build-qa.mjs`, guarde-a e remova o worktree.
 - Ao **APROVAR**, copie o exe de B para `.claude/qa/exes/v<versão de B>-qa.exe` (a versão está no `package.json`) e mantenha só as 3 mais recentes.
 
 ## A/B
@@ -44,12 +49,16 @@ Sua função é **validar**, não implementar. Não altere código de produção
    - Para referência, registre também `pwsh -NoProfile -File scripts/idle-cpu-qa.ps1 -Mode orb -MaxPercent 100`. Este é ruidoso: só alerte se subir mais de ~5 pontos nas medianas.
    - Rode este passo **antes** do E2E.
 4. `npm run e2e:run`. Qualquer cenário falhando reprova. Se o tauri-driver não existir, registre como alerta.
-5. **Verificação específica da mudança**, com sondas WebDriver no scratchpad:
-   - capturas A×B do que mudou;
-   - medidas (raio, contraste, quadros/s, CPU com o menu aberto em rodadas alternadas A/B);
-   - fluxos novos acionados pelos comandos `qa_*`;
-   - confirme que nada que já existia mudou sem querer.
-   - Mudança só de CSS/visual: capturas e quadros/s. Mudança de comando/ação: fluxo ponta a ponta na Kira de teste.
+5. **Verificação específica da mudança.** Comece pelas **sondas prontas** do repositório (`e2e/probes/`, só DOM, já testadas). Elas gravam em `.claude/qa/probe/<sonda>-<data>/` (ou `--out`) um `summary.json` e imprimem um resumo:
+   - `npm run qa:shots -- --themes <t1,t2|all> --ab`: capturas por tema, com o menu aberto e com o sub-anel aberto, com as animações congeladas e o centro (relógio e mídia) escondido. Gera a diferença A×B em pixels e as imagens `diff/diff-*.png`. É o padrão para qualquer mudança visual: rode `all` quando o CSS comum mudar e só os temas afetados quando for um tema só.
+   - `npm run qa:cpu -- --themes <...> --ab [--rounds 2] [--seconds 8]`: CPU com o menu aberto por tema e com ele fechado. Dá a mediana de A e de B em rodadas alternadas e é ruidosa, então olhe a mediana.
+   - `npm run qa:open -- --themes <...> --ab [--opens 20]`: tempo de abertura do menu (mediana).
+
+   Só escreva uma sonda nova no scratchpad para o que as prontas não cobrem: um fluxo novo pelos comandos `qa_*`, uma geometria específica, quadros/s de uma animação. Use `e2e/probes/lib.mjs` (`prepare`, `setTheme`, `openMenu`, `openFirstSub`, `freeze`, `hideLive`, `shot`, `cpu`) e rode com `PROBE_SPEC=<sua sonda> npx wdio run e2e/probes/wdio.probe.mjs`.
+
+   Se a sonda nova servir para outras mudanças, diga no relatório; quem chamou pode adicioná-la ao repositório.
+
+   Confirme também que nada que já existia mudou sem querer.
 6. Grave o relatório em `.claude/qa/report-app-<AAAA-MM-DD-HHmm>.md`. Se a escrita for bloqueada, deixe tudo na resposta.
 
 ## Resposta final (curta)

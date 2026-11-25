@@ -8,6 +8,7 @@ Menu radial para Windows — Tauri 2 + Rust (`src-tauri/`) + React 18/TS + Vite 
 - **Kira de teste** (QA, roda ao lado da instalada, janelas fora da tela, dados em `%APPDATA%\Kira-Radial-QA`): `npm run build:qa` → `src-tauri/target-qa/release/kira-radial.exe`; smoke: `pwsh -NoProfile -File scripts/smoke-qa.ps1`
 - **Consumo parado**: `npm run perf:idle` (Kira de teste com tudo escondido por 15 s; falha acima de 5% de um núcleo). `-Mode orb` mede só o ícone visível.
 - **E2E** (WebDriver na Kira de teste; só DOM, sem mouse/teclado do Windows): `npm run e2e` (build QA + testes) ou `npm run e2e:run` (só testes). Requer `cargo install tauri-driver`; o msedgedriver certo é baixado por `scripts/get-edgedriver.ps1` para `tools/`.
+- **Sondas do QA** (Kira de teste, só DOM; `--ab` compara com a Kira de teste guardada em `.claude/qa/exes/`): `npm run qa:shots -- --themes glass,rain|all --ab` (capturas + diferença em pixels; precisa de Python com Pillow), `npm run qa:cpu -- --themes ... --ab`, `npm run qa:open -- --ab`. Ficam em `e2e/probes/`, com o runner em `scripts/qa-probe.mjs`.
 
 ## Regra de validação
 Após **todo** ajuste ou melhoria, o QA roda **em paralelo, dividido em 3 agentes**, e a tarefa só termina quando **todos os chamados derem APROVADO**. Se algum der REPROVADO, corrija e rode de novo só as partes afetadas.
