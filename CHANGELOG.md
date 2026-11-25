@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.46.1
+
+- **Chuva de Código mais compacta:** a chuva agora vai só até a borda externa do sub-anel. Antes ela se estendia bem além dele e o tema parecia grande demais. A densidade continua a mesma: são 11 colunas no lugar de 13, num círculo menor.
+
 ## 0.46.0
 
 - **Sincronizar entre computadores** (Configurações → Backup): escolha uma pasta que você já sincroniza (OneDrive, Dropbox, Google Drive ou uma pasta de rede) e a Kira mantém a mesma configuração em todos os PCs que usarem essa pasta.

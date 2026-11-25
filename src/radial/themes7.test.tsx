@@ -4,7 +4,8 @@ import { defaultConfig } from "../shared/defaults";
 import { setLang, t, type Key } from "../shared/i18n";
 import { THEMES, THEME_ACCENT, THEME_GROUPS, type Theme } from "../shared/types";
 import { RadialCanvas } from "./RadialCanvas";
-import { RAIN_PERIOD } from "./ThemeLayers7";
+import { RAIN_PERIOD, RAIN_R } from "./ThemeLayers7";
+import { LAYOUT } from "./geometry";
 
 afterEach(cleanup);
 
@@ -76,7 +77,11 @@ describe("pacote Tecnologia 4 (v0.43.0)", () => {
   it("Chuva: colunas periódicas (descer um período emenda); Rack: 20 barras de 7 LEDs em 3 momentos", () => {
     const rain = draw("rain").container;
     const texts = rain.querySelectorAll(".rain-fall text");
-    expect(texts.length).toBe(13 * 4 * 2);
+    expect(texts.length).toBe(11 * 4 * 2);
+    // O campo da chuva termina na borda do sub-anel (v0.46.1), não mais além dele.
+    expect(RAIN_R).toBe(LAYOUT.subOuter + 6);
+    expect(rain.querySelector("#rain-clip circle")!.getAttribute("r")).toBe(String(RAIN_R));
+    expect(rain.querySelector(".rain-dark")!.getAttribute("r")).toBe(String(RAIN_R));
     expect(rain.querySelectorAll(".rain-head").length).toBe(texts.length);
     expect(RAIN_PERIOD).toBe(360);
     cleanup();

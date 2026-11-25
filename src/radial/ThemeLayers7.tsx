@@ -15,14 +15,16 @@ const f = (n: number) => n.toFixed(1);
 // Chuva de código — colunas de caracteres descendo atrás do anel.
 
 const GLYPHS = "0123456789ABCDEF<>{}[]=+*/#$%&";
-const COLS = 13;
+/** A chuva só até a borda externa do sub-anel (antes ia até OUT + 78 e ficava larga demais). */
+export const RAIN_R = OUT + 6;
+const COLS = 11;
 const LINE = 18;
 /** Período vertical do desenho: descer exatamente isto emenda sem pulo. */
 export const RAIN_PERIOD = 20 * LINE;
 const PERIODS = 4;
 /** Cada coluna: posição, e duas "gotas" por período (início em linhas, comprimento, caracteres). */
 const RAIN = Array.from({ length: COLS }, (_, i) => {
-  const x = C - R + ((i + 0.5) * 2 * R) / COLS;
+  const x = C - RAIN_R + ((i + 0.5) * 2 * RAIN_R) / COLS;
   const drops = [0, 1].map((d) => {
     const [a, b] = seq(2, i * 37 + d * 11 + 5);
     const len = 5 + Math.floor(b * 4);
@@ -34,7 +36,7 @@ const RAIN = Array.from({ length: COLS }, (_, i) => {
 });
 
 function RainColumn({ col }: { col: (typeof RAIN)[number] }) {
-  const top = C - R - RAIN_PERIOD;
+  const top = C - RAIN_R - RAIN_PERIOD;
   return (
     <>
       {Array.from({ length: PERIODS }, (_, k) =>
@@ -58,10 +60,10 @@ export function RainBack() {
     <g className="rain rain-back" data-testid="rain-back" aria-hidden="true">
       <defs>
         <clipPath id="rain-clip">
-          <circle cx={C} cy={C} r={R} />
+          <circle cx={C} cy={C} r={RAIN_R} />
         </clipPath>
       </defs>
-      <circle cx={C} cy={C} r={R} className="rain-dark" />
+      <circle cx={C} cy={C} r={RAIN_R} className="rain-dark" />
       <g clipPath="url(#rain-clip)">
         {/* Duas velocidades = duas animações (colunas pares devagar, ímpares rápidas). */}
         <g className="rain-fall rain-fall--slow">
@@ -71,7 +73,7 @@ export function RainBack() {
           {RAIN.filter((c) => c.fast).map((c, i) => <RainColumn key={i} col={c} />)}
         </g>
       </g>
-      <circle cx={C} cy={C} r={R} className="rain-rim" />
+      <circle cx={C} cy={C} r={RAIN_R} className="rain-rim" />
     </g>
   );
 }
