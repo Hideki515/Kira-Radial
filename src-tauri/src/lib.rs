@@ -18,6 +18,7 @@ mod icons;
 mod keycapture;
 mod knob;
 mod gamepad;
+mod sync;
 mod layout;
 mod lock;
 mod menu;
@@ -114,6 +115,14 @@ pub fn run() {
                 perf::log_level(perf::Level::Warn, "rust", &format!("atalhos de fatia: {e}"));
             }
             gamepad::apply(&handle, &cfg);
+            // Vigia da pasta de sincronização (só se ligada); confere já na abertura.
+            {
+                let h = handle.clone();
+                std::thread::spawn(move || {
+                    sync::pull(&h);
+                    sync::start(&h);
+                });
+            }
 
             // Mantém o registro do Windows coerente com a configuração.
             if !qa::ENABLED && handle.autolaunch().is_enabled().unwrap_or(false) != cfg.behavior.autostart {
@@ -193,6 +202,9 @@ pub fn run() {
             commands::discord_disconnect,
             commands::knob_error,
             commands::gamepad_connected,
+            commands::sync_status,
+            commands::sync_configure,
+            commands::sync_now,
             commands::hotkeys_error,
             updater::update_check,
             updater::update_status,

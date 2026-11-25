@@ -125,12 +125,37 @@ export async function getHotkeysError(): Promise<string | null> {
   return isTauri() ? invoke<string | null>("hotkeys_error") : null;
 }
 
-/** Erro ao registrar as teclas do knob (controle dedicado), ou null. */
+/** Sincronização entre PCs (Configurações → Backup). */
+export interface SyncStatus {
+  enabled: boolean;
+  folder: string;
+  /** ms; 0 = nunca. */
+  lastSync: number;
+  lastMachine: string;
+  error?: string | null;
+}
+
+const SYNC_OFF: SyncStatus = { enabled: false, folder: "", lastSync: 0, lastMachine: "", error: null };
+
+export async function syncStatus(): Promise<SyncStatus> {
+  return isTauri() ? invoke<SyncStatus>("sync_status") : SYNC_OFF;
+}
+
+/** Liga/desliga ou troca a pasta (a versão mais nova vale; a outra vira backup). */
+export async function syncConfigure(enabled: boolean, folder: string): Promise<SyncStatus> {
+  return isTauri() ? invoke<SyncStatus>("sync_configure", { enabled, folder }) : { ...SYNC_OFF, enabled, folder };
+}
+
+export async function syncNow(): Promise<SyncStatus> {
+  return isTauri() ? invoke<SyncStatus>("sync_now") : SYNC_OFF;
+}
+
 /** Há controle de videogame conectado (só com a leitura ligada). */
 export async function gamepadConnected(): Promise<boolean> {
   return isTauri() ? invoke<boolean>("gamepad_connected") : false;
 }
 
+/** Erro ao registrar as teclas do knob (controle dedicado), ou null. */
 export async function getKnobError(): Promise<string | null> {
   return isTauri() ? invoke<string | null>("knob_error") : null;
 }

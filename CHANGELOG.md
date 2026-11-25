@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.46.0
+
+- **Sincronizar entre computadores** (Configurações → Backup): escolha uma pasta que você já sincroniza (OneDrive, Dropbox, Google Drive ou uma pasta de rede) e a Kira mantém a mesma configuração em todos os PCs que usarem essa pasta.
+  - **Vale a versão mais nova.** A que perde nunca se perde: vira um backup na lista "Backups automáticos", tanto ao receber quanto ao enviar.
+  - **Ficam em cada PC:** a posição do ícone flutuante e "iniciar com o Windows".
+  - **Quando sincroniza:** ao salvar, a Kira envia. Ela confere a pasta ao iniciar e a cada 15 s (só a data do arquivo, com custo praticamente zero) e recebe as mudanças sem reiniciar.
+  - **Com as Configurações abertas:** se chegar uma versão de outro PC, a página recarrega sozinha. Se houver edições não salvas, aparece um aviso.
+  - A página mostra a pasta, a última sincronização (e de qual PC veio a versão) e tem o botão "Sincronizar agora".
+  - Ícones próprios (imagens) e as senhas do Discord e do OBS não viajam: elas ficam protegidas no PC onde foram configuradas.
+- **Controle de videogame:** desligar e religar rápido não deixa mais duas leituras do controle ao mesmo tempo.
+
 ## 0.45.0
 
 - **Controle de videogame** (Geral → Controle de videogame): dá para usar um controle de Xbox, ou compatível com XInput, para abrir e navegar no menu.

@@ -9,7 +9,7 @@
 use crate::config::PadCombo;
 use crate::lock::LockExt;
 use crate::menu::{self, AppState, RADIAL};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager};
 
@@ -131,7 +131,10 @@ impl Tracker {
 }
 
 static TRACKER: Mutex<Option<Tracker>> = Mutex::new(None);
-static RUNNING: AtomicBool = AtomicBool::new(false);
+/// Leitura ligada (desejada). A geração muda a cada liga/desliga: uma thread antiga vê a
+/// geração mudar e para, então desligar e religar rápido nunca deixa duas lendo.
+static ACTIVE: AtomicBool = AtomicBool::new(false);
+static GEN: AtomicU64 = AtomicU64::new(0);
 static CONNECTED: AtomicBool = AtomicBool::new(false);
 
 /// Há controle conectado agora (para as Configurações). Desligado = false.
@@ -174,30 +177,33 @@ pub fn feed(app: &AppHandle, pad: Pad, at_ms: u64) {
 /// Liga/desliga a leitura conforme a config. A Kira de teste nunca lê o controle de verdade.
 pub fn apply(app: &AppHandle, cfg: &crate::config::Config) {
     if !cfg.gamepad.enabled || crate::qa::ENABLED {
-        RUNNING.store(false, Ordering::SeqCst);
+        if ACTIVE.swap(false, Ordering::SeqCst) {
+            GEN.fetch_add(1, Ordering::SeqCst);
+        }
         CONNECTED.store(false, Ordering::SeqCst);
         return;
     }
-    if RUNNING.swap(true, Ordering::SeqCst) {
+    if ACTIVE.swap(true, Ordering::SeqCst) {
         return;
     }
+    let gen = GEN.fetch_add(1, Ordering::SeqCst) + 1;
     let app = app.clone();
-    let spawned = std::thread::Builder::new().name("gamepad".into()).spawn(move || poll_loop(&app));
+    let spawned = std::thread::Builder::new().name("gamepad".into()).spawn(move || poll_loop(&app, gen));
     if let Err(e) = spawned {
-        RUNNING.store(false, Ordering::SeqCst);
+        ACTIVE.store(false, Ordering::SeqCst);
         crate::perf::log_level(crate::perf::Level::Warn, "rust", &format!("controle: {e}"));
     }
 }
 
-fn poll_loop(app: &AppHandle) {
+fn poll_loop(app: &AppHandle, gen: u64) {
     let Some(get) = xinput::load() else {
         crate::perf::log_level(crate::perf::Level::Warn, "rust", "controle: xinput1_4.dll indisponível");
-        RUNNING.store(false, Ordering::SeqCst);
+        ACTIVE.store(false, Ordering::SeqCst);
         return;
     };
     let mut slot: Option<u32> = None;
     let mut last_scan = 0u64;
-    while RUNNING.load(Ordering::SeqCst) {
+    while GEN.load(Ordering::SeqCst) == gen {
         let t = now_ms();
         // Ler um slot vazio é lento: procura controle novo só a cada 2 s.
         if slot.is_none() && t.saturating_sub(last_scan) >= 2000 {
@@ -220,7 +226,7 @@ fn poll_loop(app: &AppHandle) {
         let visible = app.state::<AppState>().visible.load(Ordering::SeqCst);
         std::thread::sleep(std::time::Duration::from_millis(if visible { 33 } else { 100 }));
     }
-    CONNECTED.store(false, Ordering::SeqCst);
+    // Saiu porque desligaram (ou religaram): quem desliga já zera CONNECTED; a thread nova o atualiza.
 }
 
 mod xinput {

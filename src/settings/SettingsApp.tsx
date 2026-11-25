@@ -1,8 +1,8 @@
 import { CircleDot, Clapperboard, Headset, Orbit, Stethoscope, Keyboard, LayoutGrid, Palette, Save, Settings2, Undo2, Users, Archive, AlertTriangle } from "lucide-react";
 import { applyLangSetting, t, useLang } from "../shared/i18n";
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useSystemStats } from "../hooks/useSystemStats";
-import { getConfig, getHotkeyError, saveConfig } from "../shared/ipc";
+import { getConfig, getHotkeyError, onEvent, saveConfig } from "../shared/ipc";
 import { wantsOrb, type Config, type Profile } from "../shared/types";
 import { IconPage } from "./pages/IconPage";
 import { useUpdateInfo } from "./pages/UpdatesSection";
@@ -82,6 +82,21 @@ export function SettingsApp() {
 
   const errors = useMemo(() => (draft ? validateConfig(draft) : []), [draft]);
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(saved), [draft, saved]);
+  const dirtyRef = useRef(dirty);
+  dirtyRef.current = dirty;
+  // Chegou uma config de outro PC (sincronização): sem edições pendentes, recarrega;
+  // com edições, avisa (salvar mantém as daqui; a outra já virou backup).
+  useEffect(() => {
+    const off = onEvent("sync:pulled", () => {
+      if (dirtyRef.current) return setStatus({ ok: false, text: t("sync.pulledDirty") });
+      void getConfig().then((c) => {
+        setSaved(c);
+        setDraft(structuredClone(c));
+        setStatus({ ok: true, text: t("sync.pulled") });
+      });
+    });
+    return () => void off.then((f) => f());
+  }, []);
 
   // Botão Salvar e Ctrl+S: só com mudança, sem erro e sem outro salvamento em andamento.
   const save = useCallback(async () => {

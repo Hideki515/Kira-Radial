@@ -11,6 +11,7 @@ import { BrowserFields } from "../BrowserFields";
 import { ThemeEditor, addCustomTheme } from "./ThemeEditor";
 import { MAX_CUSTOM_THEMES, customRef, isCustomRef } from "../../shared/customTheme";
 import { BackupHistory } from "./BackupHistory";
+import { SyncSection } from "./SyncSection";
 import { KnobSection } from "./KnobSection";
 import { GamepadSection } from "./GamepadSection";
 import { ScreenshotSection } from "./ScreenshotSection";
@@ -340,6 +341,7 @@ export function BackupPage({ config, replace }: { config: Config; replace: (c: C
         </div>
         {msg && <p className={msg.ok ? "inline-ok" : "inline-error"}>{msg.ok && <Check size={13} />} {msg.text}</p>}
       </Section>
+      <SyncSection />
       <BackupHistory config={config} replace={replace} />
     </>
   );

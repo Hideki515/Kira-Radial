@@ -6,7 +6,7 @@ use crate::foreground;
 use crate::menu::{self, AppState};
 use std::sync::atomic::Ordering;
 use std::time::Duration;
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_autostart::ManagerExt;
 use crate::lock::LockExt;
 
@@ -22,7 +22,18 @@ pub fn get_config(state: State<'_, AppState>) -> Config {
 }
 
 #[tauri::command]
-pub fn save_config(app: AppHandle, state: State<'_, AppState>, mut config: Config) -> Result<(), String> {
+pub fn save_config(app: AppHandle, config: Config) -> Result<(), String> {
+    apply_config(&app, config.clone())?;
+    // Salvo aqui: envia para a pasta de sincronização (se ligada).
+    crate::sync::push(&app.state::<AppState>().config());
+    Ok(())
+}
+
+/// Valida, aplica (atalhos, knob, controle, ícone...) e grava. Usado ao salvar e ao
+/// receber uma config da sincronização.
+pub fn apply_config(app: &AppHandle, mut config: Config) -> Result<(), String> {
+    let app = app.clone();
+    let state = app.state::<AppState>();
     config.validate()?;
     let old = state.config();
     // Idioma primeiro: as mensagens a partir daqui (e a bandeja) já saem no novo.
@@ -395,6 +406,25 @@ pub fn set_hotkey_paused(app: AppHandle, paused: bool) {
 #[tauri::command]
 pub fn hotkeys_error() -> Option<String> {
     crate::hotkeys::error()
+}
+
+/// Sincronização entre PCs: estado atual (pasta, última vez, erro).
+#[tauri::command]
+pub fn sync_status() -> crate::sync::Status {
+    crate::sync::status()
+}
+
+/// Liga/desliga a sincronização ou troca a pasta (a versão mais nova vale).
+#[tauri::command]
+pub async fn sync_configure(app: AppHandle, enabled: bool, folder: String) -> Result<crate::sync::Status, String> {
+    tauri::async_runtime::spawn_blocking(move || crate::sync::configure(&app, enabled, folder)).await.map_err(|e| e.to_string())?
+}
+
+/// "Sincronizar agora": recebe se a pasta tem versão mais nova.
+#[tauri::command]
+pub async fn sync_now(app: AppHandle) -> crate::sync::Status {
+    let _ = tauri::async_runtime::spawn_blocking(move || crate::sync::pull(&app)).await;
+    crate::sync::status()
 }
 
 /// Há controle de videogame conectado (só se sabe com a leitura ligada).
